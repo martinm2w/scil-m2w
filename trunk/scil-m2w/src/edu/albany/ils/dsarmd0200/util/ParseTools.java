@@ -311,6 +311,35 @@ public abstract class ParseTools {
 		//System.out.println( param + "  ---> " + retval);
 		return retval;
 	}
+        
+        //m2w: for chinese.  8/2/11 12:57 PM
+        public static int wordCountChinese(String param){
+		//0- make sure emoticons arraylist has been populated (use setEmoticons)
+		//1- remove emoticons
+		//2- remove punctuation, replace multiple spaces with single space
+		int retval = 0;
+		int index = 0;
+		if (!initialized)
+			initialize();
+		String tmp = removeEmoticons(param);
+//                System.out.println("tmp: " + tmp);
+                
+		boolean inaword = false;
+		while (index < tmp.length()){
+                        String temps = tmp.substring(index, index+1);
+//                        System.out.println(temps  + ": temp ");
+			char c = tmp.charAt(index++);
+                        
+			if (((temps.matches("[\u4E00-\u9FA5]") || Character.isLetter(c) || Character.isDigit(c)) && (inaword == false))){
+				retval++;
+				inaword = true;
+			} else if (Character.isWhitespace(c)) inaword = false;
+
+		}
+		//System.out.println( param + "  ---> " + retval);
+		return retval;
+	}
+        
 
 	public static void stats(){
 		System.out.println("# of Emotes: " + emotes.size());

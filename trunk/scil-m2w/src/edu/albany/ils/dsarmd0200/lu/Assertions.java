@@ -64,7 +64,8 @@ public class Assertions {
     public void makeAssertions() {
 	for (int i = 0; i < docs_utts_.size(); i++) {
 	    String fn = (String)doc_names_.get(i);
-	    System.out.println("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$\nprocessing: " + fn);
+	    System.out.println("$$$$$$$$$."
+                    + ".$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$\nprocessing: " + fn);
 	    //utts_ = (ArrayList)docs_utts_.get(i);
 	    all_utts_.clear();
 	    all_utts_.addAll(tr_utts_);
@@ -78,13 +79,13 @@ public class Assertions {
 		//System.exit(0);
 		tagDAct();
 		calCommLink(xp);
-		buildLocalTopicList(phr_ch, xp);
+//		buildLocalTopicList(phr_ch, xp);
 
                 //meso_topic and task_focus
                 //System.out.println("------------Generate Meso-topics of " + (String)doc_names_.get(i));
-                MesoTopic mt = new MesoTopic();
-                mt.calMesoTopic((String)doc_names_.get(i), utts_, xp, phr_ch, wn_, nls_);
-		mts_.add(mt);
+//                MesoTopic mt = new MesoTopic();
+//                mt.calMesoTopic((String)doc_names_.get(i), utts_, xp, phr_ch, wn_, nls_);
+//		mts_.add(mt);
                 //ArrayList<ArrayList<String>> mts = mt.getMeso_topics_();
                 //testing the mesotopic list
 		/*
@@ -93,7 +94,7 @@ public class Assertions {
                     System.out.println(Arrays.asList(mts.get(ai).toArray()));
                 }
 		*/
-		ArrayList spks = new ArrayList(parts_.values());
+//		ArrayList spks = new ArrayList(parts_.values());
 		/*
 		for (int k = 0; k < spks.size(); k++) {
 		    Speaker part_ = (Speaker)spks.get(k);
@@ -129,7 +130,8 @@ public class Assertions {
 		XMLParse xp = xmlps_.get(i);
 		utts_ = (ArrayList)docs_utts_.get(i);
 		all_utts_.addAll(utts_);
-		buildALocalTopicList(phr_ch, xp);
+//		buildALocalTopicList(phr_ch, xp);
+                calCommLink(xp);
 	    }
 	    ArrayList spks = new ArrayList(parts_.values());
 	    for (int k = 0; k < spks.size(); k++) {
@@ -143,24 +145,24 @@ public class Assertions {
 	    prxmlp_ = new PtsReportXMLParser(Settings.getValue(Settings.REPORT) + fn.split("\\.")[0] + "_AssertionReport.xml");
 	    prxmlp_.initClaim();
 	    prxmlp_.setDataUnit(fn.split("\\.")[0], fn.split("\\.")[0]);
-	    calTpCtl(i);
+//	    calTpCtl(i);
 	    System.out.println("@Involvement");
-	    calInv(i);
+//	    calInv(i);
 	    System.out.println("@Task Control");
-	    calTkCtl(i);
+//	    calTkCtl(i);
 	    System.out.println("@Expressive Disagreement");
-	    calExDis(i);
+//	    calExDis(i);
 	    System.out.println ("@Leadership");
-	    calLeader();
+//	    calLeader();
 	    //System.out.println("@Agreement");
-	    calAgr();
+//	    calAgr();
 	    //System.out.println("@Task Focus");
-	    calTaskFocus(i);
+//	    calTaskFocus(i);
 	    //System.out.println("@Sociability Measure...");
-	    calSociability();
+//	    calSociability();
 	    //System.out.println("\n\nProcessing L...");
 	    //System.out.println("\n\nProcessing Sociability Measure...");
-	    calGroupCohesion(i);
+//	    calGroupCohesion(i);
 	    //System.out.println("\n\nprocessing topic disagreement...");
 	    //calTpDis(i);
 	    //createReport();
@@ -1425,11 +1427,19 @@ public class Assertions {
 	    utts_ = (ArrayList<Utterance>)docs_utts_.get(i);
 	    //	    utts_ = cl.getUtts();
 	    */
-	CommunicationLinkX clx = new CommunicationLinkX(utts_, wn_, isEnglish_, isChinese_);
+        if(isChinese_){
+            CommunicationLinkXChinese clx = new CommunicationLinkXChinese(utts_, wn_, isEnglish_, isChinese_);
+            clx.collectCLFtsX();
+	    utts_ = clx.getUtts();
+        }else{
+            CommunicationLinkX clx = new CommunicationLinkX(utts_, wn_, isEnglish_, isChinese_);
+            clx.collectCLFtsX();
+	    utts_ = clx.getUtts();
+        }
 	    //cl.setUtts(utts_);
 	    //cl.calCLFts();
-	    clx.collectCLFtsX();
-	    utts_ = clx.getUtts();
+//	    clx.collectCLFtsX();
+//	    utts_ = clx.getUtts();
 	    //    	WriteXML wlx = new WriteXML(clx.getMap(),utts_);
 	    //    	wlx.outputXML();
 
@@ -1480,6 +1490,8 @@ public class Assertions {
 								   "dsarmd",
 								   false,
 								   null);
+                            //m2w: merge turns has .1 or .0 turns.
+                            mergeTurnsWithSameTN(list);
 			    XMLParse xp = new XMLParse(fl.getAbsolutePath(), list);
 			    xmlps_.add(xp);
 			    PhraseCheck phr_ch = new PhraseCheck(fl.getAbsolutePath(), xp.getUtterances());
@@ -1518,6 +1530,48 @@ public class Assertions {
 	    e.printStackTrace();
 	}
     }
+
+    /**
+     *m2w: this method is for parsing through utts and merge 2 turns with same turn numbers.
+     * @param list
+     * @last 5/9/11 12:52 PM
+     */
+    private void mergeTurnsWithSameTN(ArrayList list){
+        //test out the utts first
+        for(int i = 0; i < list.size() -1 ; i++){
+            Utterance tempUtt = (Utterance)list.get(i);
+            String currTurn = tempUtt.getTurn();
+            Utterance nextUtt = (Utterance)list.get(i+1);
+            String nextTurn = nextUtt.getTurn();
+            if(currTurn.equals(nextTurn)){
+//                System.err.println("testing: " + tempUtt.getTurn() + " : " + tempUtt.getContent());
+                tempUtt.getSub_turns().add(nextUtt);
+                list.remove(i+1);
+                i--;
+            }
+//                System.out.println("testing: " + tempUtt.getTurn() + " : " + tempUtt.getContent());
+        }
+
+//        //testing
+//        for(int i = 0; i < list.size() -1 ; i++){
+//            Utterance tempUtt = (Utterance)list.get(i);
+//            String currTurn = tempUtt.getTurn();
+//            Utterance nextUtt = (Utterance)list.get(i+1);
+//            String nextTurn = nextUtt.getTurn();
+//            System.out.println("testing: " + tempUtt.getTurn() + " : " + tempUtt.getContent());
+//            if(currTurn.equals(nextTurn)){
+//                System.err.println("testing: " + tempUtt.getTurn() + " : " + tempUtt.getContent());
+//            }
+//            if(!tempUtt.getSub_turns().isEmpty()){
+//                System.err.println(tempUtt.getSub_turns().get(0).getTurn());
+//            }
+//        }
+        //parse , check turn number contains .0 .1
+        //merge into the sub turns list
+        //delete 
+        
+    }
+
 
     public void loadAndParseTraining() {
 	try {
