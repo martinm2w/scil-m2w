@@ -312,7 +312,14 @@ public abstract class ParseTools {
 		return retval;
 	}
         
-        //m2w: for chinese.  8/2/11 12:57 PM
+        /**
+         * m2w : this method is for doing Chinese word count.
+         *      1. Chinese has no spaces.
+         *      2. English has spaces.
+         * @param param
+         * @return 
+         * @date 8/4/11 11:15 AM
+         */
         public static int wordCountChinese(String param){
 		//0- make sure emoticons arraylist has been populated (use setEmoticons)
 		//1- remove emoticons
@@ -325,18 +332,26 @@ public abstract class ParseTools {
 //                System.out.println("tmp: " + tmp);
                 
 		boolean inaword = false;
-		while (index < tmp.length()){
-                        String temps = tmp.substring(index, index+1);
-//                        System.out.println(temps  + ": temp ");
-			char c = tmp.charAt(index++);
-                        
-			if (((temps.matches("[\u4E00-\u9FA5]") || Character.isLetter(c) || Character.isDigit(c)) && (inaword == false))){
-				retval++;
-				inaword = true;
-			} else if (Character.isWhitespace(c)) inaword = false;
-
-		}
-		//System.out.println( param + "  ---> " + retval);
+                //m2w: if has chinese , add it, if not, check if inaword, then add 8/4/11 10:57 AM
+                        while (index < tmp.length()){
+                                char c = tmp.charAt(index++);
+                                Character cc = c;
+                                String tempString = cc.toString();
+        //                        System.out.println(tempString);
+                                //testing booleans 
+//                                boolean a1;
+                                if ((tempString.matches("[\\u4E00-\\u9FA5]") // if is chinese word, just add it
+                                        //or if is english word
+                                        || ((Character.isLetter(c) || Character.isDigit(c)) && inaword == false))){
+                                        retval++;
+                                        
+                                        //if is chinese char, it's not in an english word.
+                                        if (!tempString.matches("[\\u4E00-\\u9FA5]")) inaword = true;
+        //                                System.out.println("a1= " + a1);
+                                }
+                                //chinese don't have spaces in them. this is why lenght = 1. commented 8/4/11 10:49 AM
+        			 else if (Character.isWhitespace(c)) inaword = false;
+                        }
 		return retval;
 	}
         
