@@ -152,12 +152,12 @@ public class CommunicationLinkXChinese{
                             shortUtterance(index);
                             SHORT_UTT_STATICS++;
                             //testing 8/2/11 12:47 PM
-                            System.out.println( "short: "+ content + " - length: " + turn_length);
+//                            System.out.println( "short: "+ content + " - length: " + turn_length);
                     } else{
                             longUtterance(index);
                             LONG_UTT_STATICS++;
                             //testing 8/2/11 12:47 PM
-                            System.out.println("long: "+content + " - length: " + turn_length);
+//                            System.out.println("long: "+content + " - length: " + turn_length);
                     }
 
             }
@@ -390,7 +390,7 @@ public class CommunicationLinkXChinese{
          * @return
          */
         private boolean judgingCnDSht(String cur_utterance, Utterance utt){//lowercased unfiltered
-            if((cur_utterance.contains("agree")
+            if((cur_utterance.contains("agree")                     || cur_utterance.contains("赞成") || cur_utterance.contains("同意") || cur_utterance.contains("赞同") 
                             || cur_utterance.contains("true")       || cur_utterance.contains("真的") 
                             || cur_utterance.contains("yes")        || cur_utterance.contains("是啊")
                             || cur_utterance.contains("yea")        || cur_utterance.contains("是阿")
@@ -553,7 +553,10 @@ public class CommunicationLinkXChinese{
                                 || pre_content.contains("nt ")
                                 || pre_content.contains("id be")
                                 || pre_content.contains("i would be")
-                                )){
+                                )
+                                ||
+                                (cur_content.contains("也没") || cur_content.contains("也不"))
+                                ){
                                 found = true;
                                 this.setRespTo(index, i, utt, "Short: cnd: CaseMatching_cur_utt: too/neither");
                                 break;
@@ -563,7 +566,7 @@ public class CommunicationLinkXChinese{
                         //m2w: code 32, rhetorical question case. if in previous 3 utts contains “?” && “ don't dont isn't wasn't hasn't weren't” , FOUND! 3/22/11 3:50 PM
                         if((pre_raw_content.contains("?")) &&
                                         !(pre_content.contains("know ")) &&
-                                        (pre_content.contains("dont ")
+                                        ((pre_content.contains("dont ")
                                         || pre_content.contains("isnt ")
                                         || pre_content.contains("wasnt ")
                                         || pre_content.contains("hasnt ")
@@ -571,7 +574,13 @@ public class CommunicationLinkXChinese{
                                         || pre_content.contains("werent ")
                                         || pre_content.contains("didnt ")
                                         || pre_raw_content.contains("right?")
-                                        )){
+                                        ) || (
+                                            (pre_content.contains("不是吗"))
+                                            || (pre_content.contains("不") && pre_content.contains("吗"))
+                                            || (pre_content.contains("没有吗"))
+                                            || (pre_content.contains("没") && pre_content.contains("吗"))
+                                            || (pre_content.contains("不对吗"))
+                                ))){
                                 found = true;
                                 this.setRespTo(index, i, utt, "Short: cnd: CaseMatching_cur_utt: rhetorical question");
                                 break;
@@ -579,20 +588,24 @@ public class CommunicationLinkXChinese{
 
                         //m2w : code 35, wow case, wow about something, look for "i", 3/24/11 11:17 AM
 //                        if((cur_raw_content.contains("wow ") || cur_raw_content.contains(" wow") || cur_raw_content.equals("wow")) && (
-                        if(cur_raw_content.contains("wow") && (
+                        if((cur_raw_content.contains("wow") && (
                                 //m2w : added exclaimation mark! 4/18/11 9:53 AM
                                 (pre_raw_content.contains("i ") || pre_raw_content.contains("!"))
-                                )){
+                                )) 
+                                || cur_raw_content.contains("哇")
+                                ){
                                 found = true;
                                 this.setRespTo(index, i, utt, "Short: cnd: CaseMatching_cur_utt: wow");
                                 break;
 
                         }
                         
-                        //m2w : code 36, deny about something, look for don't. 3/24/11 11:17 AM
-                        if(((cur_raw_content.contains("nt") || cur_raw_content.contains("n't")) && cur_raw_content.contains("either")) ){
-
-                            if (pre_content.contains("dont")){
+                        //m2w : code 36, agree on some one's denying about something, look for don't. 3/24/11 11:17 AM
+                        if(((cur_raw_content.contains("nt") || cur_raw_content.contains("n't")) && cur_raw_content.contains("either"))
+                                ||  ((cur_raw_content.contains("没") || cur_raw_content.contains("不")|| cur_raw_content.contains("赞")|| cur_raw_content.contains("反对")
+                                ) && cur_raw_content.contains("也")) ){
+                            if (pre_content.contains("dont") || 
+                                    (cur_raw_content.contains("没") || cur_raw_content.contains("不")|| cur_raw_content.contains("赞")|| cur_raw_content.contains("反对"))){
                                 found = true;
                                 this.setRespTo(index, i, utt, "Short: cnd: CaseMatching_cur_utt: i dont either");
                                 break;
@@ -607,8 +620,12 @@ public class CommunicationLinkXChinese{
                                 || cur_raw_content.contains("'s okay")
                                 || cur_raw_content.contains("s ok")
                                 || cur_raw_content.contains("s okay")
+                                || cur_raw_content.contains("没事")
+                                || cur_raw_content.contains("没关系")
                                 
-                                ) && (pre_content.contains("sorry")                                        
+                                ) && (pre_content.contains("sorry") 
+                                        || pre_content.contains("对不起") 
+                                        || pre_content.contains("不好意思") 
                                         )){
                                 found = true;
                                 this.setRespTo(index, i, utt, "Short: cnd: CaseMatching_cur_utt: it's ok");
@@ -625,9 +642,13 @@ public class CommunicationLinkXChinese{
 //                        4/16/11 4:01 PM
 
                         //m2w: code 311, exactly case, check its last utt, then perform skip judge and link to prev utts 4/1/11 3:10 PM
-                        if((cur_raw_content.toLowerCase().contains("exactly"))){
+                        if((cur_raw_content.toLowerCase().contains("exactly")) 
+                                || cur_raw_content.contains("没错") || cur_raw_content.contains("对") || cur_raw_content.contains("就是")
+                                ){
                             //checking last utt,
-                            if(pre_content.contains("exactly")  && prev_utt.getSysRespTo() != null){ // gai
+                            if((pre_content.contains("exactly") 
+                                    || cur_raw_content.contains("没错") || cur_raw_content.contains("对") || cur_raw_content.contains("就是")
+                                    ) && prev_utt.getSysRespTo() != null){ // gai
                                 found = true;
                                 String pre_SysRespTo = prev_utt.getSysRespTo();
                                 this.setRespToAs(index, pre_SysRespTo, utt, "Short: cnd: CaseMatching_cur_utt: exactly same prev utt");
@@ -640,16 +661,22 @@ public class CommunicationLinkXChinese{
                         }
 
                         //m2w: code 312, good point case. look for "?" and/or "why",4/3/11 11:38 AM
-                        if(cur_raw_content.toLowerCase().contains("good point") || cur_raw_content.toLowerCase().contains("good question")){
+                        if(cur_raw_content.toLowerCase().contains("good point") || cur_raw_content.toLowerCase().contains("good question")
+                                || cur_raw_content.contains("说的好")|| cur_raw_content.contains("问的好")|| cur_raw_content.contains("有道理")
+                                ){
                             //if previous utt also fits the case, then set to prev's link_to
-                            if(( pre_raw_content.contains("good point") || pre_raw_content.contains("good question") ) && prev_utt.getSysRespTo() != null){
+                            if(( pre_raw_content.contains("good point") || pre_raw_content.contains("good question")
+                                    || cur_raw_content.contains("说的好")|| cur_raw_content.contains("问的好")|| cur_raw_content.contains("有道理")
+                                    ) && prev_utt.getSysRespTo() != null){
                                 found = true;
                                 String pre_SysRespTo = prev_utt.getSysRespTo();
                                 this.setRespToAs(index, pre_SysRespTo, utt, "Short: cnd: CaseMatching_cur_utt: good point same prev utt");
                                 break;                                
                             }else{
                                 // if not , look for ? or why, then set.
-                                if(pre_content.contains("?") || pre_content.contains("why")){
+                                if(pre_content.contains("?") || pre_content.contains("why")
+                                        || pre_content.contains("为什么")|| pre_content.contains("怎么")
+                                        ){
                                     this.setRespTo(index, i, utt, "Short: cnd: CaseMatching_cur_utt: good point");
                                 }
                             }
@@ -658,13 +685,13 @@ public class CommunicationLinkXChinese{
                         
 
                          //m2w : i agree can't be responsing to a question. 3/24/11 11:17 AM
-                        if(cur_content.contains("agree") && pre_raw_content.contains("?")){
-                                    continue;
-                                }
+//                        if(cur_content.contains("agree") && pre_raw_content.contains("?")){
+//                                    continue;
+//                                }
                          //m2w : curr contains true, and previous shouldn't contains should or true, 3/24/11 11:17 AM
-                        if(cur_content.contains("true") && (pre_content.contains("should") || pre_content.contains("true"))){
-                                    continue;
-                                }
+//                        if(cur_content.contains("true") && (pre_content.contains("should") || pre_content.contains("true"))){
+//                                    continue;
+//                                }
 
 
 
@@ -678,40 +705,42 @@ public class CommunicationLinkXChinese{
                         if(lengthCal(prev_utt) >= 3){
 
                             //m2w: guessing case
-                            if(pre_content.contains("might be")
-                                    || pre_content.contains("might have")
-                                    || pre_content.contains("could be")
-                                    || pre_content.contains("could have")
-                                    || pre_content.contains("may be")
-                                    || pre_content.contains("maybe")
-                                    || pre_content.contains("may have")
-                                    || pre_content.contains("perhaps")
+                            if(pre_content.contains("might be") || pre_content.contains("可能")
+                                    || pre_content.contains("might have") || pre_content.contains("也许")
+                                    || pre_content.contains("could be") || pre_content.contains("应该")
+                                    || pre_content.contains("could have")   || pre_content.contains("如果")
+                                    || pre_content.contains("may be")   || pre_content.contains("要是")
+                                    || pre_content.contains("maybe")    || pre_content.contains("像是")
+                                    || pre_content.contains("may have") || pre_content.contains("好像")
+                                    || pre_content.contains("perhaps")  || pre_content.contains("或许")
                                     || pre_content.contains("probably")
                                     || pre_content.contains("seems")
                                     || pre_content.contains("seem")
                                     || (pre_content.contains("either") && pre_content.contains("or"))
+                                    || (pre_content.contains("不是") && pre_content.contains("就是"))
+                                    
                                     ){
                                 found = true;
                                 this.setRespTo(index, i, utt, "Short: cnd: CaseMatching_prev_utt: guessing");
                                 break;
 
                                 //m2w: degree case
-                            }else if (pre_content.contains("really")
-                                    || pre_content.contains("definatly")
-                                    || pre_content.contains("especially")
-                                    || pre_content.contains("apparently")
-                                    || pre_content.contains("regardless")
-                                    || pre_content.contains("some how")
-                                    || pre_content.contains("somehow")
-                                    || pre_content.contains("most")
-                                    || pre_content.contains("at all")
-                                    || pre_content.contains("at least")
-                                    || pre_content.contains("as long as")
-                                    || pre_content.contains("only")
-                                    || pre_content.contains("best")
-                                    || pre_content.contains("worst")
-                                    || pre_content.contains("est ") // 4/5/11 12:00 PM
-                                    || pre_raw_content.contains("it's so ") || pre_raw_content.contains("its so ")
+                            }else if (pre_content.contains("really")            || pre_content.contains("真的")
+                                    || pre_content.contains("definatly")        || pre_content.contains("肯定")
+                                    || pre_content.contains("especially")       || pre_content.contains("特别是")
+                                    || pre_content.contains("apparently")       || pre_content.contains("明显")
+                                    || pre_content.contains("regardless")       || pre_content.contains("无论")
+                                    || pre_content.contains("some how")         || pre_content.contains("最多")
+                                    || pre_content.contains("somehow")          || pre_content.contains("全部")
+                                    || pre_content.contains("most")             || pre_content.contains("最少")
+                                    || pre_content.contains("at all")           || pre_content.contains("只要")
+                                    || pre_content.contains("at least")         || pre_content.contains("只有")
+                                    || pre_content.contains("as long as")       
+                                    || pre_content.contains("only")             
+                                    || pre_content.contains("best")             || pre_content.contains("最")
+                                    || pre_content.contains("worst")            
+                                    || pre_content.contains("est ") // 4/5/11 12:00 PM 
+                                    || pre_raw_content.contains("it's so ") || pre_raw_content.contains("its so ") || pre_content.contains("那么")
                                     || pre_raw_content.contains("that's so ") || pre_raw_content.contains("thats so ")
                                     || pre_raw_content.contains("are so ") || pre_raw_content.contains("r so ")                                    
                                     ){
@@ -720,12 +749,13 @@ public class CommunicationLinkXChinese{
                                 break;
 
                                 //m2w: opinion case
-                            }else if ((pre_content.contains("i think")
+                            }else if ((pre_content.contains("i think")          || pre_content.contains("我想")    
                                     || pre_raw_content.contains("i'm thinking") || pre_raw_content.contains("im thinking")
-                                    || pre_content.contains("i was thinking")
-                                    || pre_content.contains("i believe")
-                                    || pre_content.contains("i guess")
-                                    || pre_content.contains("because")
+                                    || pre_content.contains("i was thinking")   || pre_content.contains("我在想")
+                                    || pre_content.contains("i believe")        || pre_content.contains("我相信")
+                                    || pre_content.contains("i guess")          || pre_content.contains("我猜")
+                                    || pre_content.contains("because")          || pre_content.contains("因为")
+                                    || (pre_content.contains("对") && pre_content.contains("？"))
                                     || pre_raw_content.endsWith("right?")) && (!pre_content.contains("why i think"))
                                     ){
                                 found = true;
@@ -733,16 +763,19 @@ public class CommunicationLinkXChinese{
                                 break;
 
                                 //m2w: order & propossal case
-                            }else if (pre_content.contains("how about")
-                                    || pre_content.contains("need to")
-                                    || pre_content.contains("should be")
+                            }else if (pre_content.contains("how about")         || pre_content.contains("要不")  || pre_content.contains("不如")|| pre_content.contains("不然")
+                                    || pre_content.contains("need to")          || pre_content.contains("必须") 
+                                    || pre_content.contains("should be")        || pre_content.contains("我得")  || pre_content.contains("他得") || pre_content.contains("她得") || pre_content.contains("你得") 
                                     || (pre_content.contains("should") && pre_raw_content.contains("?"))
-                                    || pre_content.contains("we can")
-                                    || pre_content.contains("you may")
-                                    || pre_content.contains("u may") // 4/5/11 12:02 PM
-                                    || pre_content.contains("you should") //4/5/11 12:02 PM
-                                    || pre_content.contains("u should") //4/5/11 12:02 PM
-                                    || pre_raw_content.contains("shouldn't")
+                                    || pre_content.contains("we can")           || pre_content.contains("我们能")  || pre_content.contains("我们可以")  
+                                    || pre_content.contains("you may")          || pre_content.contains("你能")  || pre_content.contains("你可以") 
+                                    // 4/5/11 12:02 PM
+                                    || pre_content.contains("u may") 
+                                    //4/5/11 12:02 PM
+                                    || pre_content.contains("you should")       || pre_content.contains("你应该")
+                                    //4/5/11 12:02 PM
+                                    || pre_content.contains("u should") 
+                                    || pre_raw_content.contains("shouldn't")    || pre_content.contains("你不应该")
                                     || pre_raw_content.contains("should've")
                                     || (pre_content.contains("would you") && pre_raw_content.contains("?"))
                                     || (pre_content.contains("could you") && pre_raw_content.contains("?"))
@@ -753,12 +786,13 @@ public class CommunicationLinkXChinese{
                                 break;
 
                                 //m2w: other case
-                            }else if (pre_content.contains("sometimes")
-                                    || pre_content.contains("somewhere")
-                                    || pre_content.contains("everyone")
-                                    || pre_content.contains("anything")
-                                    || pre_content.contains("that's why")
-                                    || pre_content.contains("anything can")
+                            }else if (pre_content.contains("sometimes")         || pre_content.contains("有时候")
+                                    || pre_content.contains("somewhere")        || pre_content.contains("有的地方")
+                                    || pre_content.contains("everyone")         || pre_content.contains("所有人") || pre_content.contains("大家")
+                                    || pre_content.contains("anything")         || pre_content.contains("任何事")|| pre_content.contains("所有事")
+                                    || pre_content.contains("that's why")       || pre_content.contains("这就是为什么")
+                                    || pre_content.contains("anything can")     
+                                                                                || pre_content.contains("不一定")
                                     || pre_raw_content.contains("it ") && pre_raw_content.contains(" depend")
                                     ){
                                 found = true;
@@ -766,11 +800,12 @@ public class CommunicationLinkXChinese{
                                 break;
 
                                 //m2w: prev_utt contains cnd key words, if there isn't any thing to match, check this then pass down
-                            }else if ((pre_content.contains("yes ")
+                            }else if ((pre_content.contains("yes ") 
                                     || (pre_content.contains("yea ") && !pre_content.contains("year"))
                                     || (pre_content.contains("true ") && !pre_content.contains("be true"))
                                     || pre_content.contains("agree ")
                                     || pre_content.contains("exactly ")
+                                    || pre_content.contains("是") || pre_content.contains("就是") || pre_content.contains("对") || pre_content.contains("好") || pre_content.contains("没错") || pre_content.contains("恩") 
                                     //excluded "because" put into opinion. 4/5/11 11:54 AM
                                     //edcluded prev_utt 's dialog act is agree-accept. 4/16/11 3:00 PM
                                     ) && !prev_utt.getTag().toLowerCase().contains("agree-accept")){
@@ -790,9 +825,9 @@ public class CommunicationLinkXChinese{
 
 
         /**
-         * m2w : extracted from the calCnDSht method, make it easy to read . later on skipping conditions should be put here
+         * m2w : we are going to set the res-to to the last utt, before that we are going to skip some cases. 
          * if it comes in this method, it always returns found as true, because we need to assign a response_to utt for the CnDSht type
-         * includes certain types of skip conditions         * 
+         * includes certain types of skip conditions.
          * @param index
          * @param found
          * @return found
@@ -822,16 +857,16 @@ public class CommunicationLinkXChinese{
                                 continue;
                             }
 
-                            if((pre_content.contains("?")//last utt contains “?” AND “what who where when”
-                                                    &&(pre_content.contains("what ")
-                                                    || pre_content.contains("who ")
-                                                    || pre_content.contains("where ")
-                                                    || pre_content.contains("when ")
-                                                    || pre_content.contains("why ")
-                                                    || pre_content.contains("how "))
-                                                    )){
-                                continue;
-                            }
+//                            if((pre_content.contains("?")//last utt contains “?” AND “what who where when”
+//                                                    &&(pre_content.contains("what ")
+//                                                    || pre_content.contains("who ")
+//                                                    || pre_content.contains("where ")
+//                                                    || pre_content.contains("when ")
+//                                                    || pre_content.contains("why ")
+//                                                    || pre_content.contains("how "))
+//                                                    )){
+//                                continue;
+//                            }
 
                             if((lengthCal(prev_utt) < 5)//prev utts contains “true yea yes agree” and its length < 5
                                                     && (pre_content.contains("yea")
@@ -840,6 +875,7 @@ public class CommunicationLinkXChinese{
                                                     || pre_content.contains("agree ")
                                                     || pre_content.contains("exactly ")
                                                     || pre_content.contains("ok ")
+                                                    || pre_content.contains("是") || pre_content.contains("就是") || pre_content.contains("对") || pre_content.contains("好") || pre_content.contains("没错") || pre_content.contains("恩") 
                                                     )){
                                 continue;
                             }
@@ -885,8 +921,8 @@ public class CommunicationLinkXChinese{
                 String prevUttContentInLoop = contentExtraction(prevUttInLoop);
                 int curr_words_length = countLetters(currUttContentInLoop);
                 int prev_words_length = countLetters(prevUttContentInLoop);
-                int curr_length = ParseTools.wordCount(currUttContentInLoop);
-                int prev_length = ParseTools.wordCount(prevUttContentInLoop);
+                int curr_length = ParseTools.wordCountChinese(currUttContentInLoop);
+                int prev_length = ParseTools.wordCountChinese(prevUttContentInLoop);
                 if ((((prev_length == curr_length) && (prev_words_length > curr_words_length))
                             || (prev_length > curr_length))
                             && !currUttContentInLoop.contains("i think")
@@ -906,38 +942,50 @@ public class CommunicationLinkXChinese{
          * @return
          */
         private boolean judgingCnDLong(String cur_utterance, Utterance utt){//lowercased unfiltered
-            if((cur_utterance.contains("agree")
-                            || cur_utterance.contains("true")
-                            || cur_utterance.contains("yes")
-                            || cur_utterance.contains("yea")
-                            || cur_utterance.contains("ya ")
-                            || cur_utterance.equals("ok")
-                            || cur_utterance.equals("okay")
-                            || cur_utterance.contains("ok,")
-                            || cur_utterance.contains("ok ")//4/18/11 1:02 PM
+            if((cur_utterance.contains("agree")                     || cur_utterance.contains("赞成") || cur_utterance.contains("同意") || cur_utterance.contains("赞同")
+                            || cur_utterance.contains("true")       || cur_utterance.contains("真的") 
+                            || cur_utterance.contains("yes")        || cur_utterance.contains("是啊")
+                            || cur_utterance.contains("yea")        || cur_utterance.contains("是阿")
+                            || cur_utterance.contains("ya ")        || cur_utterance.contains("对 ")    
+                            || cur_utterance.equals("ok")           || cur_utterance.equals("好")
+                            || cur_utterance.equals("okay")         || cur_utterance.equals("好的")
+                            || cur_utterance.contains("ok,")        || cur_utterance.contains("好,")
+                            || cur_utterance.contains("ok ")        || cur_utterance.equals("好 ")
                             || cur_utterance.contains("s cool")
                             || (cur_utterance.contains(" too") && !cur_utterance.contains("you too"))
-                            || cur_utterance.contains("wow")
-                            || cur_utterance.contains("neither")
-                            || cur_utterance.contains("sure")
-                            || cur_utterance.contains("same ")
+                            || cur_utterance.contains("wow")        || cur_utterance.equals("哇")
+                            || cur_utterance.contains("neither")    || cur_utterance.contains("也不")
+                            || cur_utterance.contains("sure")       || cur_utterance.contains("当然")
+                            || cur_utterance.contains("same ")      || cur_utterance.contains("也是")
                             || (cur_utterance.contains("i ") && (cur_utterance.contains("dont") ||cur_utterance.contains("don't")))
+                            || cur_utterance.contains("我不")
                             || (cur_utterance.contains("hah") || cur_utterance.contains("lol") || cur_utterance.contains(":D"))
+                            || cur_utterance.contains("哈哈")
                             || (cur_utterance.contains("right") && !cur_utterance.contains("the right") && cur_utterance.contains("?")) // maybe include not right 4/1/11 1:40 PM
                             || cur_utterance.contains("nope") //4/1/11 1:42 PM
+                            || cur_utterance.contains("不")         || cur_utterance.contains("没有")
                             || cur_utterance.contains("yep") //4/1/11 1:42 PM
+                            || cur_utterance.contains("恩")         
                             || cur_utterance.contains("s ok") //4/1/11 1:42 PM
+                            || cur_utterance.contains("没事的")      || cur_utterance.contains("没关系")
                             || cur_utterance.contains("sorry") // 4/1/11 1:42 PM
+                            || cur_utterance.contains("对不起")      || cur_utterance.contains("不好意思")
                             || cur_utterance.contains("definately") //4/1/11 1:42 PM
+                            || cur_utterance.contains("绝对")      || cur_utterance.contains("肯定")
                             || cur_utterance.contains("disagree")// 4/1/11 1:42 PM
+                            || cur_utterance.contains("不赞成")      || cur_utterance.contains("不赞同")      || cur_utterance.contains("不同意")
                             || cur_utterance.contains("make sense")// 4/1/11 1:42 PM
                             || cur_utterance.contains("makes sense")// 4/1/11 1:42 PM
                             || cur_utterance.contains("correct")// 4/1/11 1:42 PM
+                            || cur_utterance.contains("没错")
                             || cur_utterance.contains("good point") || cur_utterance.contains("good question") || cur_utterance.contains("valid point")//4/16/11 3:57 PM
+                            || cur_utterance.contains("说的好") || cur_utterance.contains("问的好") || cur_utterance.contains("有道理")
                             || cur_utterance.contains("exactly")//4/16/11 3:59 PM
                             || cur_utterance.contains("apparently")//4/16/11 4:36 PM
+                            || cur_utterance.contains("明显")
                             || cur_utterance.contains("not ")//4/18/11 12:32 PM
                             || utt.getTag().toLowerCase().contains("agree-accept")
+                    
                             )
                             && !cur_utterance.contains("sorry")){
                     return true;
@@ -1016,18 +1064,23 @@ public class CommunicationLinkXChinese{
 
 //                      ===== m2w : current utt contains matching cases. 4/4/11 2:41 PM ======
                         //m2w: yes and D[agree-accept] && prev is C[addressed-to]D[Information-Request] and contains ? , then set.4/18/11 9:07 AM
-                        if(cur_content.startsWith("yes") && this.lengthCal(utt) < 2 && utt.getTag().contains("agree-accept")
+                        if((cur_content.startsWith("yes")  || cur_content.startsWith("对")  || cur_content.startsWith("恩")  || cur_content.startsWith("好")  || cur_content.startsWith("是")  || cur_content.startsWith("没错"))
+                                && this.lengthCal(utt) < 2 && utt.getTag().contains("agree-accept")
                                 && pre_raw_content.contains("?") && prev_utt.getTag().toLowerCase().contains("information-request")){
                             found = true;
                             this.setRespTo(index, i, utt, "Long: cnd: CaseMatching_cur_utt: yes / I-R && ?");
                             break;
                         }
-
+                        
                         //m2w: code 38, haha and lol case , 3/28/11 1:56 PM
                         //put haha to 2nd of case matching. 4/18/11 1:01 PM
-                        if((cur_content.contains("hah") || cur_raw_content.contains("lol")) && utt.getTag().toLowerCase().contains("acknowledge") && (
+                        if((cur_content.contains("hah") || cur_raw_content.contains("lol") || cur_raw_content.contains("哈哈")) 
+                                
+                                && utt.getTag().toLowerCase().contains("acknowledge") && (
                                 //changed the lengthcal to > 3. 4/18/11 10:01 AM
-                                (pre_content.contains("hah")|| pre_content.contains("lol")) && this.lengthCal(prev_utt) >= 3)
+                                (pre_content.contains("hah")|| pre_content.contains("lol") || cur_raw_content.contains("哈哈")) 
+                                
+                                && this.lengthCal(prev_utt) >= 3)
                                 //added prev_utt length > 1. 4/18/11 11:21 AM
                                 && this.lengthCal(prev_utt) > 1
                                 ){
@@ -1037,7 +1090,8 @@ public class CommunicationLinkXChinese{
                         }
 
                         //m2w: sure and can you ? wanna ? case 4/18/11 1:41 PM
-                        if(cur_raw_content.equals("sure") && utt.getTag().equals("--Response-Answer")
+                        if((cur_raw_content.equals("sure") || cur_raw_content.equals("当然")  || cur_raw_content.equals("没问题")  )
+                                && utt.getTag().equals("--Response-Answer")
                                 && prev_utt.getTag().equals("Information-Request") && pre_raw_content.contains("?")
                                 ){
                                 found = true;
@@ -1051,7 +1105,10 @@ public class CommunicationLinkXChinese{
                                 || pre_content.contains("nt ")
                                 || pre_content.contains("id be")
                                 || pre_content.contains("i would be")
-                                )){
+                                )
+                                ||
+                                (cur_content.contains("也没") || cur_content.contains("也不"))
+                                ){
                                 found = true;
                                 this.setRespTo(index, i, utt, "Long: cnd: CaseMatching_cur_utt: too/neither");
                                 break;
@@ -1061,7 +1118,7 @@ public class CommunicationLinkXChinese{
                         //m2w: code 32, rhetorical question case. if in previous 3 utts contains “?” && “ don't dont isn't wasn't hasn't weren't” , FOUND! 3/22/11 3:50 PM
                         if((pre_raw_content.contains("?")) &&
                                         !(pre_content.contains("know ")) &&
-                                        (pre_content.contains("dont ")
+                                        ((pre_content.contains("dont ")
                                         || pre_content.contains("isnt ")
                                         || pre_content.contains("wasnt ")
                                         || pre_content.contains("hasnt ")
@@ -1069,7 +1126,13 @@ public class CommunicationLinkXChinese{
                                         || pre_content.contains("werent ")
                                         || pre_content.contains("didnt ")
                                         || pre_raw_content.contains("right?")
-                                        )){
+                                        ) || (
+                                            (pre_content.contains("不是吗"))
+                                            || (pre_content.contains("不") && pre_content.contains("吗"))
+                                            || (pre_content.contains("没有吗"))
+                                            || (pre_content.contains("没") && pre_content.contains("吗"))
+                                            || (pre_content.contains("不对吗"))
+                                ))){
                                 found = true;
                                 this.setRespTo(index, i, utt, "Long: cnd: CaseMatching_cur_utt: rhetorical question");
                                 break;
@@ -1077,10 +1140,12 @@ public class CommunicationLinkXChinese{
 
                         //m2w : code 35, wow case, wow about something, look for "i", 3/24/11 11:17 AM
 //                        if((cur_raw_content.contains("wow ") || cur_raw_content.contains(" wow") || cur_raw_content.equals("wow")) && (
-                        if(cur_raw_content.contains("wow") && (
+                        if((cur_raw_content.contains("wow") && (
                                 //m2w : added exclaimation mark! 4/18/11 9:53 AM
                                 (pre_raw_content.contains("i ") || pre_raw_content.contains("!"))
-                                )){
+                                )) 
+                                || cur_raw_content.contains("哇")
+                                ){
                                 found = true;
                                 this.setRespTo(index, i, utt, "Long: cnd: CaseMatching_cur_utt: wow");
                                 break;
@@ -1088,9 +1153,11 @@ public class CommunicationLinkXChinese{
                         }
 
                         //m2w : code 36, deny about something, look for don't. 3/24/11 11:17 AM
-                        if(((cur_raw_content.contains("nt") || cur_raw_content.contains("n't")) && cur_raw_content.contains("either")) ){
-
-                            if (pre_content.contains("dont")){
+                        if(((cur_raw_content.contains("nt") || cur_raw_content.contains("n't")) && cur_raw_content.contains("either"))
+                                ||  ((cur_raw_content.contains("没") || cur_raw_content.contains("不")|| cur_raw_content.contains("赞")|| cur_raw_content.contains("反对")
+                                ) && cur_raw_content.contains("也")) ){
+                            if (pre_content.contains("dont") || 
+                                    (cur_raw_content.contains("没") || cur_raw_content.contains("不")|| cur_raw_content.contains("赞")|| cur_raw_content.contains("反对"))){
                                 found = true;
                                 this.setRespTo(index, i, utt, "Long: cnd: CaseMatching_cur_utt: i dont either");
                                 break;
@@ -1105,8 +1172,12 @@ public class CommunicationLinkXChinese{
                                 || cur_raw_content.contains("'s okay")
                                 || cur_raw_content.contains("s ok")
                                 || cur_raw_content.contains("s okay")
-
-                                ) && (pre_content.contains("sorry")
+                                || cur_raw_content.contains("没事")
+                                || cur_raw_content.contains("没关系")
+                                
+                                ) && (pre_content.contains("sorry") 
+                                        || pre_content.contains("对不起") 
+                                        || pre_content.contains("不好意思") 
                                         )){
                                 found = true;
                                 this.setRespTo(index, i, utt, "Long: cnd: CaseMatching_cur_utt: it's ok");
@@ -1123,9 +1194,13 @@ public class CommunicationLinkXChinese{
 //                        4/16/11 4:01 PM
 
                         //m2w: code 311, exactly case, check its last utt, then perform skip judge and link to prev utts 4/1/11 3:10 PM
-                        if((cur_raw_content.toLowerCase().contains("exactly"))){
+                        if((cur_raw_content.toLowerCase().contains("exactly")) 
+                                || cur_raw_content.contains("没错") || cur_raw_content.contains("对") || cur_raw_content.contains("就是")
+                                ){
                             //checking last utt,
-                            if(pre_content.contains("exactly")  && prev_utt.getSysRespTo() != null){ // gai
+                            if((pre_content.contains("exactly") 
+                                    || cur_raw_content.contains("没错") || cur_raw_content.contains("对") || cur_raw_content.contains("就是")
+                                    ) && prev_utt.getSysRespTo() != null){ // gai
                                 found = true;
                                 String pre_SysRespTo = prev_utt.getSysRespTo();
                                 this.setRespToAs(index, pre_SysRespTo, utt, "Long: cnd: CaseMatching_cur_utt: exactly same prev utt");
@@ -1138,16 +1213,22 @@ public class CommunicationLinkXChinese{
                         }
 
                         //m2w: code 312, good point case. look for "?" and/or "why",4/3/11 11:38 AM
-                        if(cur_raw_content.toLowerCase().contains("good point") || cur_raw_content.toLowerCase().contains("good question")){
+                        if(cur_raw_content.toLowerCase().contains("good point") || cur_raw_content.toLowerCase().contains("good question")
+                                || cur_raw_content.contains("说的好")|| cur_raw_content.contains("问的好")|| cur_raw_content.contains("有道理")
+                                ){
                             //if previous utt also fits the case, then set to prev's link_to
-                            if(( pre_raw_content.contains("good point") || pre_raw_content.contains("good question") ) && prev_utt.getSysRespTo() != null){
+                            if(( pre_raw_content.contains("good point") || pre_raw_content.contains("good question")
+                                    || cur_raw_content.contains("说的好")|| cur_raw_content.contains("问的好")|| cur_raw_content.contains("有道理")
+                                    ) && prev_utt.getSysRespTo() != null){
                                 found = true;
                                 String pre_SysRespTo = prev_utt.getSysRespTo();
                                 this.setRespToAs(index, pre_SysRespTo, utt, "Long: cnd: CaseMatching_cur_utt: good point same prev utt");
                                 break;
                             }else{
                                 // if not , look for ? or why, then set.
-                                if(pre_content.contains("?") || pre_content.contains("why")){
+                                if(pre_content.contains("?") || pre_content.contains("why")
+                                        || pre_content.contains("为什么")|| pre_content.contains("怎么")
+                                        ){
                                     this.setRespTo(index, i, utt, "Long: cnd: CaseMatching_cur_utt: good point");
                                 }
                             }
@@ -1156,13 +1237,13 @@ public class CommunicationLinkXChinese{
 
 
                          //m2w : i agree can't be responsing to a question. 3/24/11 11:17 AM
-                        if(cur_content.contains("agree") && pre_raw_content.contains("?")){
-                                    continue;
-                                }
-                         //m2w : curr contains true, and previous shouldn't contains should or true, 3/24/11 11:17 AM
-                        if(cur_content.contains("true") && (pre_content.contains("should") || pre_content.contains("true"))){
-                                    continue;
-                                }
+//                        if(cur_content.contains("agree") && pre_raw_content.contains("?")){
+//                                    continue;
+//                                }
+//                         //m2w : curr contains true, and previous shouldn't contains should or true, 3/24/11 11:17 AM
+//                        if(cur_content.contains("true") && (pre_content.contains("should") || pre_content.contains("true"))){
+//                                    continue;
+//                                }
 
 
 
@@ -1176,54 +1257,57 @@ public class CommunicationLinkXChinese{
                         if(lengthCal(prev_utt) >= 3){
 
                             //m2w: guessing case
-                            if(pre_content.contains("might be")
-                                    || pre_content.contains("might have")
-                                    || pre_content.contains("could be")
-                                    || pre_content.contains("could have")
-                                    || pre_content.contains("may be")
-                                    || pre_content.contains("maybe")
-                                    || pre_content.contains("may have")
-                                    || pre_content.contains("perhaps")
+                            if(pre_content.contains("might be") || pre_content.contains("可能")
+                                    || pre_content.contains("might have") || pre_content.contains("也许")
+                                    || pre_content.contains("could be") || pre_content.contains("应该")
+                                    || pre_content.contains("could have")   || pre_content.contains("如果")
+                                    || pre_content.contains("may be")   || pre_content.contains("要是")
+                                    || pre_content.contains("maybe")    || pre_content.contains("像是")
+                                    || pre_content.contains("may have") || pre_content.contains("好像")
+                                    || pre_content.contains("perhaps")  || pre_content.contains("或许")
                                     || pre_content.contains("probably")
                                     || pre_content.contains("seems")
                                     || pre_content.contains("seem")
                                     || (pre_content.contains("either") && pre_content.contains("or"))
+                                    || (pre_content.contains("不是") && pre_content.contains("就是"))
+                                    
                                     ){
                                 found = true;
                                 this.setRespTo(index, i, utt, "Long: cnd: CaseMatching_prev_utt: guessing");
                                 break;
 
                                 //m2w: degree case
-                            }else if (pre_content.contains("really")
-                                    || pre_content.contains("definatly")
-                                    || pre_content.contains("especially")
-                                    || pre_content.contains("apparently")
-                                    || pre_content.contains("regardless")
-                                    || pre_content.contains("some how")
-                                    || pre_content.contains("somehow")
-                                    || pre_content.contains("most")
-                                    || pre_content.contains("at all")
-                                    || pre_content.contains("at least")
-                                    || pre_content.contains("as long as")
-                                    || pre_content.contains("only")
-                                    || pre_content.contains("best")
-                                    || pre_content.contains("worst")
-                                    || pre_content.contains("est ") // 4/5/11 12:00 PM
-                                    || pre_raw_content.contains("it's so ") || pre_raw_content.contains("its so ")
+                            }else if (pre_content.contains("really")            || pre_content.contains("真的")
+                                    || pre_content.contains("definatly")        || pre_content.contains("肯定")
+                                    || pre_content.contains("especially")       || pre_content.contains("特别是")
+                                    || pre_content.contains("apparently")       || pre_content.contains("明显")
+                                    || pre_content.contains("regardless")       || pre_content.contains("无论")
+                                    || pre_content.contains("some how")         || pre_content.contains("最多")
+                                    || pre_content.contains("somehow")          || pre_content.contains("全部")
+                                    || pre_content.contains("most")             || pre_content.contains("最少")
+                                    || pre_content.contains("at all")           || pre_content.contains("只要")
+                                    || pre_content.contains("at least")         || pre_content.contains("只有")
+                                    || pre_content.contains("as long as")       
+                                    || pre_content.contains("only")             
+                                    || pre_content.contains("best")             || pre_content.contains("最")
+                                    || pre_content.contains("worst")            
+                                    || pre_content.contains("est ") // 4/5/11 12:00 PM 
+                                    || pre_raw_content.contains("it's so ") || pre_raw_content.contains("its so ") || pre_content.contains("那么")
                                     || pre_raw_content.contains("that's so ") || pre_raw_content.contains("thats so ")
-                                    || pre_raw_content.contains("are so ") || pre_raw_content.contains("r so ")
+                                    || pre_raw_content.contains("are so ") || pre_raw_content.contains("r so ")                                    
                                     ){
                                 found = true;
                                 this.setRespTo(index, i, utt, "Long: cnd: CaseMatching_prev_utt: degree");
                                 break;
 
                                 //m2w: opinion case
-                            }else if ((pre_content.contains("i think")
+                            }else if ((pre_content.contains("i think")          || pre_content.contains("我想")    
                                     || pre_raw_content.contains("i'm thinking") || pre_raw_content.contains("im thinking")
-                                    || pre_content.contains("i was thinking")
-                                    || pre_content.contains("i believe")
-                                    || pre_content.contains("i guess")
-                                    || pre_content.contains("because")
+                                    || pre_content.contains("i was thinking")   || pre_content.contains("我在想")
+                                    || pre_content.contains("i believe")        || pre_content.contains("我相信")
+                                    || pre_content.contains("i guess")          || pre_content.contains("我猜")
+                                    || pre_content.contains("because")          || pre_content.contains("因为")
+                                    || (pre_content.contains("对") && pre_content.contains("？"))
                                     || pre_raw_content.endsWith("right?")) && (!pre_content.contains("why i think"))
                                     ){
                                 found = true;
@@ -1231,16 +1315,19 @@ public class CommunicationLinkXChinese{
                                 break;
 
                                 //m2w: order & propossal case
-                            }else if (pre_content.contains("how about")
-                                    || pre_content.contains("need to")
-                                    || pre_content.contains("should be")
+                            }else if (pre_content.contains("how about")         || pre_content.contains("要不")  || pre_content.contains("不如")|| pre_content.contains("不然")
+                                    || pre_content.contains("need to")          || pre_content.contains("必须") 
+                                    || pre_content.contains("should be")        || pre_content.contains("我得")  || pre_content.contains("他得") || pre_content.contains("她得") || pre_content.contains("你得") 
                                     || (pre_content.contains("should") && pre_raw_content.contains("?"))
-                                    || pre_content.contains("we can")
-                                    || pre_content.contains("you may")
-                                    || pre_content.contains("u may") // 4/5/11 12:02 PM
-                                    || pre_content.contains("you should") //4/5/11 12:02 PM
-                                    || pre_content.contains("u should") //4/5/11 12:02 PM
-                                    || pre_raw_content.contains("shouldn't")
+                                    || pre_content.contains("we can")           || pre_content.contains("我们能")  || pre_content.contains("我们可以")  
+                                    || pre_content.contains("you may")          || pre_content.contains("你能")  || pre_content.contains("你可以") 
+                                    // 4/5/11 12:02 PM
+                                    || pre_content.contains("u may") 
+                                    //4/5/11 12:02 PM
+                                    || pre_content.contains("you should")       || pre_content.contains("你应该")
+                                    //4/5/11 12:02 PM
+                                    || pre_content.contains("u should") 
+                                    || pre_raw_content.contains("shouldn't")    || pre_content.contains("你不应该")
                                     || pre_raw_content.contains("should've")
                                     || (pre_content.contains("would you") && pre_raw_content.contains("?"))
                                     || (pre_content.contains("could you") && pre_raw_content.contains("?"))
@@ -1251,12 +1338,13 @@ public class CommunicationLinkXChinese{
                                 break;
 
                                 //m2w: other case
-                            }else if (pre_content.contains("sometimes")
-                                    || pre_content.contains("somewhere")
-                                    || pre_content.contains("everyone")
-                                    || pre_content.contains("anything")
-                                    || pre_content.contains("that's why")
-                                    || pre_content.contains("anything can")
+                            }else if (pre_content.contains("sometimes")         || pre_content.contains("有时候")
+                                    || pre_content.contains("somewhere")        || pre_content.contains("有的地方")
+                                    || pre_content.contains("everyone")         || pre_content.contains("所有人") || pre_content.contains("大家")
+                                    || pre_content.contains("anything")         || pre_content.contains("任何事")|| pre_content.contains("所有事")
+                                    || pre_content.contains("that's why")       || pre_content.contains("这就是为什么")
+                                    || pre_content.contains("anything can")     
+                                                                                || pre_content.contains("不一定")
                                     || pre_raw_content.contains("it ") && pre_raw_content.contains(" depend")
                                     ){
                                 found = true;
@@ -1264,11 +1352,12 @@ public class CommunicationLinkXChinese{
                                 break;
 
                                 //m2w: prev_utt contains cnd key words, if there isn't any thing to match, check this then pass down
-                            }else if ((pre_content.contains("yes ")
+                           }else if ((pre_content.contains("yes ") 
                                     || (pre_content.contains("yea ") && !pre_content.contains("year"))
                                     || (pre_content.contains("true ") && !pre_content.contains("be true"))
                                     || pre_content.contains("agree ")
                                     || pre_content.contains("exactly ")
+                                    || pre_content.contains("是") || pre_content.contains("就是") || pre_content.contains("对") || pre_content.contains("好") || pre_content.contains("没错") || pre_content.contains("恩") 
                                     //excluded "because" put into opinion. 4/5/11 11:54 AM
                                     //edcluded prev_utt 's dialog act is agree-accept. 4/16/11 3:00 PM
                                     ) && !prev_utt.getTag().toLowerCase().contains("agree-accept")){
@@ -1320,16 +1409,16 @@ public class CommunicationLinkXChinese{
                                 continue;
                             }
 
-                            if((pre_content.contains("?")//last utt contains “?” AND “what who where when”
-                                                    &&(pre_content.contains("what ")
-                                                    || pre_content.contains("who ")
-                                                    || pre_content.contains("where ")
-                                                    || pre_content.contains("when ")
-                                                    || pre_content.contains("why ")
-                                                    || pre_content.contains("how "))
-                                                    )){
-                                continue;
-                            }
+//                            if((pre_content.contains("?")//last utt contains “?” AND “what who where when”
+//                                                    &&(pre_content.contains("what ")
+//                                                    || pre_content.contains("who ")
+//                                                    || pre_content.contains("where ")
+//                                                    || pre_content.contains("when ")
+//                                                    || pre_content.contains("why ")
+//                                                    || pre_content.contains("how "))
+//                                                    )){
+//                                continue;
+//                            }
 
                             if((lengthCal(prev_utt) < 5)//prev utts contains “true yea yes agree” and its length < 5
                                                     && (pre_content.contains("yea")
@@ -1338,6 +1427,7 @@ public class CommunicationLinkXChinese{
                                                     || pre_content.contains("agree ")
                                                     || pre_content.contains("exactly ")
                                                     || pre_content.contains("ok ")
+                                                    || pre_content.contains("是") || pre_content.contains("就是") || pre_content.contains("对") || pre_content.contains("好") || pre_content.contains("没错") || pre_content.contains("恩") 
                                                     )){
                                 continue;
                             }
@@ -1811,7 +1901,7 @@ public class CommunicationLinkXChinese{
         private int lengthCal(Utterance utt){
 
             String content = contentExtraction(utt);
-            int turn_length = ParseTools.wordCount(content);
+            int turn_length = ParseTools.wordCountChinese(content);
 
             return turn_length;
         }
