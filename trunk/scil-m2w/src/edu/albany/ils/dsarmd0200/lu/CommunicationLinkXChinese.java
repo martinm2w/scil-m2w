@@ -52,8 +52,10 @@ public class CommunicationLinkXChinese{
     private static final int LONG_LOOK_BACK = 3;
     private static final int SHORT_SIM_LOOK_BACK = 5;//m2w : for similarity 3/23/11 1:07 PM
     private static final int LONG_SIM_LOOK_BACK = 5;//m2w : for similarity 3/23/11 1:07 PM
+    //how many utts to look back from current utt, when doing sim words calculation.
     private static final int SHORT_WORD_SIM_LOOK_BACK = 3; //m2w : ADDED short and long, short was 3. 4/20/11 1:10 PM
     private static final int LONG_WORD_SIM_LOOK_BACK = 5; //m2w : was 3 , changed to 5. 4/20/11 1:10 PM
+    //do sim words calculation for words longer than SIM_LENGTH_CHECK
     private static final int LONG_WORD_SIM_LENGTH_CHECK = 6;//m2w : utt length for doing check words sim, (8), 4/20/11 10:23 AM
     private static final int SHORT_WORD_SIM_LENGTH_CHECK = 5;//M2W: added short and long for different checks. (5) 4/20/11 10:23 AM
     private static final double WORD_SIM_THRESHOLD = 0.7; // m2w : for word sim 4/16/11 3:10 PM
@@ -1483,51 +1485,56 @@ public class CommunicationLinkXChinese{
                     prev_utt = utts.get(index-i);
                     String pre_content = contentExtraction(prev_utt);
                     if(!prev_utt.getSpeaker().toLowerCase().equals(curr_speaker)){
-//                        convert the 2 utts' contents into arrays, check if they have the same word
-//                        ArrayList<String> tempCurrUtt = new ArrayList(Arrays.asList(cur_content.split(" ", -1)));
-//                        ArrayList<String> tempPrevUtt = new ArrayList(Arrays.asList(pre_content.split(" ", -1)));
-                        //changed to uttToWds method in Util. 4/20/11 2:53 PM
-                        ArrayList<String> tempCurrUtt = Util.uttToWds(cur_content);
-                        ArrayList<String> tempPrevUtt = Util.uttToWds(pre_content);
+                    //convert the 2 utts' contents into arrays, check if they have the same word
+                        
+                        //changed to uttToWdsChinese 8/9/11 2:37 PM
+                        //1. get the arraylist-of-arraylist of strings. (each word as an entry, chinese at index0, english at index1)
+                        //2. if the curr list and prev list != empty.
+                        //3. if chinese is not empty, do chinese first. find identical words.
+                        //4. if english is not empty , do english, find similar words.
+                        List tempCurrUtt = Util.uttToWdsChinese(cur_content);
+                        List tempPrevUtt = Util.uttToWdsChinese(pre_content);
+                        
+                        System.out.println("current utt: " + tempCurrUtt);
 
                         int swHit = 0;
-                        for(int x = 0; x < tempCurrUtt.size(); x++){//index utt loop
-                            for(int y = 0; y < tempPrevUtt.size(); y++){//pre utt loop
-                                //both prev and curr longer than 6, will do the check or else do nothing.
-                                //threshold is now set to 5. 4/16/11 3:16 PM
-                                if(tempCurrUtt.get(x).length() > sim_thresh && tempPrevUtt.get(y).length() > sim_thresh - 2 ){//now set to 5 and 3 4/16/11 3:31 PM
-                                    String tempCurrWord = tempCurrUtt.get(x);
-                                    String tempPrevWord = tempPrevUtt.get(y);
-                                    ArrayList<Character> tempCurrWordList = new ArrayList<Character>();
-                                    ArrayList<Character> tempPrevWordList = new ArrayList<Character>();
-                                    
-                                    for(char value: tempCurrWord.toCharArray()){
-                                        tempCurrWordList.add(value);
-                                    }                                    
-                                    for(char value: tempPrevWord.toCharArray()){
-                                        tempPrevWordList.add(value);
-                                    }
-                                    
-                                    int charHit = 0;
-                                    //loop through the smaller one of the 2 wordlist
-                                    for(int m = 0; m < Math.min(tempCurrWordList.size(), tempPrevWordList.size()); m++){
-                                            Character tempCurrChar = tempCurrWordList.get(m);
-                                            Character tempPrevChar = tempPrevWordList.get(m);
-                                            if(tempCurrChar.equals(tempPrevChar)){
-                                                charHit++;
-                                            }//ends if char same
-                                    }//ends word list for loop
-                                    //calculate the similarity of 2 words.
-//                                    Double wordSim = (double)charHit / (double)tempCurrWordList.size();
-                                    //m2w: changed to min of the 2. 4/20/11 11:03 AM
-                                    Double wordSim = (double)charHit / (double)Math.min(tempCurrWordList.size(), tempPrevWordList.size());
-                                    if(wordSim >= WORD_SIM_THRESHOLD){
-                                        //is now set to 0.7 . 4/16/11 3:16 PM
-                                        swHit++;
-                                    }
-                                }// ends if curr and prev word longer than 6 chars
-                            }//ends prev utt for loop
-                        }//ends curr utt for loop
+//                        for(int x = 0; x < tempCurrUtt.size(); x++){//index utt loop
+//                            for(int y = 0; y < tempPrevUtt.size(); y++){//pre utt loop
+//                                //both prev and curr longer than 6, will do the check or else do nothing.
+//                                //threshold is now set to 5. 4/16/11 3:16 PM
+//                                if(tempCurrUtt.get(x).length() > sim_thresh && tempPrevUtt.get(y).length() > sim_thresh - 2 ){//now set to 5 and 3 4/16/11 3:31 PM
+//                                    String tempCurrWord = tempCurrUtt.get(x);
+//                                    String tempPrevWord = tempPrevUtt.get(y);
+//                                    ArrayList<Character> tempCurrWordList = new ArrayList<Character>();
+//                                    ArrayList<Character> tempPrevWordList = new ArrayList<Character>();
+//                                    
+//                                    for(char value: tempCurrWord.toCharArray()){
+//                                        tempCurrWordList.add(value);
+//                                    }                                    
+//                                    for(char value: tempPrevWord.toCharArray()){
+//                                        tempPrevWordList.add(value);
+//                                    }
+//                                    
+//                                    int charHit = 0;
+//                                    //loop through the smaller one of the 2 wordlist
+//                                    for(int m = 0; m < Math.min(tempCurrWordList.size(), tempPrevWordList.size()); m++){
+//                                            Character tempCurrChar = tempCurrWordList.get(m);
+//                                            Character tempPrevChar = tempPrevWordList.get(m);
+//                                            if(tempCurrChar.equals(tempPrevChar)){
+//                                                charHit++;
+//                                            }//ends if char same
+//                                    }//ends word list for loop
+//                                    //calculate the similarity of 2 words.
+////                                    Double wordSim = (double)charHit / (double)tempCurrWordList.size();
+//                                    //m2w: changed to min of the 2. 4/20/11 11:03 AM
+//                                    Double wordSim = (double)charHit / (double)Math.min(tempCurrWordList.size(), tempPrevWordList.size());
+//                                    if(wordSim >= WORD_SIM_THRESHOLD){
+//                                        //is now set to 0.7 . 4/16/11 3:16 PM
+//                                        swHit++;
+//                                    }
+//                                }// ends if curr and prev word longer than 6 chars
+//                            }//ends prev utt for loop
+//                        }//ends curr utt for loop
 
                         //excluded prev_utt com_act_type is response-to. 4/16/11 3:30 PM
                         if(swHit > 0 && !prev_utt.getCommActType().toLowerCase().contains("response-to")){
@@ -1607,57 +1614,7 @@ public class CommunicationLinkXChinese{
             return found;
         }//ends method
 
-        /**
-         * m2w : changed the compare utt which was compare by exact word match to synonym.
-         * @param index
-         * @param curThreshold
-         * @param found
-         * @param which_case
-         * @return found
-         * @last 4/10/11 12:51 PM
-         */
-//        private boolean calUttSimBySynon(int index, int lookBackTresh, double simTresh,  boolean found, String which_case){
-//
-//            TreeMap<Double,Integer> sims = new TreeMap<Double,Integer>(); //m2w : for similarity calculation 3/23/11 10:04 AM
-//            int res_to = 0;
-////            boolean found_ = found;
-//            String cur_content = contentExtraction(utts.get(index));
-//            Utterance utt = utts.get(index);
-//            String curr_speaker = utts.get(index).getSpeaker().toLowerCase();
-////            Wordnet wn = new Wordnet();
-//            
-//            for (int i = 0; i < lookBackTresh; i++){
-//                if(index >= i){
-//                    Utterance prev_utt = utts.get(index-i);
-//                    if(!prev_utt.getSpeaker().toLowerCase().equals(curr_speaker)){
-//                        String pre_content = contentExtraction(prev_utt);
-//                        double sim = CommunicationLinkX.compareUttsBySynon(cur_content, pre_content);// change this line 4/10/11 12:24 PM creating new comparebysynon method in this class
-//                        System.err.println(">cur: " + cur_content);
-//                        System.err.println(">pre: " + pre_content);
-//                        System.err.println(sim);
-//                        int pre_turn_no = (Integer.parseInt(utts.get(index).getTurn()))-i;
-//                        sims.put(sim, pre_turn_no);
-//                    }else{ // if same speaker
-//                        continue;
-//                    }//ends if same speaker
-//                }//ends if index >= i
-//            }//ends for loop
-//
-//            if(sims.size() > 0){
-//                // get the highest similarity value
-//                double best_sim = sims.keySet().iterator().next();
-//                System.err.println(">best: " + best_sim);
-//                //set the target to the utterance of its sim value over threshold
-//                if(best_sim > simTresh){
-//
-//                    found = true;
-//                    res_to = sims.get(best_sim);
-//                    this.setRespTo(index, res_to, utt, which_case);
-//                }
-//
-//            }
-//            return found;
-//        }//ends method
+
 
         /**
          * m2w: compare 2 utt contents by checking how many synonyms there are in the 2 utts.
@@ -2026,6 +1983,21 @@ public class CommunicationLinkXChinese{
             }
 	}
 
+        private boolean isChineseStr(String s){
+            boolean is = true;
+            if(s != null && s.length() != 0){
+                for(int i=0; i<s.length(); i++){
+                    Character c = s.charAt(i);
+                    String temp = c.toString();
+                    if (!temp.matches("[\\u4E00-\\u9FA5]")){
+                        is = false;
+                    }
+                }
+            }
+            
+            return is;
+        }
+        
 //      ========================================testing methods===========================================
 
         /**
@@ -2269,8 +2241,72 @@ public class CommunicationLinkXChinese{
 //            return found;
 //        }//ends method
     
+        /**
+         * m2w : changed the compare utt which was compare by exact word match to synonym.
+         * @param index
+         * @param curThreshold
+         * @param found
+         * @param which_case
+         * @return found
+         * @last 4/10/11 12:51 PM
+         */
+//        private boolean calUttSimBySynon(int index, int lookBackTresh, double simTresh,  boolean found, String which_case){
+//
+//            TreeMap<Double,Integer> sims = new TreeMap<Double,Integer>(); //m2w : for similarity calculation 3/23/11 10:04 AM
+//            int res_to = 0;
+////            boolean found_ = found;
+//            String cur_content = contentExtraction(utts.get(index));
+//            Utterance utt = utts.get(index);
+//            String curr_speaker = utts.get(index).getSpeaker().toLowerCase();
+////            Wordnet wn = new Wordnet();
+//            
+//            for (int i = 0; i < lookBackTresh; i++){
+//                if(index >= i){
+//                    Utterance prev_utt = utts.get(index-i);
+//                    if(!prev_utt.getSpeaker().toLowerCase().equals(curr_speaker)){
+//                        String pre_content = contentExtraction(prev_utt);
+//                        double sim = CommunicationLinkX.compareUttsBySynon(cur_content, pre_content);// change this line 4/10/11 12:24 PM creating new comparebysynon method in this class
+//                        System.err.println(">cur: " + cur_content);
+//                        System.err.println(">pre: " + pre_content);
+//                        System.err.println(sim);
+//                        int pre_turn_no = (Integer.parseInt(utts.get(index).getTurn()))-i;
+//                        sims.put(sim, pre_turn_no);
+//                    }else{ // if same speaker
+//                        continue;
+//                    }//ends if same speaker
+//                }//ends if index >= i
+//            }//ends for loop
+//
+//            if(sims.size() > 0){
+//                // get the highest similarity value
+//                double best_sim = sims.keySet().iterator().next();
+//                System.err.println(">best: " + best_sim);
+//                //set the target to the utterance of its sim value over threshold
+//                if(best_sim > simTresh){
+//
+//                    found = true;
+//                    res_to = sims.get(best_sim);
+//                    this.setRespTo(index, res_to, utt, which_case);
+//                }
+//
+//            }
+//            return found;
+//        }//ends method
+
+
+
+
+
+
+
     /*
      * m2w : commented all old methods for backup, copied some useful ones for editing. 3/20/11 3:25 PM
      */
     
+
+
+
+
+
+
     // ===========================================old methods=======================================

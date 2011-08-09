@@ -300,6 +300,53 @@ public class Util {
 	    }
 	return wordArray;
     }
+    
+    /**
+     * m2w: parsing Chinese string into ArrayList<String>, English too. each word as an entry.
+     * @param the utterance
+     * @return the array of the utterance, chinese comes first, enlish and the end of the chinese.
+     * @date 8/9/11 2:37 PM
+     */
+    public static ArrayList<ArrayList<String>> uttToWdsChinese(String utt){
+        ArrayList<ArrayList<String>> wordArray = new ArrayList<ArrayList<String>>();
+        ArrayList<String> CNwordArray = new ArrayList<String>();
+        ArrayList<String> ENwordArray = new ArrayList<String>();
+        StringBuilder chineseSubString = new StringBuilder();
+        StringBuilder englishSubString = new StringBuilder();
+        
+        if(utt != null && utt.length() != 0){
+            //1.parsing, separate utt into English and Chinese sub-strings;
+            for(int i = 0; i < utt.length(); i++){
+                Character a = utt.charAt(i);
+                String temp = a.toString();
+                if (temp.matches("[\\u4E00-\\u9FA5]")){
+                    chineseSubString.append(temp);
+                }else{
+                    englishSubString.append(temp);
+                }
+            }
+            
+//            System.out.println(chineseSubString + "+" + englishSubString);
+            
+            //2.adding both sub-strings into word array.
+            //chinese
+            for(int i=0; i<chineseSubString.length(); i++){
+                Character a = chineseSubString.charAt(i);
+                CNwordArray.add(a.toString());
+            }
+            //english after chinese.
+            StringTokenizer st = new StringTokenizer(englishSubString.toString());
+            while(st.hasMoreTokens()){
+                String word = st.nextToken().toLowerCase();
+                if(!wordArray.contains(word) && !sws_.isStopWord(word)) {
+                        ENwordArray.add(word);
+                    }
+            }
+            if(!CNwordArray.isEmpty()){ wordArray.add(CNwordArray);}
+            if(!ENwordArray.isEmpty()){ wordArray.add(ENwordArray);}
+        }//close outter if.
+        return wordArray;
+    }
 
     public static double compareUtts(String utt1, String utt2) {
 	ArrayList<String> utt1_wds = uttToWds(utt1);
