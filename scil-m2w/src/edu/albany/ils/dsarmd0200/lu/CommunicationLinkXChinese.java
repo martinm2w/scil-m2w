@@ -273,7 +273,7 @@ public class CommunicationLinkXChinese{
                     LONG_UTT_CND_STATICS++;
                 }
                 if(!found){
-                    found = this.calUttSimilarity(index, LONG_UTT_SIM_LOOK_BACK, found, "Long: utt sim in longUtterance");
+//                    found = this.calUttSimilarity(index, LONG_UTT_SIM_LOOK_BACK, found, "Long: utt sim in longUtterance");
                 }
                 //m2w : find name maybe after the calsim 4/9/11 10:41 PM
                 //m2w: check if there is same speaker which is appeared in curr utt. 4/12/11 9:03 AM
@@ -1456,11 +1456,12 @@ public class CommunicationLinkXChinese{
 
 //    ===============================================common util=============================================
          /**
-         * m2w : check the short utt if has 2 words of high similarity(length > 6 ) as the previous utt, if does, link to it.
+         * m2w : this method is used in short utts, to check to see if previous utt has same 2 consecutive words as the current one. 
+         *          english part is done by calculating the similarity of words(same long word or misspelling), 
          * @param index
          * @param found
          * @return found
-         * @last 4/10/11 8:44 AM
+         * @date 8/10/11 2:43 PM 
          */
         private boolean checkWordSimilarity(int index, boolean found, String which_case){
 
@@ -1476,9 +1477,11 @@ public class CommunicationLinkXChinese{
             Utterance utt = utts.get(index);
             String curr_speaker = utts.get(index).getSpeaker().toLowerCase();
             String cur_content = contentExtraction(utt);
+//            System.out.println("curr content: " + cur_content);
             int where_to = 0;
             boolean isFound = false;
             //m2w : look back ,loop through several utts, now set to 3, 3/28/11 1:19 PM
+            outterFor:
             for(int i = 1; i<=sim_look_back; i++){
                 Utterance prev_utt = null;
                 if(index >= i){
@@ -1490,60 +1493,92 @@ public class CommunicationLinkXChinese{
                         //changed to uttToWdsChinese 8/9/11 2:37 PM
                         //1. get the arraylist-of-arraylist of strings. (each word as an entry, chinese at index0, english at index1)
                         //2. if the curr list and prev list != empty.
-                        //3. if chinese is not empty, do chinese first. find identical words.
-                        //4. if english is not empty , do english, find similar words.
-                        List tempCurrUtt = Util.uttToWdsChinese(cur_content);
-                        List tempPrevUtt = Util.uttToWdsChinese(pre_content);
+                        //3. get list from map, check isempty before do.
+                        //4. if English !isEmpty(), do chinese first. find identical words. 
+                        //5. if Chinese !isEmpty(), do english, find similar words.
+                        HashMap<String, ArrayList<String>> tempCurrUttMap = Util.uttToWdsChinese(cur_content);
+                        HashMap<String, ArrayList<String>> tempPrevUttMap = Util.uttToWdsChinese(pre_content);
                         
-                        System.out.println("current utt: " + tempCurrUtt);
+//                        System.out.println("current utt: " + tempCurrUttMap);
+//                        System.out.println("prerent utt: " + tempPrevUttMap);
+                        //2.
+                        if(!tempCurrUttMap.isEmpty() && !tempPrevUttMap.isEmpty()){
+                            //3.
+//                            System.out.println("in----------------------------------------------------");
+                            ArrayList<String> tempCurrCNList = tempCurrUttMap.get("CN");
+                            ArrayList<String> tempCurrENList = tempCurrUttMap.get("EN");
+                            ArrayList<String> tempPrevCNList = tempCurrUttMap.get("CN");
+                            ArrayList<String> tempPrevENList = tempCurrUttMap.get("EN");
+                            
+                            //4.
+                            if(tempCurrENList != null && !tempCurrENList.isEmpty()
+                                    && tempPrevENList != null && !tempPrevENList.isEmpty()){
+                                int swHit = 0;
+                                for(int x = 0; x < tempCurrENList.size(); x++){//index utt loop
+                                    for(int y = 0; y < tempPrevENList.size(); y++){//pre utt loop
+                                        //both prev and curr longer than 6, will do the check or else do nothing.
+                                        //threshold is now set to 5. 4/16/11 3:16 PM
+                                        if(tempCurrENList.get(x).length() > sim_thresh && tempPrevENList.get(y).length() > sim_thresh - 2 ){//now set to 5 and 3 4/16/11 3:31 PM
+                                            String tempCurrWord = tempCurrENList.get(x);
+                                            String tempPrevWord = tempCurrENList.get(y);
+                                            ArrayList<Character> tempCurrWordList = new ArrayList<Character>();
+                                            ArrayList<Character> tempPrevWordList = new ArrayList<Character>();
+                                            
+                                            for(char value: tempCurrWord.toCharArray()){
+                                                tempCurrWordList.add(value);
+                                            }                                    
+                                            for(char value: tempPrevWord.toCharArray()){
+                                                tempPrevWordList.add(value);
+                                            }
+                                            
+                                            int charHit = 0;
+                                            //loop through the smaller one of the 2 wordlist
+                                            for(int m = 0; m < Math.min(tempCurrWordList.size(), tempPrevWordList.size()); m++){
+                                                    Character tempCurrChar = tempCurrWordList.get(m);
+                                                    Character tempPrevChar = tempPrevWordList.get(m);
+                                                    if(tempCurrChar.equals(tempPrevChar)){
+                                                        charHit++;
+                                                    }//ends if char same
+                                            }//ends word list for loop
+                                            //calculate the similarity of 2 words.
+        //                                    Double wordSim = (double)charHit / (double)tempCurrWordList.size();
+                                            //m2w: changed to min of the 2. 4/20/11 11:03 AM
+                                            Double wordSim = (double)charHit / (double)Math.min(tempCurrWordList.size(), tempPrevWordList.size());
+                                            if(wordSim >= WORD_SIM_THRESHOLD){
+                                                //is now set to 0.7 . 4/16/11 3:16 PM
+                                                swHit++;
+                                            }
+                                        }// ends if curr and prev word longer than 6 chars
+                                    }//ends prev utt for loop
+                                }//ends curr utt for loop
 
-                        int swHit = 0;
-//                        for(int x = 0; x < tempCurrUtt.size(); x++){//index utt loop
-//                            for(int y = 0; y < tempPrevUtt.size(); y++){//pre utt loop
-//                                //both prev and curr longer than 6, will do the check or else do nothing.
-//                                //threshold is now set to 5. 4/16/11 3:16 PM
-//                                if(tempCurrUtt.get(x).length() > sim_thresh && tempPrevUtt.get(y).length() > sim_thresh - 2 ){//now set to 5 and 3 4/16/11 3:31 PM
-//                                    String tempCurrWord = tempCurrUtt.get(x);
-//                                    String tempPrevWord = tempPrevUtt.get(y);
-//                                    ArrayList<Character> tempCurrWordList = new ArrayList<Character>();
-//                                    ArrayList<Character> tempPrevWordList = new ArrayList<Character>();
-//                                    
-//                                    for(char value: tempCurrWord.toCharArray()){
-//                                        tempCurrWordList.add(value);
-//                                    }                                    
-//                                    for(char value: tempPrevWord.toCharArray()){
-//                                        tempPrevWordList.add(value);
-//                                    }
-//                                    
-//                                    int charHit = 0;
-//                                    //loop through the smaller one of the 2 wordlist
-//                                    for(int m = 0; m < Math.min(tempCurrWordList.size(), tempPrevWordList.size()); m++){
-//                                            Character tempCurrChar = tempCurrWordList.get(m);
-//                                            Character tempPrevChar = tempPrevWordList.get(m);
-//                                            if(tempCurrChar.equals(tempPrevChar)){
-//                                                charHit++;
-//                                            }//ends if char same
-//                                    }//ends word list for loop
-//                                    //calculate the similarity of 2 words.
-////                                    Double wordSim = (double)charHit / (double)tempCurrWordList.size();
-//                                    //m2w: changed to min of the 2. 4/20/11 11:03 AM
-//                                    Double wordSim = (double)charHit / (double)Math.min(tempCurrWordList.size(), tempPrevWordList.size());
-//                                    if(wordSim >= WORD_SIM_THRESHOLD){
-//                                        //is now set to 0.7 . 4/16/11 3:16 PM
-//                                        swHit++;
-//                                    }
-//                                }// ends if curr and prev word longer than 6 chars
-//                            }//ends prev utt for loop
-//                        }//ends curr utt for loop
-
-                        //excluded prev_utt com_act_type is response-to. 4/16/11 3:30 PM
-                        if(swHit > 0 && !prev_utt.getCommActType().toLowerCase().contains("response-to")){
-//                            found = true;
-//                            this.setRespTo(index, i, utt, which_case);
-//                            break;
-                            isFound = true;
-                            where_to = i;
-                        }//ends if hit > 0;
+                                //excluded prev_utt com_act_type is response-to. 4/16/11 3:30 PM
+                                if(swHit > 0 && !prev_utt.getCommActType().toLowerCase().contains("response-to")){
+                                    isFound = true;
+                                    where_to = i;
+                                }//ends if hit > 0;
+                                
+                            }//closes 4. if english not empty
+                            
+                            //5.
+                            if(isFound != true && tempCurrCNList != null && tempCurrCNList.size() > 1 //2 consecutive words, 8/10/11 2:46 PM
+                                    && pre_content != null){
+                                //using 2 consecutive words as searching criteria, parse through the current list and previous list.
+                                for(int curIndex=1; curIndex<tempCurrCNList.size(); curIndex++){
+                                    String tempCurSubStr = tempCurrCNList.get(curIndex) + tempCurrCNList.get(curIndex - 1);
+//                                    System.out.println("tempCurrSubStr: " + tempCurSubStr);
+                                    
+                                    //if prev utt contains curr sub string.
+                                    if(pre_content.contains(tempCurSubStr)){
+                                        isFound = true;
+                                        where_to = i;
+                                        //want to find the most previous one so don't break.
+    //                                    break outterFor;
+                                    }//close if conatins curr sub string
+                                }//closes CN for loop.
+                            }//closes 5. CN
+                            
+                        }//closes check if CN & EN list is empty
                     }//ends same name check
                 }//ends if index > i
             }//ends look back for loop
