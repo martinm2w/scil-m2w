@@ -307,8 +307,8 @@ public class Util {
      * @return the array of the utterance, chinese comes first, enlish and the end of the chinese.
      * @date 8/9/11 2:37 PM
      */
-    public static ArrayList<ArrayList<String>> uttToWdsChinese(String utt){
-        ArrayList<ArrayList<String>> wordArray = new ArrayList<ArrayList<String>>();
+    public static HashMap<String, ArrayList<String>> uttToWdsChinese(String utt){
+        HashMap<String, ArrayList<String>> wordMap = new HashMap<String, ArrayList<String>>();
         ArrayList<String> CNwordArray = new ArrayList<String>();
         ArrayList<String> ENwordArray = new ArrayList<String>();
         StringBuilder chineseSubString = new StringBuilder();
@@ -338,14 +338,14 @@ public class Util {
             StringTokenizer st = new StringTokenizer(englishSubString.toString());
             while(st.hasMoreTokens()){
                 String word = st.nextToken().toLowerCase();
-                if(!wordArray.contains(word) && !sws_.isStopWord(word)) {
+                if(!sws_.isStopWord(word)) {
                         ENwordArray.add(word);
                     }
             }
-            if(!CNwordArray.isEmpty()){ wordArray.add(CNwordArray);}
-            if(!ENwordArray.isEmpty()){ wordArray.add(ENwordArray);}
+            if(!CNwordArray.isEmpty()){ wordMap.put("CN", CNwordArray);}
+            if(!ENwordArray.isEmpty()){ wordMap.put("EN", ENwordArray);}
         }//close outter if.
-        return wordArray;
+        return wordMap;
     }
 
     public static double compareUtts(String utt1, String utt2) {
