@@ -31,9 +31,9 @@ public class CommunicationLinkXChinese{
     private static final String ADDRESSED_TO="addressed-to";
     private static final String RESPONSE_TO="response-to";
     private static final int COMM_THRESHOLD = 10;
-    private static final int SHORT_THRESHOLD = 5;	// for short turn lengths < 5
-    private static final int LONG_THRESHOLD = 4;	// for long turn lengths
-    private static final double SIM_THRESHOLD = 0.3;	// for similarity
+    private static final int SHORT_THRESHOLD = 6;          // threshold < this threshold is considered short, else long
+    private static final int LONG_THRESHOLD = 4;            // for long turn lengths
+    private static final double SIM_THRESHOLD = 0.3;        // for similarity
     private static final int SHORT_THRESHOLD_QUESTION = 3;
     private static final int LONG_THRESHOLD_QUESTION = 3;
     private static final int NOUN_SIM = 5; //m2w: the look back threshold , 5 turns now. 3/21/11 2:15 PM
@@ -81,7 +81,7 @@ public class CommunicationLinkXChinese{
     private boolean doHitReport = true;
     private boolean doMissReport = true;
     private boolean doFinalReport = true; // whether print out the final report at the end of each file or not. 4/27/11 12:40 PM
-    private boolean doGenReport = false; // whether print out the evaluation(miss and hit) or not. 4/27/11 12:40 PM
+    private boolean doGenReport = true; // whether print out the evaluation(miss and hit) or not. 4/27/11 12:40 PM
 
     //added 7/27/11 12:47 PM
     private boolean isEnglish_ = false;
@@ -249,7 +249,7 @@ public class CommunicationLinkXChinese{
          * m2w : modified xin's method. This function deals with utterance length over 5
          * @param index
          */
-        private void longUtterance(int index){
+        private void longUtterance(int index)  {
                 boolean found = false;
                 Utterance utt = utts.get(index);
 //    		String cur_content = contentExtraction(utts.get(index));
@@ -258,15 +258,6 @@ public class CommunicationLinkXChinese{
     //		TreeMap<Double,Integer> sims = new TreeMap<Double,Integer>();
                 ArrayList<Integer> pre_utt_turn = new ArrayList<Integer>();
 
-                // code 21 finding name
-//                if(findName(utt))
-//                {
-//                        map.put(Integer.parseInt(utt.getTurn()), (utts.get(Integer.parseInt(getNameUtt().getTurn())-1)).getSpeaker() + ":" + Integer.parseInt(getNameUtt().getTurn()));
-//                        String sysRespTo = (utts.get(Integer.parseInt(getNameUtt().getTurn())-1)).getSpeaker() + ":" + Integer.parseInt(getNameUtt().getTurn());
-//                        evaluate(index,Integer.parseInt(getNameUtt().getTurn()),"Long: Find Name");
-//                        utt.setRespTo(sysRespTo);
-//                        found = true;
-//                }
 //                m2w: 4/9/11 11:06 PM
                 if(!found && judgingCnDLong(cur_raw_content, utt)){
                     found = calCnDLong(index,found);
@@ -326,39 +317,6 @@ public class CommunicationLinkXChinese{
 //                                pre_utt_turn.add(Integer.parseInt(utts.get(index).getTurn())-(LONG_THRESHOLD + 1));
                 }
 
-                // find identical nouns, code 24
-//                if(!found)
-//                {
-//                        for(int i=1; i<=NOUN_SIM; i++)
-//                        {
-//                                if(index >= i)
-//                                {
-//                                        Utterance curr_utt = utts.get(index);
-////                                        String cur_raw_content = curr_utt.getContent();
-//                                        Utterance utterance = utts.get(index-i);
-//                                        ArrayList<String> curr_nouns = getNouns(cur_raw_content);
-//                                        if(!utterance.getSpeaker().toLowerCase().equals(curr_speaker))
-//                                        {
-//                                                int pre_turn_number = (Integer.parseInt(utts.get(index).getTurn()))-i;
-//                                                String pre_content = utterance.getContent();
-//                                                ArrayList<String> pre_nouns = getNouns(pre_content);
-//                                                // identical noun found
-//                                                if(nounMatch(curr_nouns,pre_nouns))
-//                                                {
-//                                                    //System.out.println("curr_nouns: " + curr_nouns.toString());
-//                                                    //System.out.println("pre_nouns: " + pre_nouns.toString());
-//                                                        found = true;
-//                                                        String sysRespTo = (utts.get(pre_turn_number-1).getSpeaker() + ":" + pre_turn_number);
-//                                                        evaluate(index,pre_turn_number,"Long: Identical Noun");
-//                                                        utt.setRespTo(sysRespTo);
-////                                                        map.put(Integer.parseInt(utt.getTurn()), (utts.get(pre_turn_number-1).getSpeaker() + ":" + pre_turn_number));
-//                                                        break;
-//                                                }
-//                                        }
-//                                }
-//                        }
-//                }
-                
                 // default to previous one, code 23
                 // m2w : added index > 0 for index = 0 ; 4/21/11 9:20 AM
                 if(!found && index > 0){
@@ -1603,12 +1561,8 @@ public class CommunicationLinkXChinese{
          * @last 3/23/11 10:45 AM - 4/1/11 1:57 PM
          */
         private boolean calUttSimilarity(int index, int curThreshold,  boolean found, String which_case){
-
-            
-
             TreeMap<Double,Integer> sims = new TreeMap<Double,Integer>(); //m2w : for similarity calculation 3/23/11 10:04 AM
             int res_to = 0;
-//            boolean found_ = found;
             String cur_content = contentExtraction(utts.get(index));
             Utterance utt = utts.get(index);
             String curr_speaker = utts.get(index).getSpeaker().toLowerCase();
@@ -1620,8 +1574,9 @@ public class CommunicationLinkXChinese{
 //                    if(!this.sameSpkerJudge(index, i)){
                     if(!utterance.getSpeaker().toLowerCase().equals(curr_speaker)){
                             String pre_content = contentExtraction(utterance);
-                            double sim = Util.compareUtts(pre_content, cur_content);
+                            double sim = Util.compareUttsChinese(pre_content, cur_content);
                             int pre_turn_no = (Integer.parseInt(utts.get(index).getTurn()))-i;
+//                            System.out.println("pre: " + pre_content + " : " + pre_turn_no + " : " + sim);
                             sims.put(sim, pre_turn_no);
                         }else{ // if same speaker
                             continue;
@@ -1631,20 +1586,18 @@ public class CommunicationLinkXChinese{
             
             if(sims.size() > 0){
                 // get the highest similarity value
-                double best_sim = sims.keySet().iterator().next();
+//                sims.
+                double best_sim = sims.lastKey();
 //                System.out.println("best_sim: " + best_sim);
 //              set the target to the utterance of its sim value over threshold
                 if(best_sim > SIM_THRESHOLD){
-//                    evaluate(index,sims.get(best_sim),41);
                     found = true;
                     res_to = sims.get(best_sim);
-//                    map.put(Integer.parseInt(utt.getTurn()), (utts.get(Integer.parseInt(utts.get(index).getTurn())-(res_to+1))).getSpeaker() + ":" + (Integer.parseInt(utts.get(index).getTurn())-res_to));
-//                    String sysRespTo = (utts.get(Integer.parseInt(utts.get(index).getTurn())-(res_to+1))).getSpeaker() + ":" + (Integer.parseInt(utts.get(index).getTurn())-res_to);
-//                    evaluate(index,res_to,41);
-//                    utt.setRespTo(sysRespTo);
+//                    System.out.println("to?"+res_to);
+                    res_to = index - res_to +1;
+//                    System.out.println("before set: " + index + " | " + res_to + " " );
                     this.setRespTo(index, res_to, utt, which_case);
                 }
-
             }
             return found;
         }//ends method
@@ -1918,7 +1871,8 @@ public class CommunicationLinkXChinese{
          * @param sysTurnNo
          * @param code
          */
-        private void evaluate(int curr_index, int sysTurnNo, String which_case){
+        private void evaluate(int curr_index, int sys_turn, String which_case){
+//                System.out.println("in eval" + curr_index + "|" + sys_turn);
 		String curr_turn_no = utts.get(curr_index).getTurn();
 		String link_to = utts.get(curr_index).getRespTo();
 		if(link_to.indexOf(":")!=-1){
@@ -1929,10 +1883,11 @@ public class CommunicationLinkXChinese{
 			}else{
 				anno_turn = Integer.parseInt(lkto[1]);
 			}
-			if(sysTurnNo == anno_turn){
+//                        if(anno_turn - sysTurnNo > 50) System.out.println("error is here"); 
+			if(sys_turn == anno_turn){
 				hit++;
                                 if(doHitReport){
-                                    this.genReport(curr_turn_no, sysTurnNo, anno_turn, which_case, "HIT");
+                                    this.genReport(curr_turn_no, sys_turn, anno_turn, which_case, "HIT");
                                 }
                                 //added long and short statistics
                                 if(which_case.startsWith("Long:")){
@@ -1949,7 +1904,7 @@ public class CommunicationLinkXChinese{
                                 }
                         }else{
                             if(doMissReport){
-                                this.genReport(curr_turn_no, sysTurnNo, anno_turn, which_case, "MISSED");
+                                this.genReport(curr_turn_no, sys_turn, anno_turn, which_case, "MISSED");
                             }
                         }
                 }
@@ -2134,16 +2089,16 @@ public class CommunicationLinkXChinese{
             //check before set. 4/16/11 3:47 PM\
             //excluded similarity case doing checkResTo before set. 4/18/11 10:50 AM
             //included long sim case. 4/20/11 1:27 PM
-            int a = where_to;
-            if(which_case.contains("similarity") && which_case.toLowerCase().contains("short")){
-            }else{
-                where_to = this.checkRespToBeforeSet(index, where_to);
-                if(a != where_to){
-                    which_case = which_case + "check before set";
-                }
+//            int a = where_to;
+//            if(which_case.contains("similarity") && which_case.toLowerCase().contains("short")){
+//            }else{
+//                where_to = this.checkRespToBeforeSet(index, where_to);
+//                if(a != where_to){
+//                    which_case = which_case + " check before set";
+//                }
                 
-            }
-            
+//            }
+//            System.out.println("in setResto" + index + "|" + where_to);
                 
 
 //                map.put(Integer.parseInt(utt.getTurn()), (utts.get(Integer.parseInt(utts.get(index).getTurn())-(where_to+1))).getSpeaker() + ":" + (Integer.parseInt(utts.get(index).getTurn())-where_to));
@@ -2301,7 +2256,7 @@ public class CommunicationLinkXChinese{
 //                    if(!prev_utt.getSpeaker().toLowerCase().equals(curr_speaker)){
 //                        String pre_content = contentExtraction(prev_utt);
 //                        double sim = CommunicationLinkX.compareUttsBySynon(cur_content, pre_content);// change this line 4/10/11 12:24 PM creating new comparebysynon method in this class
-//                        System.err.println(">cur: " + cur_content);
+//                        System.err.println(">cur: " + cubefore setr_content);
 //                        System.err.println(">pre: " + pre_content);
 //                        System.err.println(sim);
 //                        int pre_turn_no = (Integer.parseInt(utts.get(index).getTurn()))-i;
