@@ -302,7 +302,7 @@ public class Util {
     }
     
     /**
-     * m2w: parsing Chinese string into ArrayList<String>, English too. each word as an entry.
+     * m2w: parsing Chinese string into HashMap<CN, ArrayList<CNStr>>, English in the same map too. each word as an entry in the ArrayList.
      * @param the utterance
      * @return the array of the utterance, chinese comes first, enlish and the end of the chinese.
      * @date 8/9/11 2:37 PM
@@ -353,6 +353,33 @@ public class Util {
 	ArrayList<String> utt2_wds = uttToWds(utt2);
 	return compareUtts(utt1_wds, utt2_wds);
     }
+    
+    /**
+     * 
+     * @param utt1
+     * @param utt2
+     * @return 
+     */
+    public static double compareUttsChinese(String utt1, String utt2) {
+	HashMap<String, ArrayList<String>> wordMap1 = uttToWdsChinese(utt1);
+	HashMap<String, ArrayList<String>> wordMap2 = uttToWdsChinese(utt2);
+        ArrayList<String> utt1_wds = new ArrayList<String>();
+        ArrayList<String> utt2_wds = new ArrayList<String>();
+        ArrayList<String> CNwordArray1;ArrayList<String> ENwordArray1;
+        ArrayList<String> CNwordArray2;ArrayList<String> ENwordArray2;
+        //adding CN and EN into 1 list
+        if(wordMap1 != null && wordMap2 != null){
+            CNwordArray1 = wordMap1.get("CN"); ENwordArray1 = wordMap1.get("EN");
+            CNwordArray2 = wordMap2.get("CN"); ENwordArray2 = wordMap2.get("EN");
+            if(CNwordArray1 != null)    utt1_wds.addAll(CNwordArray1);
+            if(ENwordArray1 != null)    utt1_wds.addAll(ENwordArray1);
+            if(CNwordArray2 != null)    utt2_wds.addAll(CNwordArray2);
+            if(ENwordArray2 != null)    utt2_wds.addAll(ENwordArray2);
+//            System.out.println(utt1_wds);
+//            System.out.println(utt2_wds);
+        }
+	return compareUtts(utt1_wds, utt2_wds);
+    }
 
     private static double compareUtts(ArrayList<String> compared_wordArray, ArrayList<String> wordArray) {
 	int hit = 0;
@@ -368,16 +395,25 @@ public class Util {
 		    }
 		
 	    }
-	
-	if(compared_wordArray.size()==0 || wordArray.size()==0)
+	double cwsize = (double)compared_wordArray.size();
+        double wsize = (double)wordArray.size();
+        double max = Math.max(cwsize,wsize);
+	if(cwsize==0 || wsize==0)
 	    {
 		
 		f = 0;
 	    }
-	else
+        else 
 	    {				
-		f =(((double)hit/(float)compared_wordArray.size()) + ((double)hit/(float)wordArray.size()))/2;
+//		f =(((double)hit/(float)compared_wordArray.size()) + ((double)hit/(float)wordArray.size()))/2;
+                f = (double)hit/max;
+                Integer I = 10;
+                
+                   
 	    }
+//        System.out.println(compared_wordArray);
+//        System.out.println(wordArray);
+//        System.out.println(f);
 	return f;
     }
 
