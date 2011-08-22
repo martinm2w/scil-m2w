@@ -62,19 +62,48 @@ public class Assertions {
     }
 
     public void makeAssertions() {
-	for (int i = 0; i < docs_utts_.size(); i++) {
+        //Lin Added 08/05/2011
+                
+                for (int j = 0; j < tr_utts_.size(); j++){
+		    String utterance = ((Utterance)tr_utts_.get(j)).getUtterance();
+                    String noEmotes = ParseTools.removeEmoticons(utterance);
+                    String tmpTagged=StanfordPOSTagger.tagChineseString(noEmotes);
+                    String tagged = tmpTagged.trim();
+                    String spcTagged=tmpTagged.replaceAll("/"+"([A-Z]+)*"+" ", " ");
+                    ((Utterance)tr_utts_.get(j)).setTaggedContent(tagged);
+                    ((Utterance)tr_utts_.get(j)).setSpaceTaggedContent(spcTagged);
+                    
+                    //System.out.println("sTmp: "+utts_.get(j).getTaggedContent());
+                }
+        //end of Lin
+	
+        for (int i = 0; i < docs_utts_.size(); i++) {
 	    String fn = (String)doc_names_.get(i);
-	    System.out.println("$$$$$$$$$."
-                    + ".$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$\nprocessing: " + fn);
+	    System.out.println("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$\nprocessing: " + fn);
 	    //utts_ = (ArrayList)docs_utts_.get(i);
 	    all_utts_.clear();
-	    all_utts_.addAll(tr_utts_);
+            all_utts_.addAll(tr_utts_);
 	    gch_ = new GroupCohesion();
 	    if (Settings.getValue(Settings.PROCESS_TYPE).equals("automated")) {
 		PhraseCheck phr_ch = (PhraseCheck)phr_checks_.get(i);
 		XMLParse xp = xmlps_.get(i);
 		utts_ = (ArrayList)docs_utts_.get(i);
-		all_utts_.addAll(utts_);
+                
+                //Lin Added 08/05/2011
+                for (int j = 0; j < utts_.size(); j++){
+		    String utterance = utts_.get(j).getUtterance().toString();
+                    String noEmotes = ParseTools.removeEmoticons(utterance);
+                    String tmpTagged=StanfordPOSTagger.tagChineseString(noEmotes);
+                    String tagged = tmpTagged.trim();
+                    String spcTagged=tmpTagged.replaceAll("/"+"([A-Z]+)*"+" ", " ");
+                    utts_.get(j).setTaggedContent(tagged);
+                    utts_.get(j).setSpaceTaggedContent(spcTagged);
+                    j=j;
+                    //System.out.println("sTmp: "+utts_.get(j).getTaggedContent());
+                }
+                //end of Lin
+		
+                all_utts_.addAll(utts_);
 		tagCommType();
 		//System.exit(0);
 		tagDAct();
@@ -1432,7 +1461,7 @@ public class Assertions {
             clx.collectCLFtsX();
 	    utts_ = clx.getUtts();
         }else{
-            CommunicationLinkX clx = new CommunicationLinkX(utts_, wn_, isEnglish_, isChinese_);
+	CommunicationLinkX clx = new CommunicationLinkX(utts_, wn_, isEnglish_, isChinese_);
             clx.collectCLFtsX();
 	    utts_ = clx.getUtts();
         }

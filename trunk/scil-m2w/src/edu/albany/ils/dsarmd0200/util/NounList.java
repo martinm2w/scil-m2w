@@ -501,15 +501,20 @@ public class NounList {
 				if (!speakTokens.containsKey(speaker))
 					speakTokens.put(speaker, speakTokens.size());
 				// remove emoticons in each utterance
-				String noEmotes = ParseTools.removeEmoticons(utterance);
+//LinCommented				String noEmotes = ParseTools.removeEmoticons(utterance);
 //				StanfordPOSTagger.initialize();
 				// tag the utterance
-				String tagged = StanfordPOSTagger.tagString(noEmotes).trim();
+//LinCommented				String tagged = StanfordPOSTagger.tagString(noEmotes).trim();
 				//System.out.println("Turn "+(i+1)+": "+tagged);
-				fv.add(tagged);
-				utt_.setTaggedContent(tagged);
+//LinCommented				fv.add(tagged);
+//LinCommented				utt_.setTaggedContent(tagged);
 				// split to X/Xtag
-				String [] tagsplit = tagged.split("\\s+");
+//LinCommented				String [] tagsplit = tagged.split("\\s+");
+                                
+                                
+//LinAdded                      
+                                fv.add(utt_.getTaggedContent());
+                                String [] tagsplit=utt_.getTaggedContent().split("\\s+"); 
 				// get words and phrases in one utterance, saves WORDS WITH TAGS from each utterance
 				// into arraylist tokens Eg. A/Atag B/Btag
 				ArrayList <String> tokens = getTokens(tagsplit); int count = 0;
@@ -570,17 +575,20 @@ public class NounList {
 					speakTokens.put(speaker, speakTokens.size());
 				// remove emoticons in each utterance
 //                                System.out.println(utterance);
-				String noEmotes = ParseTools.removeEmoticons(utterance);
+//LinCommented				String noEmotes = ParseTools.removeEmoticons(utterance);
 //                                System.out.println(noEmotes);
 //				StanfordPOSTagger.initializeChinese();
 				// tag the utterance
 //                                System.out.println("inited chinese");
-				String tagged = StanfordPOSTagger.tagChineseString(noEmotes).trim();
+//LinCommented				String tagged = StanfordPOSTagger.tagChineseString(noEmotes).trim();
 				//System.out.println("Turn "+(i+1)+": "+tagged);
-				fv.add(tagged);
-				utt_.setTaggedContent(tagged);
+//LinCommented				fv.add(tagged);
+//LinCommented				utt_.setTaggedContent(tagged);
 				// split to X/Xtag
-				String [] tagsplit = tagged.split("\\s+");
+//LinCommented				String [] tagsplit = tagged.split("\\s+");
+//LinAdded                      
+                                fv.add(utt_.getTaggedContent());
+                                String [] tagsplit=utt_.getTaggedContent().split("\\s+");          
 				// get words and phrases in one utterance, saves WORDS WITH TAGS from each utterance
 				// into arraylist tokens Eg. A/Atag B/Btag
 				ArrayList <String> tokens = getTokens(tagsplit); int count = 0;

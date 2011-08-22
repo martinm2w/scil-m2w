@@ -45,7 +45,8 @@ public class Ngram {
         }
         text = text.replaceAll("$a $m", "am");
         text = text.replaceAll("$p $m", "pm");
-        text = text.replaceAll("[^\\w']+", " ").toLowerCase().trim();
+	text = text.replaceAll("[\\p{Punct}^']+", " ").toLowerCase().trim();
+        //text = text.replaceAll("[^\\w']+", " ").toLowerCase().trim();
         text = text.replaceAll("'cause", "because");
         text = text.replaceAll("'bout", "about");
         // by Laura, Jan 02, 2011
