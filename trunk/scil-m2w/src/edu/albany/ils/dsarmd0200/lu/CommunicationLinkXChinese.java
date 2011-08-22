@@ -344,7 +344,27 @@ public class CommunicationLinkXChinese{
 
         }
 
-        
+        private ArrayList<ArrayList> buildRankList(int index){
+            ArrayList<ArrayList> list = new ArrayList<ArrayList>();
+            return list;
+        }
+        private ArrayList<ArrayList> calRank(ArrayList<ArrayList> list){
+            return list;
+        }
+        private int getHighestRankTN(ArrayList<ArrayList> list){
+            int highestRankTN = 0;
+            return highestRankTN;
+        }
+        private void shortUttRank(int index){
+            ArrayList<ArrayList> list = buildRankList(index);
+            list = calRank(list);
+            int res_to = 0;
+            res_to = getHighestRankTN(list);
+            Utterance currUtt = (Utterance)list.get(0).get(1);
+            this.setRespTo(index, res_to, currUtt, "Short Rank");
+            
+        }
+            
 //     =====================================confirmation & deny short type util=====================================
         /**
          * m2w: judge the current utterance , see if it's confirmation & deny type
