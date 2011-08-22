@@ -39,6 +39,8 @@ public class Utterance implements DialogAct {
     //m2w: added instance variable of type Utterance containing the .1 and .0 turns.
     private ArrayList<Utterance> sub_turns = new ArrayList<Utterance>();
 
+    //Lin added
+    private String space_tagged_content=null;
 
     /************************get information***********************************/
     /**
@@ -56,6 +58,9 @@ public class Utterance implements DialogAct {
 	return tagged_content;
     }
     
+    public String getSpaceTagContent() {
+	return space_tagged_content;
+    }
     /**
      * Get the tag.
      * */
@@ -118,6 +123,8 @@ public class Utterance implements DialogAct {
     public String getSysTopic() {
 	return sys_topic;
     }
+    
+    
 
     /**
      * get the source node
@@ -139,6 +146,7 @@ public class Utterance implements DialogAct {
 	return false;
     }
 
+    
 
     /*****************************set information*****************************/
     /**
@@ -257,6 +265,9 @@ public class Utterance implements DialogAct {
 	this.sys_topic = topic;
     }
 
+    public void setSpaceTaggedContent(String content) {
+	this.space_tagged_content = content;
+    }
     /**
      * set tag maps
      */

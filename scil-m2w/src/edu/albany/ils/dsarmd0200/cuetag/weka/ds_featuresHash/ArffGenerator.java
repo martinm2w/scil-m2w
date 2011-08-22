@@ -28,7 +28,7 @@ public class ArffGenerator {
     private static String tagType = Settings.getValue("tagType");
 
 //    private static PNWords pnw = new PNWords();
-    private TagRulesPredefined trp = new TagRulesPredefined();
+    private TagRulesPredefined trp;
     
     public ArffGenerator(String tr_fileName, String tr_fileLocation, String te_fileName, String te_fileLocation,
             ArrayList tr_utts, ArrayList utts, ArrayList tags, HashMap featuresMap, ArrayList allFeatures){
@@ -41,6 +41,15 @@ public class ArffGenerator {
         this.tags = tags;
         this.featuresMap = featuresMap;
         this.allFeatures = allFeatures;
+
+//         modified by laura, Jul 11, 2011
+        if(Settings.getValue("language").equals("chinese")){
+            System.out.println("Use Chinese Ngram rules ...");
+            trp = new TagRulesPredefinedChinese();
+        }
+        else{
+            trp = new TagRulesPredefined();
+        }
     }
 
     public void writeTrainingArff(){
@@ -96,17 +105,18 @@ public class ArffGenerator {
                 Utterance utterance = (Utterance)tr_utts.get(i);
                 String daTag = "";
                 String str = "";
-                if(tagType.equals("da15")){
-                    daTag = utterance.getTag().toLowerCase().trim();
-                    daTag = daTag.replace("--", "");
-                }
-                else if(tagType.equals("da3")){
-                    daTag = utterance.getMTag().toLowerCase().trim();
-                }
-                else{
-                    System.err.println("unrecognized tag type");
-                    return;
-                }
+                daTag = TaggingType.getTag(utterance, tagType);
+//                if(tagType.equals("da15")){
+//                    daTag = utterance.getTag().toLowerCase().trim();
+//                    daTag = daTag.replace("--", "");
+//                }
+//                else if(tagType.equals("da3")){
+//                    daTag = utterance.getMTag().toLowerCase().trim();
+//                }
+//                else{
+//                    System.err.println("unrecognized tag type");
+//                    return;
+//                }
                 ArrayList featuresOfTheTag = (ArrayList)featuresMap.get(daTag);
 
                 
@@ -116,12 +126,18 @@ public class ArffGenerator {
                 String content = utterance.getContent();
                
                 // by Laura Nov 30, 2010
-                content = Ngram.urlNormalize(content);
-                content = Ngram.filterUtterance(content);
+//LinCommented                content = Ngram.urlNormalize(content);
+//LinCommented                content = Ngram.filterUtterance(content);
 
 //                // by Laura Dec 07, 2010
 //                content = pnw.replaceSentence(content);
 
+//Lin Added
+                content=utterance.getSpaceTagContent();
+                content = Ngram.urlNormalize(content);
+                content = Ngram.filterUtterance(content);
+
+//end of                
                 ArrayList<String> ngrams = Ngram.generateNgramList(content);
 
                 // by Laura Jan 04, 2011
@@ -168,20 +184,20 @@ public class ArffGenerator {
                 Utterance utterance = (Utterance)utts.get(i);
                 String tag = "";
                 String str = "";
-                if(tagType.equals("da15")){
-                    tag = utterance.getTag().toLowerCase().trim();
-                    tag = tag.replace("--", "");
-                }
-                else if(tagType.equals("da3")){
-                    tag = utterance.getMTag().toLowerCase().trim();
-                }
-                else{
-                    System.err.println("unrecognized tag type");
-                    return;
-                }
-                if(tag == null || tag.equals("")) {// testing file may not have tag attribute
-                    tag = "unknown";
-		}
+                tag = TaggingType.getTag(utterance, tagType);
+//                if(tagTypeTaggingType.equals("da15")){
+//                    tag = utterance.getTag().toLowerCase().trim();
+//                    tag = tag.replace("--", "");
+//                }
+//                else if(tagType.equals("da3")){
+//                    tag = utterance.getMTag().toLowerCase().trim();
+//                }
+//                else{
+//                    System.err.println("unrecognized tag type");
+//                    return;
+//                }
+//                if(tag == null || tag.equals("")) // testing file may not have tag attribute
+//                    tag = "unknown";
 
                 // by Laura Nov 30, 2010
                 String commActType = utterance.getCommActType().toLowerCase();
@@ -189,18 +205,24 @@ public class ArffGenerator {
                 String content = utterance.getContent();
                                 
                 // by Laura Nov 30, 2010
-                content = Ngram.urlNormalize(content);
-                content = Ngram.filterUtterance(content);
+//LinCommented                content = Ngram.urlNormalize(content);
+//LinCommented                content = Ngram.filterUtterance(content);
 
 
                 // by Laura Jan 04, 2011
                 // Add pre-defined features
-                content = trp.rules_filtered(content);
+//LinCommented                content = trp.rules_filtered(content);
                 
 
 //                // by Laura Dec 07, 2010
 //                content = pnw.replaceSentence(content);
-                
+//Lin Added
+                content=utterance.getSpaceTagContent();
+                content = Ngram.urlNormalize(content);
+                content = Ngram.filterUtterance(content);
+                content = trp.rules_filtered(content);
+
+//end of                 
                 ArrayList<String> ngrams = Ngram.generateNgramList(content);                
                 for(int j = 0; j < ngrams.size(); j++){
                     String term = ngrams.get(j);
@@ -227,6 +249,7 @@ public class ArffGenerator {
                 }
             }
             bw.close();
+ 
         } catch (IOException e) {
             e.printStackTrace();
         }

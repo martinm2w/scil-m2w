@@ -86,6 +86,8 @@ public class CommunicationLinkXChinese{
     //added 7/27/11 12:47 PM
     private boolean isEnglish_ = false;
     private boolean isChinese_ = false;
+    
+    private int $prevIn4Count = 0;
 
     
     
@@ -174,6 +176,7 @@ public class CommunicationLinkXChinese{
     //        System.out.println("Number of long utts: " + LONG_UTT_STATICS + ". CdN: " + LONG_UTT_CND_STATICS);
             System.out.println("Number of short utts: " + SHORT_UTT_STATICS + ", short hit: "+ short_hit +". CdN: " + SHORT_UTT_CND_STATICS + ", cnd hit: "+ short_cnd_hit);
             System.out.println("Number of long utts: " + LONG_UTT_STATICS + ", long hit: "+ long_hit +". CdN: " + LONG_UTT_CND_STATICS + ", cnd hit: "+ long_cnd_hit);
+            System.out.println($prevIn4Count);
     //        System.out.println("yes count: "+ yes_count +", ir count: "+ i_r_count + "qm: " +qm_count);
         }
     }
@@ -765,7 +768,7 @@ public class CommunicationLinkXChinese{
                                     || (pre_content.contains("true ") && !pre_content.contains("be true"))
                                     || pre_content.contains("agree ")
                                     || pre_content.contains("exactly ")
-                                    || pre_content.contains("是") || pre_content.contains("就是") || pre_content.contains("对") || pre_content.contains("好") || pre_content.contains("没错") || pre_content.contains("恩") 
+                                    || pre_content.equals("是") || pre_content.equals("就是") || pre_content.matches("[\\u4E00-\\u9FA5]$对") || pre_content.matches("[\\u4E00-\\u9FA5]$好") || pre_content.contains("没错") || pre_content.contains("恩") 
                                     //excluded "because" put into opinion. 4/5/11 11:54 AM
                                     //edcluded prev_utt 's dialog act is agree-accept. 4/16/11 3:00 PM
                                     ) && !prev_utt.getTag().toLowerCase().contains("agree-accept")){
@@ -1965,11 +1968,17 @@ public class CommunicationLinkXChinese{
                 Utterance cUtt = utts.get(Integer.parseInt(curr_turn_no) - 1);
                 Utterance sUtt = utts.get(auto_turn_no - 1);
                 Utterance aUtt = utts.get(anno_turn_no - 1);
+                int a = Integer.parseInt(curr_turn_no);
+                if(a - anno_turn_no < 4){
+                    $prevIn4Count++;
+                    System.out.print("4_");
+                }
                 System.out.println(hitOrNot + "!!!   " + " -- " + which_case);
 		System.out.println("turn: "+ curr_turn_no + "(" + cUtt.getSpeaker() + "): " + cUtt.getContent() + "  |  C["+ cUtt.getCommActType() +"]D["+ cUtt.getTag() +"]");
 		System.out.println("Syst: "+ auto_turn_no + "(" + sUtt.getSpeaker() + "): " + sUtt.getContent() + "  |  C["+ sUtt.getCommActType() +"]D["+ sUtt.getTag() +"]");
 		System.out.println("Anno: "+ anno_turn_no + "(" + aUtt.getSpeaker() + "): " + aUtt.getContent() + "  |  C["+ aUtt.getCommActType() +"]D["+ aUtt.getTag() +"]");
 		System.out.println();
+                
             }
 	}
 

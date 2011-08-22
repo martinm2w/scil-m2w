@@ -8,15 +8,16 @@ import java.util.HashMap;
 
 public class TagRulesPredefined {
 
-    public HashMap<String, ArrayList<String>> tagFeaturesPredefined =
+    protected HashMap<String, ArrayList<String>> tagFeaturesPredefined =
             new HashMap<String, ArrayList<String>>();
+    protected HashMap<String, HashMap<String, Double>> tagFeaturesPredefinedWithScore =
+            new HashMap<String, HashMap<String, Double>>();
 
-    public TagRulesPredefined(){
-        init();
+    public TagRulesPredefined(){        
     }
 
     public String rules_filtered(String str){
-
+        init();
         String str2 = "<start> " + str.toLowerCase().trim() + " <finish>";
         
         ArrayList<String> AD_Features = tagFeaturesPredefined.get(DsarmdDATag.AD);
@@ -36,7 +37,7 @@ public class TagRulesPredefined {
         
     }
 
-    private void init(){
+    protected void init(){
         /* Action-Directive pre-defined features */
         ArrayList<String> AD_Features = new ArrayList<String>();
         /* Disagree-Reject pre-defined features */

@@ -199,12 +199,17 @@ public class CorpusAnalysis {
             String content = utterance.getContent();
 
             
-            content = Ngram.urlNormalize(content);
-            content = Ngram.filterUtterance(content);
+//LinCommented            content = Ngram.urlNormalize(content);
+//LinCommented            content = Ngram.filterUtterance(content);
             
 //            // by Laura Dec 07, 2010
 //            content = pnw.replaceSentence(content);
-            
+//Lin Added
+                content=utterance.getSpaceTagContent();
+                content = Ngram.urlNormalize(content);
+                content = Ngram.filterUtterance(content);
+
+//end of
             ArrayList<String> terms = Ngram.generateNgramList(content);
 
 
@@ -235,13 +240,20 @@ public class CorpusAnalysis {
 
             String content = utterance.getContent();
 
-            content = Ngram.urlNormalize(content);
-            content = Ngram.filterUtterance(content);
+//LinCommented            content = Ngram.urlNormalize(content);
+//LinCommented            content = Ngram.filterUtterance(content);
 
 
 //            // by Laura Dec 07, 2010
 //            content = pnw.replaceSentence(content, true, daTag);
 
+//Lin Added
+                content=utterance.getSpaceTagContent();
+                content = Ngram.urlNormalize(content);
+                content = Ngram.filterUtterance(content);
+
+//end of
+            
             ArrayList<String> terms = Ngram.generateNgramList(content);
             for(int j = 0; j < terms.size(); j++){
                 if(utts_termFrequancy.containsKey(terms.get(j))){
@@ -295,12 +307,18 @@ public class CorpusAnalysis {
             int tagIndex = DsarmdDATag.getTagAliasNum(daTag, tagNum) - 1;
             String content = utterance.getContent();
             
-            content = Ngram.urlNormalize(content);
-            content = Ngram.filterUtterance(content);
+//LinCommented            content = Ngram.urlNormalize(content);
+//LinCommented            content = Ngram.filterUtterance(content);
 
             
 //            // by Laura Dec 07, 2010
 //            content = pnw.replaceSentence(content);
+//Lin Added
+                content=utterance.getSpaceTagContent();
+                content = Ngram.urlNormalize(content);
+                content = Ngram.filterUtterance(content);
+
+//end of
 
             ArrayList<String> terms = Ngram.generateNgramList(content);
 
