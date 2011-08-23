@@ -81,7 +81,7 @@ public class CommunicationLinkXChinese{
     private boolean doHitReport = true;
     private boolean doMissReport = true;
     private boolean doFinalReport = true; // whether print out the final report at the end of each file or not. 4/27/11 12:40 PM
-    private boolean doGenReport = true; // whether print out the evaluation(miss and hit) or not. 4/27/11 12:40 PM
+    private boolean doGenReport = false; // whether print out the evaluation(miss and hit) or not. 4/27/11 12:40 PM
 
     //added 7/27/11 12:47 PM
     private boolean isEnglish_ = false;
@@ -153,12 +153,13 @@ public class CommunicationLinkXChinese{
                     String content = contentExtraction(u_content).toLowerCase();
                     int turn_length = ParseTools.wordCountChinese(content);
                     if(turn_length < SHORT_THRESHOLD){
-                            shortUtterance(index);
+//                            shortUtterance(index);
+                            shortUttRank(index);
                             SHORT_UTT_STATICS++;
                             //testing 8/2/11 12:47 PM
 //                            System.out.println( "short: "+ content + " - length: " + turn_length);
                     } else{
-                            longUtterance(index);
+//                            longUtterance(index);
                             LONG_UTT_STATICS++;
                             //testing 8/2/11 12:47 PM
 //                            System.out.println("long: "+content + " - length: " + turn_length);
@@ -343,26 +344,95 @@ public class CommunicationLinkXChinese{
 
 
         }
+//    ==========================================rank calculation methods==========================================
 
-        private ArrayList<ArrayList> buildRankList(int index){
-            ArrayList<ArrayList> list = new ArrayList<ArrayList>();
-            return list;
-        }
-        private ArrayList<ArrayList> calRank(ArrayList<ArrayList> list){
-            return list;
-        }
-        private int getHighestRankTN(ArrayList<ArrayList> list){
-            int highestRankTN = 0;
-            return highestRankTN;
-        }
+        /**
+         * m2w: calculate and set res-to by calculating 10/9 previous utt's rank(how much is it likely to be the correct res-to).
+         * @param index 
+         */
         private void shortUttRank(int index){
             ArrayList<ArrayList> list = buildRankList(index);
-            list = calRank(list);
-            int res_to = 0;
-            res_to = getHighestRankTN(list);
-            Utterance currUtt = (Utterance)list.get(0).get(1);
-            this.setRespTo(index, res_to, currUtt, "Short Rank");
-            
+            //if curr utt is the first. thus list is empty.
+            if(!list.isEmpty()){
+                list = calRankShort(list, index);
+                for(int i = 0; i < list.size(); i++){
+                    System.out.print(list.get(i).get(0));
+                    System.out.print(((Utterance)list.get(i).get(1)).getContent());
+                    System.out.println(list.get(i).get(2));
+                }
+                int res_to = 0;
+                res_to = getHighestRankTN(list);
+                Utterance currUtt = (Utterance)list.get(0).get(1);
+                this.setRespTo(index, res_to, currUtt, "Short Rank");
+            }//closes if is empty.
+        }//closes method.
+        
+        /**
+         * m2w: build the rank list for previous utts. ArrayList<ArrayList>
+         * index 0 : the "i" , index - i = which previous utt.
+         * index 1 : the i'th previous utt.
+         * index 2 : the rank of this previous utt.
+         * @param index
+         * @return the rank list
+         * @date 8/23/11 11:31 AM
+         */
+        private ArrayList<ArrayList> buildRankList(int index){
+            ArrayList<ArrayList> list = new ArrayList<ArrayList>();
+            //build list.
+            for(int i = 1; (index - i > 0) && (i < 10); i++){
+                Utterance prev_utt = utts.get(index - i);
+                int init_rank = 0;
+                ArrayList sub_list = new ArrayList();
+                sub_list.add(i);
+                sub_list.add(prev_utt);
+                sub_list.add(init_rank);
+                if(!sub_list.isEmpty()) list.add(sub_list);
+            }
+            return list;
+        }
+        
+        
+        /**
+         * m2w: calculate the ranks of each previous utts and return the list.
+         * @param list
+         * @param index
+         * @return 
+         */
+        private ArrayList<ArrayList> calRankShort(ArrayList<ArrayList> list, int index){
+            Utterance curr_utt = utts.get(index);
+            list = this.calRankFindName(curr_utt, list);
+            return list;
+        }
+        
+        private ArrayList<ArrayList> calRankLong(ArrayList<ArrayList> list, int index){
+            Utterance curr_utt = utts.get(index);
+            return list;
+        }
+        
+        /**
+         * m2w: get the highest rank turn number form the list.
+         * 1. sort the list in descending order according to the list's index 2 entry's value.
+         * 2. get the highest ranked turn and its turn number.
+         * @param list
+         * @return 
+         * @date 8/23/11 11:15 AM
+         */
+        private int getHighestRankTN(ArrayList<ArrayList> list){
+            int highestRankTN = 0;
+            Collections.sort(list, new Comparator(){
+                @Override
+                public int compare(Object ob1, Object ob2){
+                    int o1Rank = 0;
+                    int o2Rank = 0;
+                    o1Rank = (Integer)(((ArrayList)ob1).get(2));
+                    o2Rank = (Integer)(((ArrayList)ob2).get(2));
+                    //descending order
+                    return o2Rank - o1Rank;
+                }
+            });
+            Utterance highestUtt = (Utterance)list.get(0).get(1);
+            highestRankTN = Integer.parseInt(highestUtt.getTurn());
+            return highestRankTN;
         }
             
 //     =====================================confirmation & deny short type util=====================================
@@ -1810,6 +1880,61 @@ public class CommunicationLinkXChinese{
             return found;
         }//ends method
 
+        private ArrayList<ArrayList> calRankFindName(Utterance curr_utt, ArrayList<ArrayList> list){
+            int rank = 0;
+            String curr_speaker = curr_utt.getSpeaker().toLowerCase();
+            String cur_content = contentExtraction(curr_utt);
+            String cur_raw_content = curr_utt.getContent().toLowerCase();
+            
+            
+            String name = "";
+            boolean name_found = false;
+            boolean link_found = false;
+            
+            //look for if there's any speaker name in cur utterance;
+            StringTokenizer tokenizer = new StringTokenizer(cur_content);
+            while(tokenizer.hasMoreTokens()){
+                    String token = tokenizer.nextToken();
+                    //arraylist for getting name in the list. 4/3/11 3:06 PM
+                    ArrayList<String> nameList = new ArrayList<String>(speaker_names);
+                    //nameList = (ArrayList)Arrays.asList(speaker_names.toArray());
+                    for (int i = 0; i < nameList.size(); i ++ ){
+                        if(token.length() > 2 && nameList.get(i).contains(token.toLowerCase())){ // added token length > 2 , 4/16/11 3:51 PM
+                            name_found = true;
+                            name = nameList.get(i).toLowerCase(); // this is the name in the map/arraylist, so no need to "contains" getting name matching. 4/3/11 10:09 PM
+                            break;
+                        }
+                    }   
+            }//closes while has more tokens
+            
+            //if there is a name in curr utt.
+            if(name_found){
+                for(int i = 1; i<list.size(); i++){
+                Utterance prev_utt = (Utterance)(list.get(i).get(1));
+                int iRank = (Integer)(list.get(i).get(0));
+                String preSpkName = prev_utt.getSpeaker().toLowerCase();
+                //if prev utt speaker's name matches the name we found in curr utt, rank + 5.
+                    if(!preSpkName.equalsIgnoreCase(curr_speaker)){
+                        
+                        //added conventional-opening , hi some one case. 4/18/11 1:09 PM
+                        if (curr_utt.getTag().toLowerCase().contains("opening") || cur_raw_content.contains("hi ")){
+                            if((this.lengthCal(prev_utt) > 1) && preSpkName.equals(name) && this.lengthCal(prev_utt) > 1 && prev_utt.getTag().toLowerCase().contains("opening") ){
+                                //rank + 6
+                                iRank += 6;
+                                list.get(i).set(0, iRank);
+                            }
+                        }else if(preSpkName.equals(name) && this.lengthCal(prev_utt) > 1){
+                            //rank + 5
+                            iRank += 6;
+                            list.get(i).set(0, iRank);
+                        }//ends if same name has found!
+                    }//ends same name check
+                }//ends outter for loop
+            }//ends if name is found  
+            
+            return list;
+        }
+        
         /**
          * m2w : returns the speaker's name if it appears in the current utt.
          * @param index
@@ -1991,7 +2116,7 @@ public class CommunicationLinkXChinese{
                 int a = Integer.parseInt(curr_turn_no);
                 if(a - anno_turn_no < 4){
                     $prevIn4Count++;
-                    System.out.print("4_");
+//                    System.out.print("4_");
                 }
                 System.out.println(hitOrNot + "!!!   " + " -- " + which_case);
 		System.out.println("turn: "+ curr_turn_no + "(" + cUtt.getSpeaker() + "): " + cUtt.getContent() + "  |  C["+ cUtt.getCommActType() +"]D["+ cUtt.getTag() +"]");
@@ -2329,3 +2454,4 @@ public class CommunicationLinkXChinese{
 
 
     // ===========================================old methods=======================================
+
