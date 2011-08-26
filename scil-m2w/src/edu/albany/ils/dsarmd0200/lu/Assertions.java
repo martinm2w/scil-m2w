@@ -94,6 +94,7 @@ public class Assertions {
 		    String utterance = utts_.get(j).getUtterance().toString();
                     String noEmotes = ParseTools.removeEmoticons(utterance);
                     String tmpTagged=StanfordPOSTagger.tagChineseString(noEmotes);
+//                    System.out.println("String tmpTagged: " + tmpTagged);
                     String tagged = tmpTagged.trim();
                     String spcTagged=tmpTagged.replaceAll("/"+"([A-Z]+)*"+" ", " ");
                     utts_.get(j).setTaggedContent(tagged);
