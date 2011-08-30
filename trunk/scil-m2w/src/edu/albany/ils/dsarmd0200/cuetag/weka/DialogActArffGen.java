@@ -8,6 +8,7 @@
 package edu.albany.ils.dsarmd0200.cuetag.weka;
 
 import edu.albany.ils.dsarmd0200.cuetag.svm.TagNumber;
+import edu.albany.ils.dsarmd0200.cuetag.weka.ds_featuresHash.Ngram;
 import edu.albany.ils.dsarmd0200.evaltag.Utterance;
 import edu.albany.ils.dsarmd0200.lu.Settings;
 import edu.albany.ils.dsarmd0200.util.Util;
@@ -136,11 +137,15 @@ public class DialogActArffGen {
 	    }
 	    String utt = utterance.getContent(); // utterance content
             
-            utt = utt.replace("?", " questionmark ");
-            utt = Util.filterIt(utt).toLowerCase();
+            //utt = utt.replace("?", " questionmark "); comment by TL 08/23/11
+            //utt = Util.filterIt(utt).toLowerCase();   comment by TL 08/23/11
             /* make it string safe */
-            utt = utt.replace("\'", "\\\'");
-            ArrayList utt_ngram = Ngram_gen(utt);
+            //utt = utt.replace("\'", "\\\'");          comment by TL 08/23/11
+	    if ((Settings.getValue(Settings.LANGUAGE)).equals("chinese"))
+		{utt = utterance.getSpaceTagContent();}
+	    utt = Ngram.urlNormalize(utt);
+	    utt = Ngram.filterUtterance(utt);
+            ArrayList utt_ngram = Ngram.generateNgramList(utt); //Ngram_gen(utt); comment by TL 08/23/11
             Object[] utt_ngram_array = utt_ngram.toArray();
             for(int j = 0; j < utt_ngram_array.length; j++){
                 if(term_frequency_.containsKey(utt_ngram_array[j].toString())){
@@ -172,11 +177,15 @@ public class DialogActArffGen {
 						, Integer.parseInt(Settings.getValue("tagNum")));
             String utt = utterance.getContent(); // utterance content
 
-            utt = utt.replace("?", " questionmark ");
-            utt = Util.filterIt(utt).toLowerCase();
+            //utt = utt.replace("?", " questionmark "); comment by TL 08/23/11
+            //utt = Util.filterIt(utt).toLowerCase();   comment by TL 08/23/11
             /* make it string safe */
-            utt = utt.replace("\'", "\\\'");
-            ArrayList utt_ngram = Ngram_gen(utt);
+            //utt = utt.replace("\'", "\\\'");          comment by TL 08/23/11
+	    if ((Settings.getValue(Settings.LANGUAGE)).equals("chinese"))
+		{utt = utterance.getSpaceTagContent();}
+	    utt = Ngram.urlNormalize(utt);
+	    utt = Ngram.filterUtterance(utt);
+            ArrayList utt_ngram = Ngram.generateNgramList(utt);  //Ngram_gen(utt); comment by TL 08/23/11
             Object[] utt_ngram_array = utt_ngram.toArray();
             for(int j = 0; j < utt_ngram_array.length; j++){
                 if(tag_frequency_.containsKey(utt_ngram_array[j].toString())){
@@ -231,10 +240,15 @@ public class DialogActArffGen {
                 int tagNum = tn.tagNumberDialogAct(tag.toLowerCase(), Integer.parseInt(Settings.getValue("tagNum")));
                 String utt = utterance.getContent(); // utterance content
                 
-                utt = utt.replace("?", " questionmark ");
-                utt = Util.filterIt(utt).toLowerCase();
-                utt = utt.replace("\'", "\\\'");
-                ArrayList utt_ngram_terms = Ngram_gen(utt);
+                //utt = utt.replace("?", " questionmark ");   comment by TL 08/23/11
+                //utt = Util.filterIt(utt).toLowerCase();     comment by TL 08/23/11 
+                //utt = utt.replace("\'", "\\\'");            comment by TL 08/23/11
+		if ((Settings.getValue(Settings.LANGUAGE)).equals("chinese"))
+		    {utt = utterance.getSpaceTagContent();}
+		utt = Ngram.urlNormalize(utt);
+		utt = Ngram.filterUtterance(utt);
+		ArrayList utt_ngram_terms = Ngram.generateNgramList(utt); //Ngram_gen(utt); comment by TL 08/23/11
+                //ArrayList utt_ngram_terms = Ngram_gen(utt);
                 Object[] ngram = utt_ngram_terms.toArray();
                 String line = "";
                 for(int j = 0; j < ngram.length; j++){
@@ -299,10 +313,15 @@ public class DialogActArffGen {
                 int tagNum = tn.tagNumberDialogAct(tag.toLowerCase(), Integer.parseInt(Settings.getValue("tagNum")));
                 String utt = utterance.getContent();
 
-                utt = utt.replace("?", " questionmark ");
-                utt = Util.filterIt(utt).toLowerCase();
-                utt = utt.replace("\'", "\\\'");
-                ArrayList utt_ngram_terms = Ngram_gen(utt);
+                //utt = utt.replace("?", " questionmark "); comment by TL 08/23/11
+                //utt = Util.filterIt(utt).toLowerCase();   comment by TL 08/23/11
+                //utt = utt.replace("\'", "\\\'");         comment by TL 08/23/11
+		if ((Settings.getValue(Settings.LANGUAGE)).equals("chinese"))
+		    {utt = utterance.getSpaceTagContent();}
+		utt = Ngram.urlNormalize(utt);
+		utt = Ngram.filterUtterance(utt);
+		ArrayList utt_ngram_terms = Ngram.generateNgramList(utt); //Ngram_gen(utt); comment by TL 08/23/11
+                //ArrayList utt_ngram_terms = Ngram_gen(utt);
                 Object[] ngram = utt_ngram_terms.toArray();
                 String line = "";
 

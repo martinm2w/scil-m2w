@@ -35,7 +35,7 @@ public class Utterance implements DialogAct {
     private String sys_topic = null;
     
     private Node source_ = null;
-
+	
     //m2w: added instance variable of type Utterance containing the .1 and .0 turns.
     private ArrayList<Utterance> sub_turns = new ArrayList<Utterance>();
 
@@ -293,13 +293,13 @@ public class Utterance implements DialogAct {
 	}
 	return null;
     }
-
+    
     /**
      * @return the sub_turns
      */
     public ArrayList<Utterance> getSub_turns() {
         return sub_turns;
-    }
+}
 
     /**
      * @param sub_turns the sub_turns to set

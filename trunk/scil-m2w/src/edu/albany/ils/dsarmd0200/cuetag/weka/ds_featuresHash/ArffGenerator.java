@@ -45,7 +45,8 @@ public class ArffGenerator {
 //         modified by laura, Jul 11, 2011
         if(Settings.getValue("language").equals("chinese")){
             System.out.println("Use Chinese Ngram rules ...");
-            trp = new TagRulesPredefinedChinese();
+            //trp = new TagRulesPredefinedChinese();
+            trp = new TagRulesPredefined();
         }
         else{
             trp = new TagRulesPredefined();
@@ -133,7 +134,8 @@ public class ArffGenerator {
 //                content = pnw.replaceSentence(content);
 
 //Lin Added
-                content=utterance.getSpaceTagContent();
+                if ((Settings.getValue(Settings.LANGUAGE)).equals("chinese"))
+		    {content=utterance.getSpaceTagContent();}
                 content = Ngram.urlNormalize(content);
                 content = Ngram.filterUtterance(content);
 
@@ -217,7 +219,8 @@ public class ArffGenerator {
 //                // by Laura Dec 07, 2010
 //                content = pnw.replaceSentence(content);
 //Lin Added
-                content=utterance.getSpaceTagContent();
+                if ((Settings.getValue(Settings.LANGUAGE)).equals("chinese"))
+		    {content=utterance.getSpaceTagContent();}
                 content = Ngram.urlNormalize(content);
                 content = Ngram.filterUtterance(content);
                 content = trp.rules_filtered(content);

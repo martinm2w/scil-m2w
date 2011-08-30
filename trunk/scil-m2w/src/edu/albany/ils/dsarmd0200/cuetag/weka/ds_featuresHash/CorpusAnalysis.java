@@ -5,6 +5,7 @@
 package edu.albany.ils.dsarmd0200.cuetag.weka.ds_featuresHash;
 
 import edu.albany.ils.dsarmd0200.evaltag.Utterance;
+import edu.albany.ils.dsarmd0200.lu.Settings;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -205,9 +206,10 @@ public class CorpusAnalysis {
 //            // by Laura Dec 07, 2010
 //            content = pnw.replaceSentence(content);
 //Lin Added
-                content=utterance.getSpaceTagContent();
-                content = Ngram.urlNormalize(content);
-                content = Ngram.filterUtterance(content);
+	    if ((Settings.getValue(Settings.LANGUAGE)).equals("chinese"))
+		{content=utterance.getSpaceTagContent();}
+	    content = Ngram.urlNormalize(content);
+	    content = Ngram.filterUtterance(content);
 
 //end of
             ArrayList<String> terms = Ngram.generateNgramList(content);
@@ -248,9 +250,10 @@ public class CorpusAnalysis {
 //            content = pnw.replaceSentence(content, true, daTag);
 
 //Lin Added
-                content=utterance.getSpaceTagContent();
-                content = Ngram.urlNormalize(content);
-                content = Ngram.filterUtterance(content);
+	    if ((Settings.getValue(Settings.LANGUAGE)).equals("chinese"))
+		{content=utterance.getSpaceTagContent();}
+	    content = Ngram.urlNormalize(content);
+	    content = Ngram.filterUtterance(content);
 
 //end of
             
@@ -314,9 +317,10 @@ public class CorpusAnalysis {
 //            // by Laura Dec 07, 2010
 //            content = pnw.replaceSentence(content);
 //Lin Added
-                content=utterance.getSpaceTagContent();
-                content = Ngram.urlNormalize(content);
-                content = Ngram.filterUtterance(content);
+	    if ((Settings.getValue(Settings.LANGUAGE)).equals("chinese"))
+		{content=utterance.getSpaceTagContent();}
+	    content = Ngram.urlNormalize(content);
+	    content = Ngram.filterUtterance(content);
 
 //end of
 

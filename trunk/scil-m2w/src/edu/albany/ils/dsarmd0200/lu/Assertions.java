@@ -62,21 +62,6 @@ public class Assertions {
     }
 
     public void makeAssertions() {
-        //Lin Added 08/05/2011
-                
-                for (int j = 0; j < tr_utts_.size(); j++){
-		    String utterance = ((Utterance)tr_utts_.get(j)).getUtterance();
-                    String noEmotes = ParseTools.removeEmoticons(utterance);
-                    String tmpTagged=StanfordPOSTagger.tagChineseString(noEmotes);
-                    String tagged = tmpTagged.trim();
-                    String spcTagged=tmpTagged.replaceAll("/"+"([A-Z]+)*"+" ", " ");
-                    ((Utterance)tr_utts_.get(j)).setTaggedContent(tagged);
-                    ((Utterance)tr_utts_.get(j)).setSpaceTaggedContent(spcTagged);
-                    
-                    //System.out.println("sTmp: "+utts_.get(j).getTaggedContent());
-                }
-        //end of Lin
-	
         for (int i = 0; i < docs_utts_.size(); i++) {
 	    String fn = (String)doc_names_.get(i);
 	    System.out.println("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$\nprocessing: " + fn);
@@ -93,8 +78,15 @@ public class Assertions {
                 for (int j = 0; j < utts_.size(); j++){
 		    String utterance = utts_.get(j).getUtterance().toString();
                     String noEmotes = ParseTools.removeEmoticons(utterance);
-                    String tmpTagged=StanfordPOSTagger.tagChineseString(noEmotes);
-//                    System.out.println("String tmpTagged: " + tmpTagged);
+                    //String tmpTagged=StanfordPOSTagger.tagChineseString(noEmotes);
+		    String tmpTagged="";
+		    if ((Settings.getValue(Settings.LANGUAGE)).equals("english")){
+			tmpTagged=StanfordPOSTagger.tagString(noEmotes);
+		    }
+		    else if ((Settings.getValue(Settings.LANGUAGE)).equals("chinese"))
+			{    
+			    tmpTagged=StanfordPOSTagger.tagChineseString(noEmotes);
+			}
                     String tagged = tmpTagged.trim();
                     String spcTagged=tmpTagged.replaceAll("/"+"([A-Z]+)*"+" ", " ");
                     utts_.get(j).setTaggedContent(tagged);
@@ -109,13 +101,13 @@ public class Assertions {
 		//System.exit(0);
 		tagDAct();
 		calCommLink(xp);
-//		buildLocalTopicList(phr_ch, xp);
+		buildLocalTopicList(phr_ch, xp);
 
                 //meso_topic and task_focus
                 //System.out.println("------------Generate Meso-topics of " + (String)doc_names_.get(i));
-//                MesoTopic mt = new MesoTopic();
-//                mt.calMesoTopic((String)doc_names_.get(i), utts_, xp, phr_ch, wn_, nls_);
-//		mts_.add(mt);
+                MesoTopic mt = new MesoTopic();
+                mt.calMesoTopic((String)doc_names_.get(i), utts_, xp, phr_ch, wn_, nls_);
+		mts_.add(mt);
                 //ArrayList<ArrayList<String>> mts = mt.getMeso_topics_();
                 //testing the mesotopic list
 		/*
@@ -124,7 +116,7 @@ public class Assertions {
                     System.out.println(Arrays.asList(mts.get(ai).toArray()));
                 }
 		*/
-//		ArrayList spks = new ArrayList(parts_.values());
+		ArrayList spks = new ArrayList(parts_.values());
 		/*
 		for (int k = 0; k < spks.size(); k++) {
 		    Speaker part_ = (Speaker)spks.get(k);
@@ -160,8 +152,7 @@ public class Assertions {
 		XMLParse xp = xmlps_.get(i);
 		utts_ = (ArrayList)docs_utts_.get(i);
 		all_utts_.addAll(utts_);
-//		buildALocalTopicList(phr_ch, xp);
-                calCommLink(xp);
+		buildALocalTopicList(phr_ch, xp);
 	    }
 	    ArrayList spks = new ArrayList(parts_.values());
 	    for (int k = 0; k < spks.size(); k++) {
@@ -175,24 +166,24 @@ public class Assertions {
 	    prxmlp_ = new PtsReportXMLParser(Settings.getValue(Settings.REPORT) + fn.split("\\.")[0] + "_AssertionReport.xml");
 	    prxmlp_.initClaim();
 	    prxmlp_.setDataUnit(fn.split("\\.")[0], fn.split("\\.")[0]);
-//	    calTpCtl(i);
+	    calTpCtl(i);
 	    System.out.println("@Involvement");
-//	    calInv(i);
+	    calInv(i);
 	    System.out.println("@Task Control");
-//	    calTkCtl(i);
+	    calTkCtl(i);
 	    System.out.println("@Expressive Disagreement");
-//	    calExDis(i);
+	    calExDis(i);
 	    System.out.println ("@Leadership");
-//	    calLeader();
+	    calLeader();
 	    //System.out.println("@Agreement");
-//	    calAgr();
+	    calAgr();
 	    //System.out.println("@Task Focus");
-//	    calTaskFocus(i);
+	    calTaskFocus(i);
 	    //System.out.println("@Sociability Measure...");
-//	    calSociability();
+	    calSociability();
 	    //System.out.println("\n\nProcessing L...");
 	    //System.out.println("\n\nProcessing Sociability Measure...");
-//	    calGroupCohesion(i);
+	    calGroupCohesion(i);
 	    //System.out.println("\n\nprocessing topic disagreement...");
 	    //calTpDis(i);
 	    //createReport();
