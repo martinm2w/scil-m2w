@@ -74,7 +74,7 @@ public class TagRulesPredefinedChinese extends TagRulesPredefined {
         BufferedReader br;
         String str = "";
         try {
-            br = new BufferedReader(new FileReader("/home/ruobo/develop/scil0200/conf/724.ngram.Chinese"));
+            br = new BufferedReader(new FileReader("724.ngram.Chinese"));
             while((str = br.readLine()) != null){
                 String[] array = str.split(":");
                 String tag = array[1].trim();

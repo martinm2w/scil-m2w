@@ -78,7 +78,7 @@ public class CommunicationLinkX{
     //report controlling. 5/13/11 2:09 PM
     private boolean doHitReport = true;
     private boolean doMissReport = true;
-    private boolean doFinalReport = true; // whether print out the final report at the end of each file or not. 4/27/11 12:40 PM
+    private boolean doFinalReport = false; // whether print out the final report at the end of each file or not. 4/27/11 12:40 PM
     private boolean doGenReport = false; // whether print out the evaluation(miss and hit) or not. 4/27/11 12:40 PM
 
     //added 7/27/11 12:47 PM
@@ -1817,7 +1817,7 @@ public class CommunicationLinkX{
         private void evaluate(int curr_index, int sysTurnNo, String which_case){
 		String curr_turn_no = utts.get(curr_index).getTurn();
 		String link_to = utts.get(curr_index).getRespTo();
-		if(link_to.indexOf(":")!=-1){
+		if(link_to != null && link_to.indexOf(":")!=-1){
 			String[] lkto = link_to.split(":");
 			int anno_turn =0;
 			if(lkto[1].contains(".")){

@@ -85,7 +85,8 @@ public class FileProcessor {
 	}
 	text = text.replaceAll("$a $m", "am");
 	text = text.replaceAll("$p $m", "pm");
-	text = text.replaceAll("[^\\w^']+", " ").toLowerCase().trim();
+	//text = text.replaceAll("[^\\w^']+", " ").toLowerCase().trim();
+	text = text.replaceAll("[\\p{Punct}^']+", " ").toLowerCase().trim();
 	//	text = text.replaceAll("[^\\w^'^\\?]+", " ").toLowerCase().trim();
 	text = text.replaceAll("'cause", "because");
 	text = text.replaceAll("'bout", "about");
@@ -128,7 +129,8 @@ public class FileProcessor {
 	}
 	text = text.replaceAll("$a $m", "am");
 	text = text.replaceAll("$p $m", "pm");
-	text = text.replaceAll("[^\\w^']+", " ").toLowerCase().trim();
+	//text = text.replaceAll("[^\\w^']+", " ").toLowerCase().trim();
+	text = text.replaceAll("[\\p{Punct}^']+", " ").toLowerCase().trim();
 	//	text = text.replaceAll("[^\\w^'^\\?]+", " ").toLowerCase().trim();
 	text = text.replaceAll("'cause", "because");
 	text = text.replaceAll("'bout", "about");

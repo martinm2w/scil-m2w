@@ -13,6 +13,7 @@ import edu.albany.ils.dsarmd0200.lu.CommunicationLink;
 import edu.albany.ils.dsarmd0200.lu.Settings;
 import edu.albany.ils.dsarmd0200.util.Util;
 import edu.albany.ils.dsarmd0200.util.Wordnet;
+import edu.albany.ils.dsarmd0200.cuetag.weka.ds_featuresHash.Ngram;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -150,15 +151,22 @@ public class CommActArffGen {
         for(int i = 0; i < tr_utts.size(); i++){
             Utterance utterance = (Utterance)tr_utts.get(i); // Utterance turn node
             String utt = utterance.getContent(); // utterance content
-            utt = Util.filterIt(utt).toLowerCase();
+            //utt = Util.filterIt(utt).toLowerCase();  //comment by TL 08/23/11
             /* make it string safe */
-            utt = utt.replace("\'", "\\\'");
+            //utt = utt.replace("\'", "\\\'");  comment by TL 08/23/11
+	    if ((Settings.getValue(Settings.LANGUAGE)).equals("chinese"))
+		{	
+		    utt = utterance.getSpaceTagContent();
+		}
+	    utt = Ngram.urlNormalize(utt);
+	    utt = Ngram.filterUtterance(utt);
             for(int k = 0; k < speakers_.size(); k++){
                 String speakerName = speakers_.toArray()[k].toString();
                 if(utt.contains(" " + speakerName + " "))
                     utt = utt.replace(speakerName, "<speaker>");
             }
-            ArrayList utt_ngram = Ngram_gen(utt);
+            ArrayList utt_ngram = Ngram.generateNgramList(utt); //Ngram_gen(utt); comment by TL 08/23/11
+            //ArrayList utt_ngram = Ngram_gen(utt);
             Object[] utt_ngram_array = utt_ngram.toArray();
             for(int j = 0; j < utt_ngram_array.length; j++){
                 if(term_frequency_.containsKey(utt_ngram_array[j].toString())){
@@ -185,15 +193,20 @@ public class CommActArffGen {
             String tag = utterance.getCommActType(); // utterance comm_act_type tag
             int tag_num = tn.tagNumberCommAct(tag.toLowerCase());
             String utt = utterance.getContent(); // utterance content
-            utt = Util.filterIt(utt).toLowerCase();
+            //utt = Util.filterIt(utt).toLowerCase(); comment by TL 08/23/11
             /* make it string safe */
-            utt = utt.replace("\'", "\\\'");
+            //utt = utt.replace("\'", "\\\'");  comment by TL 08/23/11
+	    if ((Settings.getValue(Settings.LANGUAGE)).equals("chinese"))
+		{	    utt = utterance.getSpaceTagContent(); }
+	    utt = Ngram.urlNormalize(utt);
+	    utt = Ngram.filterUtterance(utt);
             for(int k = 0; k < speakers_.size(); k++){
                 String speakerName = speakers_.toArray()[k].toString();
                 if(utt.contains(" " + speakerName + " "))
                     utt = utt.replace(speakerName, "<speaker>");
             }
-            ArrayList utt_ngram = Ngram_gen(utt);
+            ArrayList utt_ngram = Ngram.generateNgramList(utt); //Ngram_gen(utt); comment by TL 08/23/11
+            //ArrayList utt_ngram = Ngram_gen(utt);
             Object[] utt_ngram_array = utt_ngram.toArray();
             for(int j = 0; j < utt_ngram_array.length; j++){
                 if(tag_frequency_.containsKey(utt_ngram_array[j].toString())){
@@ -267,14 +280,19 @@ public class CommActArffGen {
                 else{ // not continuation-of, not response-to da tag, use ngram to training set
                     int tagNum = tn.tagNumberCommAct(tag.toLowerCase());
                     String utt = utterance.getContent(); // utterance content
-                    utt = Util.filterIt(utt).toLowerCase();
-                    utt = utt.replace("\'", "\\\'");
+                    //utt = Util.filterIt(utt).toLowerCase();  comment by TL 08/23/11
+                    //utt = utt.replace("\'", "\\\'");         comment by TL 08/23/11
+		    if ((Settings.getValue(Settings.LANGUAGE)).equals("chinese"))
+			{  utt = utterance.getSpaceTagContent(); }
+		    utt = Ngram.urlNormalize(utt);
+		    utt = Ngram.filterUtterance(utt);
                     for(int k = 0; k < speakers_.size(); k++){
                         String speakerName = speakers_.toArray()[k].toString();
                         if(utt.contains(" " + speakerName + " "))
                             utt = utt.replace(speakerName, "<speaker>");
                     }
-                    ArrayList utt_ngram_terms = Ngram_gen(utt);
+		    ArrayList utt_ngram_terms = Ngram.generateNgramList(utt); //Ngram_gen(utt); comment by TL 08/23/11
+                    //ArrayList utt_ngram_terms = Ngram_gen(utt);
                     Object[] ngram = utt_ngram_terms.toArray();
 
                     for(int j = 0; j < ngram.length; j++){
@@ -346,19 +364,24 @@ public class CommActArffGen {
                 if(tag.equals("") || tag == null)
                     tag = "unknown";
                 int tagNum = tn.tagNumberCommAct(tag.toLowerCase());
-                String utt = utterance.getContent();
+		String utt = utterance.getContent();
+		if ((Settings.getValue(Settings.LANGUAGE)).equals("chinese"))
+		    { utt = utterance.getSpaceTagContent(); }//edited by TL 08/23/11 
                 String[] utt_array = utt.split("\\s+");
 		if (utt_array == null || utt_array.length == 0) continue;
                 String firstword = utt_array[0].toLowerCase();
-                utt = Util.filterIt(utt).toLowerCase();
-                utt = utt.replace("\'", "\\\'");
+                //utt = Util.filterIt(utt).toLowerCase();
+                //utt = utt.replace("\'", "\\\'");
+		utt = Ngram.urlNormalize(utt);
+		utt = Ngram.filterUtterance(utt);
 
                 for(int k = 0; k < speakers_.size(); k++){
                     String speakerName = speakers_.toArray()[k].toString();
                     if(utt.contains(" " + speakerName + " "))
                         utt = utt.replace(speakerName, "<speaker>");
                 }
-                ArrayList utt_ngram_terms = Ngram_gen(utt);
+		ArrayList utt_ngram_terms = Ngram.generateNgramList(utt); //Ngram_gen(utt); comment by TL 08/23/11
+                //ArrayList utt_ngram_terms = Ngram_gen(utt);
                 Object[] ngram = utt_ngram_terms.toArray();
                 String line = "";
                 
