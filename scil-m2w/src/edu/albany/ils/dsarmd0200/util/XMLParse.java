@@ -45,7 +45,7 @@ public class XMLParse {
 		{
 		    Utterance utterance = (Utterance) utts_.get(index);
 			utterances.add(utterance.getUtterance());
-			speakers.add(utterance.getSpeaker());
+			speakers.add(utterance.getSpeaker().toLowerCase()); //modified by TL 09/01/11 toLowerCase()
 			//timestamps.add(utterance.getTime());
 			turn_no.add(utterance.getTurn());
 			comm_acts.add(utterance.getCommActType());

@@ -40,6 +40,7 @@ public class TaskControl {
 									 (utt_.getTag().indexOf("Confirmation-Request") != -1) ||*/
 		utt_.getMTag().equalsIgnoreCase("TASK-MGMT") ||
 		utt_.getMTag().equalsIgnoreCase("PRCS-MGMT")) {
+		//System.out.println("find a task control usable utterance (" + utt_.getTag() + "/" + utt_.getMTag() + "): " + utt_.getContent() + utt_.getSpeaker()); 
 		if (utt_.getTag().equalsIgnoreCase("information-request") ||
 		    utt_.getTag().equalsIgnoreCase("confirmation-request") ||
 		    (utt_.getTag().indexOf("Information-Request") != -1) ||
@@ -161,8 +162,21 @@ public class TaskControl {
 		utt_post_ = utts_.get(i+1);
 		utt_post_new_spk = isNewSpk(utt_post_, i);
 	    }
-	    String uttc_ = utt_.getTaggedContent();
+	    String uttc_ = utt_.getTaggedSubSentence();
+	    String uttc_nt_ = utt_.getSubSentence();
+	    if (uttc_nt_ == null) uttc_nt_ = utt_.getContent();
+	    if (uttc_ == null) uttc_ = utt_.getTaggedContent();
 	    if (uttc_ == null) continue;
+	    if (utt_.getTag().equalsIgnoreCase("information-request")) {
+		if (utt_.getContent().toLowerCase().indexOf("any other question") != -1 || 
+		    utt_.getContent().toLowerCase().indexOf("any more question") != -1 || 
+		    utt_.getContent().toLowerCase().indexOf("want a question") != -1) {
+		    utt_.setTag("action-directive");
+		    continue;
+		}
+	    }
+	    //String uttc_ = utt_.getTaggedContent();
+	    //if (uttc_ == null) {System.out.println("utt_ tagged is NULL!!!!!: " + utt_.getUtterance()); continue;}
 	    //String[] ws = uttc_.split("[\\W]+");
 	    String[] ws = uttc_.split("[\\s]+");
 	    //if (ws[ws.length - 1].indexOf("?") != -1) {
@@ -190,11 +204,30 @@ public class TaskControl {
 			     nls_.isPerson(ws1s[0]))) {
 			    if (!isLocalTopic(ws1s[0]) &&
 				utt_post_new_spk) {
-				System.out.println("find a person name: " + uttc_ + " ----- speaker: " + utt_.getSpeaker());
+				//System.out.println("find a person name: " + uttc_ + " ----- speaker: " + utt_.getSpeaker());
 				utt_.setTag("action-directive");
 				break;
 			    }
 			} 
+			if (ws1s[1].startsWith("n") &&
+			    (nls_.isPerson(ws1s[0]) ||
+			     nls_.isPerson(ws1s[0].substring(0, ws1s[0].length() - 1))) &&
+			    (uttc_nt_.endsWith(ws1s[0] + "?") ||
+			     uttc_nt_.endsWith(ws1s[0])) &&
+			    uttc_nt_.endsWith("?")) {
+			    //System.out.println("find a person name: " + uttc_ + " ----- speaker: " + utt_.getSpeaker());
+			    utt_.setTag("action-directive");
+			    break;
+			}
+			if (ws1s[1].startsWith("n") &&
+			    (nls_.isPerson(ws1s[0]) ||
+			     nls_.isPerson(ws1s[0].substring(0, ws1s[0].length() - 1)) &&
+			     ws1s[0].endsWith("?")) &&
+			    uttc_nt_.indexOf("over to " + ws1s[0]) != -1) {
+			    //System.out.println("find a person name: " + uttc_ + " ----- speaker: " + utt_.getSpeaker());
+			    utt_.setTag("action-directive");
+			    break;
+			}
 		    }
 		    /*
 		    String ws1 = ws[ws.length - 1].toLowerCase();
@@ -243,7 +276,9 @@ public class TaskControl {
 	    if (word.equalsIgnoreCase(utt_pos.getSpeaker())) //introduce himself/herself
 		return true;
 	}	    
-	for (int j = 0; j < i; j++) {
+	int j = i - 10;
+	if (j < 0) j = 0;
+	for (; j < i; j++) {
 	    Utterance utt_ = utts_.get(j);
 	    if (utt_.getSpeaker().equals(utt_pos.getSpeaker())) { //appeared before
 		return false;

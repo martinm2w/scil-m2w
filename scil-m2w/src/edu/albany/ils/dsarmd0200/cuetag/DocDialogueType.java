@@ -27,14 +27,15 @@ public class DocDialogueType {
 	for (int i = 0; i < utts_.size(); i++) {
 	    Utterance utt_ = utts_.get(i);
 	    if (utt_.getTag().equals(DsarmdDATag.CR) ||
-		utt_.getTag().equals(DsarmdDATag.IR)/* ||
-						       utt_.getContent().indexOf("?") != -1*/) {
+		utt_.getTag().equals(DsarmdDATag.IR) ||
+		utt_.getContent().indexOf("?") != -1) { //uncomment 09/01/11 by TL
 		size_of_ircr ++;
 	    }
+	    //System.out.println("utt_ content: " + utt_.getContent());
 	}
 	double perOfIRCR = (double)size_of_ircr/utts_.size();
-	System.out.println("size of ircr: " + size_of_ircr);
-	System.out.println("percentage of ircr: " + perOfIRCR);
+	//System.out.println("size of ircr: " + size_of_ircr);
+	//System.out.println("percentage of ircr: " + perOfIRCR);
 	if (perOfIRCR >= 0.25) {
 	    ddt_ = QA;
 	} else { ddt_ = ME; }

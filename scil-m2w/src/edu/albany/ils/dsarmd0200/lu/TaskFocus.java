@@ -97,8 +97,8 @@ public class TaskFocus {
 
                 }
 
-            
-                msm = msm / (double)temp_List.size();
+		if (temp_List.size() == 0) {msm = 0;}
+                else {msm = msm / (double)temp_List.size();}
             }
             
             return msm;
@@ -148,7 +148,8 @@ public class TaskFocus {
 //                    System.out.println("tempMgm: " + tempMgm);
 //                    System.out.println("-----end------");
                 }
-                mgm = mgm / (double)temp_List.size();
+		if (temp_List.size() == 0) { mgm = 0; }
+                else {mgm = mgm / (double)temp_List.size();}
             }
            
             return mgm;

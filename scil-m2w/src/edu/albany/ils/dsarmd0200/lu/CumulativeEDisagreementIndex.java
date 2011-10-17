@@ -34,7 +34,7 @@ public class CumulativeEDisagreementIndex {
 		(utt_.getTag().toLowerCase().indexOf(DATagger.NDISAGREE_REJECT1) != -1) || //1/26/2011
 		(utt_.getTag().toLowerCase().indexOf(DATagger.NDISAGREE_REJECT2) != -1)/* || //1/26/2011
 											  utt_.getPolarity().equalsIgnoreCase("negative")*/) { 
-		//System.out.println("utt_.getTag(): " + utt_.getTag());
+		//System.out.println("utt_.getTag(): " + utt_.getTag() + " ============= " + utt_.getContent());
 		/*
 		if (utt_.getPolarity().equalsIgnoreCase("negative")) {
 		    System.out.println("negative opion: " + utt_.getContent());
@@ -62,9 +62,11 @@ public class CumulativeEDisagreementIndex {
 	    count++;
 	    utts_count_.put(cur_spk, count);
 	}
+	/*
 	System.out.println("total negative: " + total_pl_neg);
 	System.out.println("total dis: " + total_ex_dis);
 	System.out.println("total count: " + total_count);
+	*/
 	//System.out.println("utts_count:\n" + utts_count_);
 	//System.out.println("dris_count:\n" + dris_);
 	boolean over_thr = false;
@@ -79,7 +81,7 @@ public class CumulativeEDisagreementIndex {
 	    String key = (String)keys.next();
 	    Integer dis_count = (Integer) dris_.get(key);
 	    if (over_thr) {
-		System.out.println("number of disagreement of " + key + " is: " + dis_count);
+		//System.out.println("number of disagreement of " + key + " is: " + dis_count);
 		dris_sc_.put(key, new Double(dis_count.doubleValue()/total_dri_));
 		if (parts.get(key) == null) {
 		    //System.out.println(key + "is not a part!!!");

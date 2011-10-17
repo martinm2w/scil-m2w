@@ -2,6 +2,7 @@ package edu.albany.ils.dsarmd0200.util;
 
 import java.io.*;
 import java.util.*;
+import edu.albany.ils.dsarmd0200.lu.Settings;
 
 public class SentenceSplitter implements Serializable
 {
@@ -22,7 +23,7 @@ public class SentenceSplitter implements Serializable
     	
     	// load abbreviations
 	try{
-	    BufferedReader in = new BufferedReader( new FileReader( new File( "/home/ting/tools/mdl/abbrv.lst" ) ) );
+	    BufferedReader in = new BufferedReader( new FileReader( new File( Settings.getValue("abbrv_list")))); //"/home/ting/tools/mdl/abbrv.lst" ) ) );
 	    
 	    String line = new String();
 	    while ( (line = in.readLine()) != null )

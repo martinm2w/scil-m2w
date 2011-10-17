@@ -71,7 +71,8 @@ public class Util {
 	text = text.replaceAll(" dont ", " don't ");
 	text = text.replaceAll("$a $m", "am");
 	text = text.replaceAll("$p $m", "pm");
-	text = text.replaceAll("[^\\w']+", " ").toLowerCase().trim();
+	//text = text.replaceAll("[^\\w']+", " ").toLowerCase().trim();
+	text = text.replaceAll("[\\p{Punct}^']+", " ").toLowerCase().trim();
 	text = text.replaceAll("\\s+", " ");
 	return text;
     }
@@ -300,7 +301,7 @@ public class Util {
 	    }
 	return wordArray;
     }
-    
+
     /**
      * m2w: parsing Chinese string into HashMap<CN, ArrayList<CNStr>>, English in the same map too. each word as an entry in the ArrayList.
      * @param the utterance
@@ -353,7 +354,7 @@ public class Util {
 	ArrayList<String> utt2_wds = uttToWds(utt2);
 	return compareUtts(utt1_wds, utt2_wds);
     }
-    
+
     /**
      * 
      * @param utt1
@@ -395,25 +396,16 @@ public class Util {
 		    }
 		
 	    }
-	double cwsize = (double)compared_wordArray.size();
-        double wsize = (double)wordArray.size();
-        double max = Math.max(cwsize,wsize);
-	if(cwsize==0 || wsize==0)
+	
+	if(compared_wordArray.size()==0 || wordArray.size()==0)
 	    {
 		
 		f = 0;
 	    }
-        else 
+	else
 	    {				
-//		f =(((double)hit/(float)compared_wordArray.size()) + ((double)hit/(float)wordArray.size()))/2;
-                f = (double)hit/max;
-                Integer I = 10;
-                
-                   
+		f =(((double)hit/(float)compared_wordArray.size()) + ((double)hit/(float)wordArray.size()))/2;
 	    }
-//        System.out.println(compared_wordArray);
-//        System.out.println(wordArray);
-//        System.out.println(f);
 	return f;
     }
 

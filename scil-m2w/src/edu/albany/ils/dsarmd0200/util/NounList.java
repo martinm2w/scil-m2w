@@ -154,9 +154,13 @@ public class NounList {
         for (int i = 0; i < ws.length; i++) {
             //System.out.println("w: " + ws[i]);
             String wl = ws[i].toLowerCase();
-            if (speakers.contains(wl)) {
-		return true;
-            }
+	    for (String spk: speakers) {
+		if (spk.equals(wl) ||
+		    spk.indexOf(" " + wl) != -1 ||
+		    spk.indexOf(wl + " ") != -1) {
+		    return true;
+		}
+	    }
         }
         return false;
     }
@@ -263,11 +267,11 @@ public class NounList {
 		for (int i = 0; i < nouns.size(); i++){
 			NounToken temp = nouns.get(i);
 			if (temp.firstMention()){
-			    //System.out.println(temp.getWord() + " - turn " + temp.getTurnNo());
-				count++;
+			    System.out.println(temp.getWord() + " - turn " + temp.getTurnNo());
+			    count++;
 			}
 		}
-		//System.out.println(count + " found.");
+		System.out.println(count + " found.");
 	}
 
 	public void printNounsWithSubsequentMentions(){
@@ -492,45 +496,56 @@ public class NounList {
 	public void createList(FindVerb fv){
 	    if (isEnglish_)
 		{
-//                    System.out.println("in here");
+                    //System.out.println("in here");
 		if (!created){
 			for (int i = 0; i < utterances.size(); i++){
 			    Utterance utt_ = utts_.get(i);
-				String utterance = utterances.get(i);
-				String speaker = speakers.get(i);
-				if (!speakTokens.containsKey(speaker))
-					speakTokens.put(speaker, speakTokens.size());
-				// remove emoticons in each utterance
-//LinCommented				String noEmotes = ParseTools.removeEmoticons(utterance);
-//				StanfordPOSTagger.initialize();
-				// tag the utterance
-//LinCommented				String tagged = StanfordPOSTagger.tagString(noEmotes).trim();
-				//System.out.println("Turn "+(i+1)+": "+tagged);
-//LinCommented				fv.add(tagged);
-//LinCommented				utt_.setTaggedContent(tagged);
-				// split to X/Xtag
-//LinCommented				String [] tagsplit = tagged.split("\\s+");
-                                
-                                
-//LinAdded                      
-                                fv.add(utt_.getTaggedContent());
-                                String [] tagsplit=utt_.getTaggedContent().split("\\s+"); 
-				// get words and phrases in one utterance, saves WORDS WITH TAGS from each utterance
-				// into arraylist tokens Eg. A/Atag B/Btag
-				ArrayList <String> tokens = getTokens(tagsplit); int count = 0;
-				//System.out.println("***" + (i+1) + "***");
-				for (int j = 0; j < tokens.size(); j++){
-					String token = tokens.get(j);
-					//get the word
-					String word = ParseTools.getWord(token).trim();
-					word = word.replaceAll("\\s+", " ");
-					//get the tag
-					String tag = ParseTools.getTag(token);
-					int ID = numberOfNouns();
-					int turnno = ParseTools.getTurnNo(turn_no.get(i));
-					
-					// Find appropriate verbs and if it is first mentioned or it has been mentioned in nouns
-					// in ParseTool class
+			    String utterance = utterances.get(i);
+			    String speaker = speakers.get(i);
+			    if (!speakTokens.containsKey(speaker))
+				speakTokens.put(speaker, speakTokens.size());
+			    // remove emoticons in each utterance
+			    //LinCommented				String noEmotes = ParseTools.removeEmoticons(utterance);
+			    //				StanfordPOSTagger.initialize();
+			    // tag the utterance
+			    //LinCommented				String tagged = StanfordPOSTagger.tagString(noEmotes).trim();
+			    //System.out.println("Turn "+(i+1)+": "+tagged);
+			    //LinCommented				fv.add(tagged);
+			    //LinCommented				utt_.setTaggedContent(tagged);
+			    // split to X/Xtag
+			    //LinCommented				String [] tagsplit = tagged.split("\\s+");
+			    
+                            
+			    //LinAdded                      
+			    /*
+				System.out.println("utt_: " + utt_.getContent() + " ============ " + utt_.getTaggedContent());
+				if (utt_.getTaggedContent() == null) {
+				    System.out.println("utt_ tagged content is NULL: " + utt_.getContent());
+				    continue;
+				}
+			    */
+			    fv.add(utt_.getTaggedContent());
+			    if (utt_.getSubSentence() != null) {
+				String tagged = StanfordPOSTagger.tagString(utt_.getSubSentence()).trim();
+				utt_.setTaggedSubSentence(tagged);
+			    }
+			    String [] tagsplit=utt_.getTaggedContent().split("\\s+"); 
+			    // get words and phrases in one utterance, saves WORDS WITH TAGS from each utterance
+			    // into arraylist tokens Eg. A/Atag B/Btag
+			    ArrayList <String> tokens = getTokens(tagsplit); int count = 0;
+			    //System.out.println("***" + (i+1) + "***");
+			    for (int j = 0; j < tokens.size(); j++){
+				String token = tokens.get(j);
+				//get the word
+				String word = ParseTools.getWord(token).trim();
+				word = word.replaceAll("\\s+", " ");
+				//get the tag
+				String tag = ParseTools.getTag(token);
+				int ID = numberOfNouns();
+				int turnno = ParseTools.getTurnNo(turn_no.get(i));
+				
+				// Find appropriate verbs and if it is first mentioned or it has been mentioned in nouns
+				// in ParseTool class
 					
 					// extract all nouns and analyse
 					if (ParseTools.isNoun(tag)){
@@ -542,7 +557,7 @@ public class NounList {
 						NounToken nt =
 								new NounToken(word, tag, speaker, turnno, ID, wrdnt);
 //								new NounToken(word, tag, speaker, i + 1, ID, wrdnt);
-						if ((!ParseTools.isBadNoun(word)) && ParseTools.isWord(word)){
+						if ((!ParseTools.isBadNoun(word)) && ParseTools.isWord(word) && !isSpeaker(word)){ //modified by TL 09/01 !isSpeaker
 							// resolve noun token
 							resolve(nt);
 							if (nt.firstMention()){
@@ -622,7 +637,9 @@ public class NounList {
 //						if ((!ParseTools.isBadNoun(word)) && ParseTools.isWord(word)){
 						if (!ParseTools.isBadNoun(word)) { //modified by 06/20/2011 TL
 							// resolve noun token
-							resolveCHN(nt);
+
+						    //resolveCHN(nt);
+						    resolve(nt); //modified by TL 08/11
 							if (nt.firstMention()){
 								String ft = Integer.toString(i+1) + ".";
 								ft += Integer.toString((++count));
@@ -635,7 +652,8 @@ public class NounList {
 						NounToken nt = new NounToken(word, tag, speaker, i + 1, ID, getCnwn());
 						if (!ParseTools.ignorePronoun(word) &&
 						    !ParseTools.isBadNoun(word)) { //add bracket 06/17 by TL, add isBadNoun
-						    resolveCHN(nt);
+						    //resolveCHN(nt);
+						    resolve(nt); //modified by TL 08/11
 						    //System.out.println("after resolve: " + nt);
 						    nouns.add(nt);
 						}
@@ -944,7 +962,7 @@ public class NounList {
 		if (tag.charAt(0) == 'N' && !word1.contains("%")){//m2w : added word1 not equals % cuz it stuck at runtime.
 			tag = "noun";
                         try{
-                            System.out.println("word: >" + word1 + "<");
+//                            System.out.println("word: >" + word1 + "<");
                             synonyms = getCnwn().getChineseSynlist(word1);
                         }catch(SQLException e){e.printStackTrace();}
 			//System.out.println("The word: " + word1);

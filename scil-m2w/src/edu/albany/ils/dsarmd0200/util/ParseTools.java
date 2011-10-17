@@ -311,7 +311,7 @@ public abstract class ParseTools {
 		//System.out.println( param + "  ---> " + retval);
 		return retval;
 	}
-        
+
         /**
          * m2w : this method is for doing Chinese word count.
          *      1. Chinese has no spaces.

@@ -141,6 +141,7 @@ public class Leadership {
     }
 
     public void calculateR() {
+	//System.out.println(topic_control_r_ + " "  + task_control_r_  + " " + involvement_r_  + " " + disagreement_r_);
 	leadership_r_ = topic_control_r_ + task_control_r_ + involvement_r_ + disagreement_r_;
     }
 
