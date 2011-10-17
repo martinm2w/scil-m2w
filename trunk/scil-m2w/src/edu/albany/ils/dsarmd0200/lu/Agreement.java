@@ -63,9 +63,9 @@ public class Agreement {
 		atx_count_++;
 	    }
 	}
-	System.out.println("atx_pl_ps_count: " + atx_pl_ps_count);
-	System.out.println("atx_tag_ag_count: " + atx_tag_ag_count);
-	System.out.println("atx_overall_count: " + atx_count_);
+	//System.out.println("atx_pl_ps_count: " + atx_pl_ps_count);
+	//System.out.println("atx_tag_ag_count: " + atx_tag_ag_count);
+	//System.out.println("atx_overall_count: " + atx_count_);
 	return atx_count_;
     }
 

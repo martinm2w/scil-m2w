@@ -190,7 +190,7 @@ public abstract class GenderCheck {
 		if (!initialized)
 			initialize();
 		String pn = pronoun.toLowerCase();
-		System.out.println("test pronoun: " + pn);
+		//System.out.println("test pronoun: " + pn);
 		return (!malePronouns.containsKey(pn) && !unhumanPronouns.containsKey(pn));
 	}
 	

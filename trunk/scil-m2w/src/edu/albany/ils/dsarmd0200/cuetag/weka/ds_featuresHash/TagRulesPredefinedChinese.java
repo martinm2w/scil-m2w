@@ -23,7 +23,6 @@ public class TagRulesPredefinedChinese extends TagRulesPredefined {
 
     @Override
     public String rules_filtered(String str){
-//        System.err.println(str);
         init();
         String str2 = "<start> " + str.toLowerCase().trim() + " <finish>";
 
@@ -39,7 +38,6 @@ public class TagRulesPredefinedChinese extends TagRulesPredefined {
                 tagFeaturesPredefinedWithScore.get(DsarmdDATag.CR);
 
         for(String s : AA_Features.keySet()){ // agree-accept
-//            System.err.println(s);
             if(str2.contains(s)){
                 str = str.replace(s, DsarmdDATag.AA);
             }
@@ -74,7 +72,7 @@ public class TagRulesPredefinedChinese extends TagRulesPredefined {
         BufferedReader br;
         String str = "";
         try {
-            br = new BufferedReader(new FileReader("724.ngram.Chinese"));
+            br = new BufferedReader(new FileReader(chineseNgram));
             while((str = br.readLine()) != null){
                 String[] array = str.split(":");
                 String tag = array[1].trim();

@@ -32,6 +32,32 @@ public class DialogueActType extends Opinion{
 	}
     }
 
+    /*
+     * Added by Laura, Apr 21, 2011
+     */
+    public DialogueActType(ArrayList all_utts_,
+			   ArrayList tr_utts_,
+			   ArrayList<Utterance> utts_,
+                           ArrayList<Utterance> splitUtts_,
+                           TreeMap<Integer, Integer> turnNoSplitNo) {
+	super();
+	this.all_utts_ = all_utts_;
+	this.tr_utts_ = tr_utts_;
+	this.utts_ = utts_;
+	//System.out.println("utts_ size: " + utts_.size());
+        this.splitUtts_ = splitUtts_;
+        this.turnNoSplitNo = turnNoSplitNo;
+        splitUtterance = true;
+	tagType_ = Settings.getValue("tagType");
+	//System.out.println("go into processFeatures...");
+	if (tagType_.equals("da15")) {
+	    processFeatures();
+	    prepareForTraining();
+	}else {
+	    prepareForTraining3();
+	}
+    }
+
     /*******************************get information**************************/
 
 
@@ -41,8 +67,18 @@ public class DialogueActType extends Opinion{
         ArrayList tagList = ca.getTagList();
 	trainingArff = wekaArffPath + "training.arff";
 	testingArff = wekaArffPath + "testing.arff";
-        ArffGenerator ag = new ArffGenerator("training.arff", trainingArff, "testing.arff",
-					     testingArff, tr_utts_, utts_, tagList, featuresMap_, allFeatures_);
+
+        // modified by Laura, May 5th, 2011
+        ArffGenerator ag;
+        if(!splitUtterance){
+            ag = new ArffGenerator("training.arff", trainingArff, "testing.arff",
+                    testingArff, tr_utts_, utts_, tagList, featuresMap_, allFeatures_);
+        }
+        else{
+            ag = new ArffGenerator("training.arff", trainingArff, "testing.arff",
+                    testingArff, tr_utts_, splitUtts_, tagList, featuresMap_, allFeatures_);
+        }
+
         ag.writeTrainingArff();
         
         /* generate testing arff file */
@@ -82,10 +118,45 @@ public class DialogueActType extends Opinion{
 	weka_classify_ = new edu.albany.ils.dsarmd0200.cuetag.weka/*.ds_featuresHash*/.WekaClassify(trainingArff, testingArff,
 					  trainingArffBatchFiltered, testingArffBatchFiltered, wekaResults, wekaClassifierName);
 	weka_classify_.classify();
-	results_ = new TaggingResults(wekaResults, utts_, "dialog_act" + Settings.getValue("tagNum"));
-	utts_ = results_.getTaggingResults();
+        // modified by Laura, Apr 20, 2011
+
+        if(!splitUtterance){
+            results_ = new TaggingResults(wekaResults, utts_, "dialog_act" + Settings.getValue("tagNum"));
+            utts_ = results_.getTaggingResults();
+        }
+        else{
+            results_ = new TaggingResults(wekaResults, splitUtts_, "dialog_act" + Settings.getValue("tagNum"));
+            splitUtts_ = results_.getTaggingResults(); // expanded tagging result
+	    /*
+            System.out.println("Laura debug: before combine, utts size = " + splitUtts_.size() + "\n\n");
+            System.out.println("&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&");
+            for(Utterance utt : splitUtts_) {
+                System.out.println("$$$$ " + utt.toString());
+            }
+            System.out.println("&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&\n\n");
+	    */
+            CombineTestingUtterance ctu = new CombineTestingUtterance(/*utts_,*/ splitUtts_, turnNoSplitNo);
+            ArrayList tmp_utts_ = ctu.getCombinedUtts();
+	    utts_.clear();
+	    utts_.addAll(tmp_utts_);
+	    /*
+            System.out.println("Laura debug: after combine, utts size = " + utts_.size() + "\n\n");
+            for(Utterance utt : utts_){
+                System.out.println(utt.toString());
+            }
+	    */
+
+
+//DaTaggingResult dtr = new DaTaggingResult("/home/gjiao/NetBeansProjects/dsarmd0200/data/0505/YMCA_gt.xml", utts_);
+//System.out.println(dtr.toString());
+//System.exit(0);
+        }
+
+	
+
 	//System.out.println("utts: " + utts_);
 	//results_.writeTaggingXml("/home/gjiao/Desktop/Sep1/session49_DialogAct.xml");
+	//System.out.println("after tagging, utts_ size: " + utts_.size());
     }
 
     public void processFeatures() {
@@ -145,6 +216,10 @@ public class DialogueActType extends Opinion{
     }
 
     /*******************************   Attributes  **************************/
+    
+    private boolean splitUtterance = false;
+    private ArrayList<Utterance> splitUtts_ = null;
+    private TreeMap<Integer, Integer> turnNoSplitNo = null;
     private ArrayList<Utterance> utts_ = null;
     private ArrayList<Utterance> all_utts_ = null;
     private ArrayList<Utterance> tr_utts_ = null;

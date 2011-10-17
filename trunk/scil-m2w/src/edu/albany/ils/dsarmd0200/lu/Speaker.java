@@ -351,6 +351,7 @@ public class Speaker {
     }
     
     public void calLeadershipR() {
+	//System.out.println("name: " + name_);
 	leadership_.calculateR();
     }
     
@@ -385,7 +386,7 @@ public class Speaker {
 	    diff_from_third = second - tc_.getPower();
 	    //System.out.println("diff_from_first tpc: " + diff_from_first);
 	    //System.out.println("diff_from_third tpc: " + diff_from_third);
-	    if (diff_from_first < diff_from_third) {
+	    if (diff_from_first < diff_from_third) {//modified by TL 09/01/11 < to <=
 		spk2.getLeadershipInfo().setTopicControl2R(2);
 	    }
 	} else {
@@ -413,8 +414,8 @@ public class Speaker {
 	    }
 	    diff_from_first = first - second;
 	    diff_from_third = second - getDI(); 
-	    if (diff_from_first < diff_from_third) {
-		leadership_.setTaskControl2R(2);
+	    if (diff_from_first < diff_from_third) {//modified by TL 09/01/11 < to <=
+		spk2.getLeadershipInfo().setTaskControl2R(2); //modified by TL 09/01/11 before is leadership_....
 	    }
 	}else {
 	    leadership_.setTaskControlR(rank);
@@ -435,7 +436,7 @@ public class Speaker {
 		    diff_from_third = getDisagreement() - spk.getDisagreement();
 		}
 	    }
-	    if (diff_from_first < diff_from_third) {
+	    if (diff_from_first < diff_from_third) {//modified by TL 09/01/11 < to <=
 		leadership_.setDisagreement2R(rank);
 	    }
 	} else {
@@ -457,7 +458,7 @@ public class Speaker {
 		    diff_from_third =  getInv().getPower() - spk.getInv().getPower();
 		}
 	    }
-	    if (diff_from_first < diff_from_third) {
+	    if (diff_from_first < diff_from_third) { //modified by TL 09/01/11 < to <=
 		leadership_.setInvolvement2R(rank);
 	    }
 	} else {

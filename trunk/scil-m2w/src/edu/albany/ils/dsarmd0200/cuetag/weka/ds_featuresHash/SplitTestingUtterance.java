@@ -8,6 +8,8 @@ package edu.albany.ils.dsarmd0200.cuetag.weka.ds_featuresHash;
 import edu.albany.ils.dsarmd0200.evaltag.Utterance;
 import edu.albany.ils.dsarmd0200.util.SentenceSplitter;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.TreeMap;
 
 /**
  *
@@ -15,8 +17,10 @@ import java.util.ArrayList;
  */
 public class SplitTestingUtterance {
 
-    private ArrayList<Utterance> utts;
+    private ArrayList<Utterance> utts = new ArrayList<Utterance>();
     SentenceSplitter sp = new SentenceSplitter();
+    private TreeMap<Integer, Integer> turnNoSplitNo = new TreeMap<Integer, Integer>();//key: turn no; value: number of sub-sentences
+    private ArrayList<Utterance> splittedUtts = new ArrayList<Utterance>();
 
     public SplitTestingUtterance(ArrayList<Utterance> utts){
         this.utts = utts;
@@ -28,27 +32,54 @@ public class SplitTestingUtterance {
      * sub sentence, everything else stays the same.
      * @return an enriched utts
      */
-    public ArrayList<Utterance> getSplittedUtts(){
-        ArrayList<Utterance> result = new ArrayList<Utterance>();
-
+    public void startSplitting(){
+        
         for(Utterance utt : utts){
-            String content = utt.getContent().toLowerCase().trim();
+            //String content = utt.getContent().toLowerCase().trim();
+            String content = utt.getContent().trim().replaceAll("[ ]+", " ");
+	    //System.out.println("content: " + content);
             ArrayList<String> subSentences = sp.split(content);
-            if(subSentences.size() > 3){
-                result.add(utt);
+            //if(subSentences.size() > 3){
+            if(subSentences.size() < 3){
+                splittedUtts.add(utt);
             }
-            else if(subSentences.size() > 1){ // sub sentences num : 2 - 3
+            else if(subSentences.size() > 2){ // sub sentences num : 2 - 3
+                
+		//System.out.println("Laura debug: turn no = " + utt.getTurn());
+                int subSentenceNum = subSentences.size();
+                int turnNo = Integer.parseInt(utt.getTurn());
+                turnNoSplitNo.put(turnNo, subSentenceNum);
                 for(String s : subSentences){
-                    Utterance tmp = utt;
+                    Utterance tmp = new Utterance();
+                    tmp.setCommActType(utt.getCommActType());
+                    tmp.setSpeaker(utt.getSpeaker());
+                    tmp.setPOS(utt.getPOS());
+                    tmp.setPOSCOUNT(utt.getPOSCOUNT());
+                    tmp.setPOSORIGIN(utt.getPOSORIGIN());
+                    tmp.setPolarity(utt.getPolarity());
+                    tmp.setRespTo(utt.getRespTo());
+                    tmp.setTopic(utt.getTopic());
+                    tmp.setTag(utt.getTag());
                     tmp.setContent(s);
-                    result.add(tmp); // seperate them
+		    tmp.setTaggedContent(utt.getTaggedContent());
+                    tmp.setTurn(utt.getTurn());
+                    splittedUtts.add(tmp); // seperate them
                 }
             }
             else{
-                result.add(utt);
+                splittedUtts.add(utt);
             }
         }
-        return result;
     }
 
+    public TreeMap<Integer, Integer> getTurnNoSplitNo(){
+        return turnNoSplitNo;
+    }
+
+    public ArrayList<Utterance> getSplittedUtts(){
+        return splittedUtts;
+    }
+
+    
+    
 }

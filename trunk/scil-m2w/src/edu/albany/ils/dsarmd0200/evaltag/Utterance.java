@@ -15,6 +15,7 @@ public class Utterance implements DialogAct {
     
     //data
     private String content = null;
+    private String ori_content = null;
     private String tagged_content = null;
     private String tag = "";    
     private String mtag = "";    
@@ -23,7 +24,10 @@ public class Utterance implements DialogAct {
     private String turn = null;
     private String pos_ = null;
     private String pos_origin_ = null;
+    private String pos_count_ = null;
     private String resp_to = null;
+    private String resp_to_spk = null;
+    private String resp_to_utt = null;
     private String speaker = null;
     private String comm_act_type = "";
     private String time = null;
@@ -38,8 +42,10 @@ public class Utterance implements DialogAct {
 	
     //m2w: added instance variable of type Utterance containing the .1 and .0 turns.
     private ArrayList<Utterance> sub_turns = new ArrayList<Utterance>();
-
-    //Lin added
+    // Added by Laura, May 05, 2011
+    private String subSentence = null;
+    private String tagged_subSentence = null;
+//Lin added
     private String space_tagged_content=null;
 
     /************************get information***********************************/
@@ -50,6 +56,14 @@ public class Utterance implements DialogAct {
 	return content;
     }
     
+    public String getSubSentence() {
+        return subSentence;
+    }
+
+    public String getTaggedSubSentence() {
+        return tagged_subSentence;
+    }
+
     public String getUtterance() {
 	return content;
     }
@@ -92,12 +106,20 @@ public class Utterance implements DialogAct {
 	return pos_origin_;
     }
 
+    public String getPOSCOUNT() {
+        return pos_count_;
+    }
+
     public String getTurn() {
 	return turn;
     }
 
     public String getRespTo() {
 	return resp_to;
+    }
+    
+    public String getRespToSpk() {
+	return resp_to_spk;
     }
     
     public String getCommActType() {
@@ -123,7 +145,7 @@ public class Utterance implements DialogAct {
     public String getSysTopic() {
 	return sys_topic;
     }
-    
+
     
 
     /**
@@ -146,7 +168,7 @@ public class Utterance implements DialogAct {
 	return false;
     }
 
-    
+
 
     /*****************************set information*****************************/
     /**
@@ -201,6 +223,10 @@ public class Utterance implements DialogAct {
 	this.pos_origin_ = pos_origin;
     }
 
+    public void setPOSCOUNT(String pos_count){
+        this.pos_count_ = pos_count;
+    }
+
     public void setSpeaker(String speaker) {
 	this.speaker = speaker.toLowerCase();//add toLowerCase 1/20/2011
     }
@@ -216,6 +242,12 @@ public class Utterance implements DialogAct {
 
     public void setRespTo(String resp_to) {
 	this.resp_to = resp_to;
+	if (resp_to == null || resp_to.trim().length() == 0) return;
+	String[] resps = resp_to.split(":");
+	if (resps.length > 1) {
+	    resp_to_spk = resps[0].toLowerCase();
+	    resp_to_utt = resps[1].toLowerCase();
+	}
     }
 
     public void setCommActType(String comm_act_type) {
@@ -245,8 +277,21 @@ public class Utterance implements DialogAct {
 	this.content = content;
     }
 
+    public void setOriContent(String content) {
+	this.ori_content = content;
+    }
+
+    public void setSubSentence(String subSentence) {
+        this.subSentence = subSentence;
+    }
+
+    public void setTaggedSubSentence(String subSentence) {
+        this.tagged_subSentence = subSentence;
+    }
+
     public void setTaggedContent(String content) {
-	this.tagged_content = content;
+	if (tagged_content == null) 
+	    this.tagged_content = new String(content);
     }
 
     public void setUtterance(String content) {
@@ -266,7 +311,7 @@ public class Utterance implements DialogAct {
     }
 
     public void setSpaceTaggedContent(String content) {
-	this.space_tagged_content = content;
+	this.space_tagged_content = new String(content.toString());
     }
     /**
      * set tag maps
@@ -275,37 +320,37 @@ public class Utterance implements DialogAct {
     }
 
     public String toString() {
-	if (topic != null) {
+	//if (topic != null) {
 	    StringBuffer output = new StringBuffer();
+	    output.append("**************************turn: " + turn + "\n");
 	    output.append("speaker: " + speaker + "\n");
 	    output.append("content: " + content + "\n");
+            output.append("sub sentence: " + subSentence + "\n");
 	    output.append("tag: " + tag + "\n");
-	    output.append("topic: " + topic + "\n");
-	    output.append("mtag: " + mtag + "\n");
-	    output.append("communication act: " + comm_act_type + "\n");
-	    output.append("polarity: " + polarity + "\n");
-	    output.append("turn: " + turn + "\n");
+	    //output.append("topic: " + topic + "\n");
+	    //output.append("mtag: " + mtag + "\n");
+	    //output.append("communication act: " + comm_act_type + "\n");
+	    //output.append("polarity: " + polarity + "\n");
 	    output.append("response to: " + resp_to + "\n");
-	    output.append("extracted tag: " + sys_tag + "\n");
-	    output.append("extracted polarity: " + sys_polarity + "\n");
-	    output.append("extracted response to: " + sys_resp_to + "\n");
+	    //output.append("extracted tag: " + sys_tag + "\n");
+	    //output.append("extracted polarity: " + sys_polarity + "\n");
+	    //output.append("extracted response to: " + sys_resp_to + "\n");
 	    return output.toString();
-	}
-	return null;
+	    //}
+	    //return null;
     }
-    
     /**
      * @return the sub_turns
      */
     public ArrayList<Utterance> getSub_turns() {
         return sub_turns;
-}
-
+    }
+    
     /**
      * @param sub_turns the sub_turns to set
      */
     public void setSub_turns(ArrayList<Utterance> sub_turns) {
         this.sub_turns = sub_turns;
-    }
+}
     
 }

@@ -60,9 +60,9 @@ public class GroupCohesion {
 	if (dpm_score_ >= dpm_thr_) ov_thr += 1;
 	if (prm_score_ >= prm_thr_) ov_thr += 1;
 	double confidence = ov_thr/total;
-	if (confidence == 0) System.out.println("@Cohesion: notCohesive");
-	else if (confidence < 0.6) System.out.println("@Cohesion: mixedIndicators \n@Confidence: \n" + confidence);
-	else System.out.println("@Cohesion: cohesive \n@Confidence: \n" + confidence);
+	if (confidence == 0) System.out.println("@Cohesion: none");
+	else if (confidence < 0.6) System.out.println("@Cohesion: low \n@Confidence: \n" + confidence);
+	else System.out.println("@Cohesion: high \n@Confidence: \n" + confidence);
     }
     /*******************************  Attributes   **************************/
     private TaskFocus tkf_ = null;
@@ -76,10 +76,10 @@ public class GroupCohesion {
     private double prm_score_ = -1;
     private DPM dpm = null;
     private PRM prm = null;
-    private final static double mso_thr_ = 0.31;
+    private final static double mso_thr_ = 0.32;//0.31; 08/31/11 TL
     private final static double spks_adm_thr_ = 0.6;
-    private final static double sm_thr_ = 0.69;
-    private final static double dpm_thr_ = 0.70;
+    private final static double sm_thr_ = 0.68;//0.69;  08/31/11 TL
+    private final static double dpm_thr_ = 0.69; //0.70; 08/31/11 TL
     private final static double prm_thr_ = 0.75;
     
     

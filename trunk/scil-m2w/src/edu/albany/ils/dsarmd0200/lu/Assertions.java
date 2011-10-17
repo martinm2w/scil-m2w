@@ -13,6 +13,7 @@ import edu.albany.ils.dsarmd0200.util.*;
 import edu.albany.ils.dsarmd0200.util.xml.*;
 //import edu.albany.ils.dsarmd0200.ml.*;
 import edu.albany.ils.dsarmd0200.cuetag.*;
+import edu.albany.ils.dsarmd0200.cuetag.weka.ds_featuresHash.SplitTestingUtterance;
 import edu.albany.ils.dsarmd0200.evaltag.*;
 import java.sql.SQLException;
 import org.apache.xerces.parsers.*;
@@ -30,11 +31,20 @@ public class Assertions {
 	docs_path_ = data_path;
 //	System.out.println("Preparing...");
 
-	loadAndParseTraining ();
-	loadAndParse ();
-        //m2w: for chinese
-        this.setLanguageAndInitPosTaggers();
-//        this.initChineseWordnet();
+	if ((Settings.getValue (Settings.WEB_SERVICE)).equals ("no"))
+	    {
+		loadAndParseTraining ();
+		loadAndParse();
+                this.setLanguageAndInitPosTaggers();
+	    }
+	else
+	    {
+		loadAndParseTraining ();
+                this.setLanguageAndInitPosTaggers();
+		QueryListener ql = new QueryListener (this);
+		ql.start ();
+
+	    }
 	/*
 	if (Settings.getValue(Settings.PROCESS_TYPE).equals("automated")) {
 	    preprocess();
@@ -62,12 +72,34 @@ public class Assertions {
     }
 
     public void makeAssertions() {
-        for (int i = 0; i < docs_utts_.size(); i++) {
+        //Lin Added 08/05/2011
+                
+                for (int j = 0; j < tr_utts_.size(); j++){
+		    String utterance = ((Utterance)tr_utts_.get(j)).getUtterance();
+                    String noEmotes = ParseTools.removeEmoticons(utterance);
+                    String tmpTagged="";
+		    if ((Settings.getValue(Settings.LANGUAGE)).equals("english")){
+			tmpTagged=StanfordPOSTagger.tagString(noEmotes);
+		    }
+		    else if ((Settings.getValue(Settings.LANGUAGE)).equals("chinese"))
+			{    
+			    tmpTagged=StanfordPOSTagger.tagChineseString(noEmotes);
+			}
+                    String tagged = tmpTagged.trim();
+                    String spcTagged=tmpTagged.replaceAll("/"+"([A-Z]+)*"+" ", " ");
+                    ((Utterance)tr_utts_.get(j)).setTaggedContent(tagged);
+                    ((Utterance)tr_utts_.get(j)).setSpaceTaggedContent(spcTagged);
+                    
+                    //System.out.println("sTmp: "+utts_.get(j).getTaggedContent());
+                }
+        //end of Lin
+	
+	for (int i = 0; i < docs_utts_.size(); i++) {
 	    String fn = (String)doc_names_.get(i);
 	    System.out.println("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$\nprocessing: " + fn);
 	    //utts_ = (ArrayList)docs_utts_.get(i);
 	    all_utts_.clear();
-            all_utts_.addAll(tr_utts_);
+	    all_utts_.addAll(tr_utts_);
 	    gch_ = new GroupCohesion();
 	    if (Settings.getValue(Settings.PROCESS_TYPE).equals("automated")) {
 		PhraseCheck phr_ch = (PhraseCheck)phr_checks_.get(i);
@@ -96,7 +128,7 @@ public class Assertions {
                 }
                 //end of Lin
 		
-                all_utts_.addAll(utts_);
+		all_utts_.addAll(utts_);
 		tagCommType();
 		//System.exit(0);
 		tagDAct();
@@ -140,7 +172,7 @@ public class Assertions {
 		for (int k = 0; k < utts_.size(); k++) {
 		    Utterance utt_ = (Utterance)utts_.get(k);
 		    System.out.println(utt_.getTurn() + " || " + utt_.getSpeaker() + " || " + utt_.getTag() + " || " + utt_.getCommActType() 
-				       + " || " + utt_.getRespTo() + ": " + utt_.getContent());
+				       + " || " + utt_.getRespTo() + ": " + utt_.getSubSentence() + " ---- " + utt_.getTaggedSubSentence());
 		}
 		*/
 
@@ -175,11 +207,11 @@ public class Assertions {
 	    calExDis(i);
 	    System.out.println ("@Leadership");
 	    calLeader();
-	    //System.out.println("@Agreement");
+	    System.out.println("@Agreement");
 	    calAgr();
-	    //System.out.println("@Task Focus");
+	    System.out.println("@Task Focus");
 	    calTaskFocus(i);
-	    //System.out.println("@Sociability Measure...");
+	    System.out.println("@Sociability Measure...");
 	    calSociability();
 	    //System.out.println("\n\nProcessing L...");
 	    //System.out.println("\n\nProcessing Sociability Measure...");
@@ -215,7 +247,7 @@ public class Assertions {
 			while ((line = bufferedReader.readLine ()) != null)
 			    {
 				System.err.println (line);
-			    }
+    }
 			InputStreamReader myErrorStreamReader = new InputStreamReader (moveQueryFile.getErrorStream ());
 			BufferedReader bufferedErrorReader = new BufferedReader (myErrorStreamReader);
 			String eLine;
@@ -223,7 +255,7 @@ public class Assertions {
 			    {
 				System.err.println (eLine);
 			    }
-			
+
 			if (moveQueryFile.waitFor () != 0)
 			    System.err.println ("ERROR" + moveQueryFile.exitValue ());
 			else System.err.println ("moved query file");
@@ -281,7 +313,25 @@ public class Assertions {
 	Settings.setValue("tagNum", "15");
 	Settings.setValue("tagType", "da15");
 	//System.out.println("tagNum: " + Settings.getValue("tagNum"));
-	daT = new DialogueActType(all_utts_, tr_utts_, utts_);
+	//daT = new DialogueActType(all_utts_, tr_utts_, utts_); comment out at 05/19 by TL
+
+        // modified by Laura, May 5th, 2011
+        if(Boolean.valueOf(Settings.getValue("splitUtterance"))){
+            System.out.println("Laura debug: before splitting, size = " + utts_.size());
+            SplitTestingUtterance stu = new SplitTestingUtterance(utts_);
+            stu.startSplitting();
+            ArrayList<Utterance> splittedUtts = stu.getSplittedUtts();
+            System.out.println("Laura debug: after splitting, size = " + splittedUtts.size());
+            TreeMap<Integer, Integer> turnNoSplitNo = stu.getTurnNoSplitNo();
+            System.out.println("splitted turns and quantities: " + turnNoSplitNo);
+
+            daT = new DialogueActType(all_utts_, tr_utts_, utts_, splittedUtts, turnNoSplitNo);
+        }
+        else{
+            daT = new DialogueActType(all_utts_, tr_utts_, utts_);
+        }
+
+        
 	daT.tagIt();
 	for (int i = 0; i < utts_.size(); i++) {
 	    Utterance utt_ = (Utterance)utts_.get(i);
@@ -385,11 +435,28 @@ public class Assertions {
 	for (int i = 0; i < keys.size(); i++) {
 	    String key = (String)keys.get(i);
 	    Speaker spk = parts_.get(key);
-	    spk.calATX();
 	    if (spk.getName().startsWith("ils")) continue;
+	    spk.calATX();
             // modified by Laura, April 13, 2011
 	    //System.out.println(/*"The actural score of ATX of " + */spk.getName() + /*" is: "*/ " : " + spk.getATX());
 	}
+	//added by TL 06/01
+//	double total_agreed = 0;
+//	for (int i = 0; i < keys.size(); i++) {
+//	    String key = (String)keys.get(i);
+//	    Speaker spk = parts_.get(key);
+//	    if (spk.getName().startsWith("ils")) continue;
+//	    total_agreed += spk.getAgreed();
+//	    //System.out.println(/*"The actural score of ATX of " + */spk.getName() + /*" is: "*/ " : " + spk.getATX());
+//	}
+//	for (int i = 0; i < keys.size(); i++) {
+//	    String key = (String)keys.get(i);
+//	    Speaker spk = parts_.get(key);
+//	    if (spk.getName().startsWith("ils")) continue;
+//	    double agreed_per = spk.getAgreed() / total_agreed;
+//	    System.out.println(/*"The actural score of ATX of " + */spk.getName() + /*" is: "*/ " : " + agreed_per);
+//	}
+	
     }
 
     public void calTpDis(int j) {
@@ -1709,15 +1776,13 @@ public class Assertions {
 //                    StanfordPOSTagger.initializeChinese();
 //		}
 	    nls_.createList(fv);
+        }
 	    /*
 	    if ((Settings.getValue (Settings.URDU)).equals("yes") )
 		{
 		    nls_.setUrdu (true);
 		    nls_.setUrduPath (Settings.getValue (Settings.URDU_PATH));
-		}
-	    */
-	    nls_.createList(fv);
-	}
+	}*/
 	//end comment
 	//only for invlovement
 	//if (is_inv_) {
@@ -1750,13 +1815,6 @@ public class Assertions {
 	    System.out.println("size of mentions: " + lts_.sizeOfMentions());
 	    */
 	}
-	/*
-	System.out.println("local topics: " );
-	for (int i = 0; i < lts_.size(); i++) {
-	    LocalTopic lt_ = (LocalTopic)lts_.get(i);
-	    System.out.println("lt" + i + ": " + lt_);
-	}
-	*/
 	for (int k = 0; k < utts_.size(); k++) {
 	    Utterance utt_ = (Utterance)utts_.get(k);
 	    //System.out.println(utt_.getTurn() + " || " + utt_.getSpeaker() + " || " + utt_.getTag() + " || " + utt_.getCommActType() 
@@ -1878,7 +1936,7 @@ public class Assertions {
     public void setTop10nouns() {
 	ArrayList nouns = nls_.getNouns();
 	ArrayList top10Ids = new ArrayList();
-	for (int i = 0; i < 10; i++) {
+	for (int i = 0; i < 10 && i < nouns.size(); i++) {
 	    NounToken noun = (NounToken)nouns.get(i);
 	    Integer id = noun.getID();
 	    top10Ids.add(id);
@@ -1966,6 +2024,7 @@ public class Assertions {
 		    isChinese_ = true;
 //		    nls_.setChinese (true);
                     StanfordPOSTagger.initializeChinese();
+                    System.out.println("init chinese done!!");
 		}
     }
     
