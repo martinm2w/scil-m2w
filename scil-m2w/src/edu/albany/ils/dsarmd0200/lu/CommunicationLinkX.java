@@ -377,7 +377,630 @@ public class CommunicationLinkX{
 
         }
 
+//     =====================================rank calculation methods ===============================================
         
+        /**
+         * m2w: calculate and set res-to by calculating 10/9 previous utt's rank(how much is it likely to be the correct res-to).
+         * @param index 
+         */
+        private void shortUttRank(int index){
+            ArrayList<ArrayList> list = buildRankList(index);
+            Utterance currUtt = utts.get(index);
+//            System.out.println("testing: in short utt rank");
+            //if curr utt is the first. thus list is empty.
+            if(!list.isEmpty()){
+//                System.out.println("testing: in short utt rank, list is not empty");
+                list = calRankShort(list, index);
+//                for(int i = 0; i < list.size(); i++){
+//                    if((Integer)list.get(i).get(2) > 0){
+//                        System.out.print(list.get(i).get(0) + " ");
+//                        System.out.print(((Utterance)list.get(i).get(1)).getContent() + " " );
+//                        System.out.println(list.get(i).get(2));
+//                    }
+//                }
+//                System.out.println("testing: in short utt rank, after cal rank short");
+                int res_to = 0;
+                res_to = getHighestRankTN(list, index);
+//                System.out.println("testing: in short utt rank, after get highest rank turn number");
+//                Utterance currUtt = (Utterance)list.get(0).get(1);
+//                System.out.println( " res_to: " + res_to + "rank : "+ list.get(0).get(2));
+                int rank = (Integer)list.get(0).get(2);
+                this.setResToTN(index, res_to, currUtt, "Short Rgetank",rank);
+//                System.out.println("testing: in short utt rank, after set res-to");
+                
+            }//closes if is empty.
+        }//closes method.
+        
+        /**
+         * m2w: build the rank list for previous utts. ArrayList<ArrayList>
+         * index 0 : the "i" , index - i = which previous utt.
+         * index 1 : the i'th previous utt.
+         * index 2 : the rank of this previous utt.
+         * @param index
+         * @return the rank list
+         * @date 8/23/11 11:31 AM
+         */
+        private ArrayList<ArrayList> buildRankList(int index){
+            ArrayList<ArrayList> list = new ArrayList<ArrayList>();
+            //build list.
+            for(int i = 1; (index - i > 0) && (i < 10); i++){
+                Utterance prev_utt = utts.get(index - i);
+                int init_rank = 0;
+                ArrayList sub_list = new ArrayList();
+                sub_list.add(i);
+                sub_list.add(prev_utt);
+                sub_list.add(init_rank);
+                if(!sub_list.isEmpty()) list.add(sub_list);
+            }
+            return list;
+        }
+        
+        
+        /**
+         * m2w: calculate the ranks of each previous utts and return the list.
+         * @param list
+         * @param index
+         * @return 
+         */
+        private ArrayList<ArrayList> calRankShort(ArrayList<ArrayList> list, int index){
+            Utterance curr_utt = utts.get(index);
+            list = this.calRankUtilFindName(curr_utt, list);
+            list = this.calRankUtilWordSim(curr_utt, list);
+            list = this.calRankUtilCaseMatching(curr_utt, list);
+            return list;
+        }
+        
+        private ArrayList<ArrayList> calRankLong(ArrayList<ArrayList> list, int index){
+            Utterance curr_utt = utts.get(index);
+            return list;
+        }
+        
+        /**
+         * m2w: get the highest rank turn number form the list.
+         * 1. sort the list in descending order according to the list's index 2 entry's value.
+         * 2. get the highest ranked turn and its turn number.
+         * @param list
+         * @return 
+         * @date 8/23/11 11:15 AM
+         */
+        private int getHighestRankTN(ArrayList<ArrayList> list, int index){
+            int highestRankTN = 0;
+            Collections.sort(list, new Comparator(){
+                @Override
+                public int compare(Object ob1, Object ob2){
+                    int o1Rank = 0;
+                    int o2Rank = 0;
+                    o1Rank = (Integer)(((ArrayList)ob1).get(2));
+                    o2Rank = (Integer)(((ArrayList)ob2).get(2));
+                    //descending order
+                    return o2Rank - o1Rank;
+                }
+            });
+            if((Integer)(list.get(0).get(2)) < 2){
+                return Integer.parseInt(utts.get(index - 1).getTurn());
+            }
+            Utterance highestUtt = (Utterance)list.get(0).get(1);
+            highestRankTN = Integer.parseInt(highestUtt.getTurn());
+            return highestRankTN;
+        }
+          
+        /**
+         * 
+         * @param curr_utt
+         * @param list
+         * @return 
+         */
+        private ArrayList<ArrayList> calRankUtilFindName(Utterance curr_utt, ArrayList<ArrayList> list){
+            int rank = 0;
+            String curr_speaker = curr_utt.getSpeaker().toLowerCase();
+            String cur_content = contentExtraction(curr_utt);
+            String cur_raw_content = curr_utt.getContent().toLowerCase();
+            
+            
+            String name = "";
+            boolean name_found = false;
+            boolean link_found = false;
+            
+            //look for if there's any speaker name in cur utterance;
+            StringTokenizer tokenizer = new StringTokenizer(cur_content);
+            while(tokenizer.hasMoreTokens()){
+                    String token = tokenizer.nextToken();
+                    //arraylist for getting name in the list. 4/3/11 3:06 PM
+                    ArrayList<String> nameList = new ArrayList<String>(speaker_names);
+                    //nameList = (ArrayList)Arrays.asList(speaker_names.toArray());
+                    for (int i = 0; i < nameList.size(); i ++ ){
+                        if(token.length() > 2 && nameList.get(i).contains(token.toLowerCase())){ // added token length > 2 , 4/16/11 3:51 PM
+                            name_found = true;
+                            name = nameList.get(i).toLowerCase(); // this is the name in the map/arraylist, so no need to "contains" getting name matching. 4/3/11 10:09 PM
+                            break;
+                        }
+                    }   
+            }//closes while has more tokens
+            
+            //if there is a name in curr utt.
+            if(name_found){
+                for(int i = 1; i<list.size(); i++){
+                Utterance prev_utt = (Utterance)(list.get(i).get(1));
+                int iRank = (Integer)(list.get(i).get(0));
+                String preSpkName = prev_utt.getSpeaker().toLowerCase();
+                //if prev utt speaker's name matches the name we found in curr utt, rank + 5.
+                    if(!preSpkName.equalsIgnoreCase(curr_speaker)){
+                        
+                        //added conventional-opening , hi some one case. 4/18/11 1:09 PM
+                        if (curr_utt.getTag().toLowerCase().contains("opening") || cur_raw_content.contains("hi ")){
+                            if((this.lengthCal(prev_utt) > 1) && preSpkName.equals(name) && this.lengthCal(prev_utt) > 1 && prev_utt.getTag().toLowerCase().contains("opening") ){
+                                //rank + 6
+                                iRank += 6;
+                                list.get(i).set(0, iRank);
+                            }
+                        }else if(preSpkName.equals(name) && this.lengthCal(prev_utt) > 1){
+                            //rank + 5
+                            iRank += 6;
+                            list.get(i).set(0, iRank);
+                        }//ends if same name has found!
+                    }//ends same name check
+                }//ends outter for loop
+            }//ends if name is found  
+            
+            return list;
+        }
+        
+        private ArrayList<ArrayList> calRankUtilWordSim(Utterance curr_utt, ArrayList<ArrayList> list){
+
+            String curr_speaker = curr_utt.getSpeaker().toLowerCase();
+            String cur_content = contentExtraction(curr_utt);
+            //m2w : look back ,loop through several utts, now set to 3, 3/28/11 1:19 PM
+            outterFor:
+            for(int i = 0; i<list.size(); i++){
+                Utterance prev_utt = (Utterance)(list.get(i).get(1));
+                String pre_content = contentExtraction(prev_utt);
+                if(!prev_utt.getSpeaker().equalsIgnoreCase(curr_speaker)){
+                    //convert the 2 utts' contents into arrays, check if they have the same word
+                        
+                        //changed to uttToWdsChinese 8/9/11 2:37 PM
+                        //1. get the arraylist-of-arraylist of strings. (each word as an entry, chinese at index0, english at index1)
+                        //2. if the curr list and prev list != empty.
+                        //3. get list from map, check isempty before do.
+                        //4. if English !isEmpty(), do chinese first. find identical words. 
+                        //5. if Chinese !isEmpty(), do english, find similar words.
+                        HashMap<String, ArrayList<String>> tempCurrUttMap = Util.uttToWdsChinese(cur_content);
+                        HashMap<String, ArrayList<String>> tempPrevUttMap = Util.uttToWdsChinese(pre_content);
+                        
+                        //2.
+                        if(!tempCurrUttMap.isEmpty() && !tempPrevUttMap.isEmpty()){
+                            //3.
+                            ArrayList<String> tempCurrCNList = tempCurrUttMap.get("CN");
+                            ArrayList<String> tempCurrENList = tempCurrUttMap.get("EN");
+                            ArrayList<String> tempPrevCNList = tempCurrUttMap.get("CN");
+                            ArrayList<String> tempPrevENList = tempCurrUttMap.get("EN");
+                            
+                            //4.
+                            if(tempCurrENList != null && !tempCurrENList.isEmpty()
+                                    && tempPrevENList != null && !tempPrevENList.isEmpty()){
+                                int swHit = 0;
+                                for(int x = 0; x < tempCurrENList.size(); x++){//index utt loop
+                                    for(int y = 0; y < tempPrevENList.size(); y++){//pre utt loop
+                                        //both prev and curr longer than 6, will do the check or else do nothing.
+                                        //threshold is now set to 5. 4/16/11 3:16 PM
+                                        if(tempCurrENList.get(x).length() > 5 && tempPrevENList.get(y).length() > 5 - 2 ){//now set to 5 and 3 4/16/11 3:31 PM
+                                            String tempCurrWord = tempCurrENList.get(x);
+                                            String tempPrevWord = tempCurrENList.get(y);
+                                            ArrayList<Character> tempCurrWordList = new ArrayList<Character>();
+                                            ArrayList<Character> tempPrevWordList = new ArrayList<Character>();
+                                            
+                                            for(char value: tempCurrWord.toCharArray()){
+                                                tempCurrWordList.add(value);
+                                            }                                    
+                                            for(char value: tempPrevWord.toCharArray()){
+                                                tempPrevWordList.add(value);
+                                            }
+                                            
+                                            int charHit = 0;
+                                            //loop through the smaller one of the 2 wordlist
+                                            for(int m = 0; m < Math.min(tempCurrWordList.size(), tempPrevWordList.size()); m++){
+                                                    Character tempCurrChar = tempCurrWordList.get(m);
+                                                    Character tempPrevChar = tempPrevWordList.get(m);
+                                                    if(tempCurrChar.equals(tempPrevChar)){
+                                                        charHit++;
+                                                    }//ends if char same
+                                            }//ends word list for loop
+                                            //calculate the similarity of 2 words.
+        //                                    Double wordSim = (double)charHit / (double)tempCurrWordList.size();
+                                            //m2w: changed to min of the 2. 4/20/11 11:03 AM
+                                            Double wordSim = (double)charHit / (double)Math.min(tempCurrWordList.size(), tempPrevWordList.size());
+                                            if(wordSim >= WORD_SIM_THRESHOLD){
+                                                //is now set to 0.7 . 4/16/11 3:16 PM
+                                                swHit++;
+                                            }
+                                        }// ends if curr and prev word longer than 6 chars
+                                    }//ends prev utt for loop
+                                }//ends curr utt for loop
+
+                                //excluded prev_utt com_act_type is response-to. 4/16/11 3:30 PM
+                                if(swHit > 0 && !prev_utt.getCommActType().toLowerCase().contains("response-to")){
+                                    //rank + 2
+                                    this.increaseRank(list.get(i), 2);
+                                }//ends if hit > 0;
+                            }//closes 4. if english not empty
+                            
+                            //5.
+                            if(tempCurrCNList != null && tempCurrCNList.size() > 1 //2 consecutive words, 8/10/11 2:46 PM
+                                    && pre_content != null){
+                                //using 2 consecutive words as searching criteria, parse through the current list and previous list.
+                                for(int curIndex=1; curIndex<tempCurrCNList.size(); curIndex++){
+                                    String tempCurSubStr = tempCurrCNList.get(curIndex) + tempCurrCNList.get(curIndex - 1);
+                                    //if prev utt contains curr sub string.
+                                    if(pre_content.contains(tempCurSubStr)){
+                                        this.increaseRank(list.get(i), 2);
+                                    }//close if conatins curr sub string
+                                }//closes CN for loop.
+                            }//closes 5. CN
+                        }//closes check if CN & EN list is empty
+                }//ends same name check
+            }//ends look back for loop
+
+
+            return list;
+        }//ends method
+        
+        private ArrayList<ArrayList> calRankUtilCaseMatching(Utterance curr_utt, ArrayList<ArrayList> list){
+            Utterance utt = curr_utt;
+            String curr_speaker = curr_utt.getSpeaker().toLowerCase();
+            String cur_content = contentExtraction(curr_utt).toLowerCase();
+            String cur_raw_content = curr_utt.getContent().toLowerCase();
+            
+            //flow controling:
+            boolean firstLol = true;
+            boolean firstExactly = true;
+            boolean firstGoodPoint = true;
+            //m2w : look back ,loop through several utts, now set to 3
+            for(int i = 0; i<list.size(); i++){
+                Utterance prev_utt = (Utterance)(list.get(i).get(1));
+                    //m2w: if prev_utt has the same speaker,skip， use the condition here, put the new condition in the skip method. 3/23/11 2:31 PM
+                    if(!prev_utt.getSpeaker().equalsIgnoreCase(curr_speaker)){
+
+                        String pre_raw_content = prev_utt.getContent().toLowerCase();
+                        String pre_content = contentExtraction(prev_utt).toLowerCase();
+
+
+//                      ===== m2w : current utt contains matching cases. 4/4/11 2:41 PM ======
+                        //m2w: yes and D[agree-accept] && prev is C[addressed-to]D[Information-Request] and contains ? , then set.4/18/11 9:07 AM
+                        if((cur_content.startsWith("yes")  || cur_content.startsWith("对")  || cur_content.startsWith("恩")  || cur_content.startsWith("好")  || cur_content.startsWith("是")  || cur_content.startsWith("没错"))
+                                && this.lengthCal(utt) < 2 && utt.getTag().contains("agree-accept")
+                                && pre_raw_content.contains("?") 
+//                                && prev_utt.getTag().toLowerCase().contains("information-request")
+                                ){
+                            //rank + 2
+                            this.increaseRank(list.get(i), 2);
+                        }
+
+                        //m2w: if curr and prev both contains "haha", should be laughing at the same utt.
+                        //chinese : skip prev_utt if prev_utt also is "lol", then add 2 to the first prev_utt which is not lol, and only do it once.
+                        //put haha to 2nd of case matching. 4/18/11 1:01 PM
+                        if((firstLol) 
+                                && (cur_content.contains("hah") || cur_raw_content.contains("lol") || cur_raw_content.contains("哈哈")) 
+                                //changed the lengthcal to > 3. 4/18/11 10:01 AM
+                                && !(pre_content.contains("hah")|| pre_content.contains("lol") || cur_raw_content.contains("哈哈"))
+                                //added prev_utt length > 1. 4/18/11 11:21 AM
+                                && this.lengthCal(prev_utt) > 1
+                                ){
+                            //rank + 2
+                            this.increaseRank(list.get(i), 2);
+                            firstLol = false; // do + 2 once.
+                        }
+
+                        //m2w: sure and can you ? wanna ? case 4/18/11 1:41 PM
+                        if((cur_raw_content.equals("sure") || cur_raw_content.contains("当然")  || cur_raw_content.contains("没问题")  )
+//                                && utt.getTag().equals("--Response-Answer")
+//                                && prev_utt.getTag().equals("Information-Request")
+                                && pre_raw_content.contains("?")
+                                ){
+                            //rank + 2
+                            this.increaseRank(list.get(i), 2);
+                        }
+                        
+                        //m2w: code 34, too, neither case 3/24/11 1:56 PM
+                        //chinese: curr_utt contains "也", prev_utt is some statement starts with "我". 8/24/11 11:10 AM
+                        if(((cur_content.contains(" too") || cur_content.contains(" neither")) && (
+                                pre_content.contains("not ")
+                                || pre_content.contains("nt ")
+                                || pre_content.contains("id be")
+                                || pre_content.contains("i would be")
+                                ))
+                                ||
+                                (cur_content.contains("也") && (
+                                pre_content.contains("没有")
+                                || pre_content.startsWith("我")
+                                ))
+                                ){
+                            //rank + 1
+                            this.increaseRank(list.get(i), 1);
+                            
+                        }
+                        
+                        //m2w: code 32, rhetorical question case. if in previous 3 utts contains “?” && “ don't dont isn't wasn't hasn't weren't” , FOUND! 3/22/11 3:50 PM
+                        //chinese： 反问句. 
+                        if((pre_raw_content.contains("?")) &&
+                                        !(pre_content.contains("know ")) &&
+                                        ((pre_content.contains("dont ")
+                                        || pre_content.contains("isnt ")
+                                        || pre_content.contains("wasnt ")
+                                        || pre_content.contains("hasnt ")
+                                        || pre_content.contains("havnt ")
+                                        || pre_content.contains("werent ")
+                                        || pre_content.contains("didnt ")
+                                        || pre_raw_content.contains("right?")
+                                        ) || (
+                                            pre_content.matches(".*不[\\u4E00-\\u9FA5]?吗.*")// 不是吗
+                                            || pre_content.matches(".*没[\\u4E00-\\u9FA5]?吗.*")//
+                                            || pre_content.matches(".*难道[\\u4E00-\\u9FA5]+吗.*")//
+                                            || pre_content.matches(".*怎么[\\u4E00-\\u9FA5]+呢.*")
+                                ))){
+                            //rank + 3
+                            this.increaseRank(list.get(i), 3);
+                       }
+
+//                        //m2w : code 35, wow case, wow about something, look for "i", 3/24/11 11:17 AM
+////                        if((cur_raw_content.contains("wow ") || cur_raw_content.contains(" wow") || cur_raw_content.equals("wow")) && (
+//                        if((cur_raw_content.contains("wow") && (
+//                                //m2w : added exclaimation mark! 4/18/11 9:53 AM
+//                                (pre_raw_content.contains("i ") || pre_raw_content.contains("!"))
+//                                )) 
+//                                || cur_raw_content.contains("哇")
+//                                ){
+//                                found = true;
+//                                this.setRespTo(index, i, utt, "Short: cnd: CaseMatching_cur_utt: wow");
+//                                break;
+//
+//                        }
+                        
+                        //m2w : code 36, agree on some one's denying about something, look for don't. 3/24/11 11:17 AM
+                        if(((cur_raw_content.contains("nt") || cur_raw_content.contains("n't")) && cur_raw_content.contains("either"))
+//                                ||  ((cur_raw_content.contains("没") || cur_raw_content.contains("不")|| cur_raw_content.contains("赞")|| cur_raw_content.contains("反对")) && cur_raw_content.contains("也")) 
+                                || (cur_content.contains("我也") || utt.getTag().toLowerCase().contains("agree"))
+                                ){
+                            if (pre_content.contains("dont") || 
+//                                    (cur_raw_content.contains("没") || cur_raw_content.contains("不")|| cur_raw_content.contains("赞")|| cur_raw_content.contains("反对"))
+                                    (pre_content.contains("我不赞")
+                                    || pre_content.contains("我反对")
+                                    || prev_utt.getTag().toLowerCase().contains("disagree")
+                                    )){
+                                //rank + 2
+                                this.increaseRank(list.get(i), 2);
+                            }
+                        }
+
+                        //m2w: code 39, it's ok case, look for "sorry" in previous utts 4/1/11 3:10 PM
+                        if((cur_raw_content.contains("'s ok")
+                                || cur_raw_content.contains("'s okay")
+                                || cur_raw_content.contains("s ok")
+                                || cur_raw_content.contains("s okay")
+                                || cur_raw_content.contains("没事")
+                                || cur_raw_content.contains("没关系")
+                                
+                                ) && (pre_content.contains("sorry") 
+                                        || pre_content.contains("对不起") 
+                                        || pre_content.contains("不好意思") 
+                                        )){
+                                //rank + 3
+                            this.increaseRank(list.get(i), 3);
+                        }
+
+//                        //m2w: code 310, sorry check. if last utt has sorry too, link to last's link_to ,4/3/11 11:38 AM
+//                        if((cur_raw_content.contains("sorry") && pre_raw_content.contains("sorry") && prev_utt.getSysRespTo() != null)){
+//                            found = true;
+//                            String pre_SysRespTo = prev_utt.getSysRespTo();
+//                            this.setRespToAs(index, pre_SysRespTo, utt, "Short: cnd: CaseMatching_cur_utt: sorry same prev utt");
+//                            break;
+//                        }
+//                        4/16/11 4:01 PM
+
+                        //m2w: code 311, exactly case, check its last utt, then perform skip judge and link to prev utts 4/1/11 3:10 PM
+                        //chinese: if curr and prev utt both contains exactly, then look for prev-utt's res-to see if that utt is in the list, 
+                        //if is in the list ,then add 2 to its rank.
+                        if((cur_raw_content.toLowerCase().contains("exactly")) 
+                                || cur_raw_content.contains("没错") || cur_raw_content.contains("对") || cur_raw_content.contains("就是")
+                                ){
+                            //checking last utt,
+                            if((pre_content.contains("exactly") 
+                                    || cur_raw_content.contains("没错") || cur_raw_content.contains("对") || cur_raw_content.contains("就是")
+                                    ) && prev_utt.getSysRespTo() != null){ // gai
+                                String pre_SysRespTo = prev_utt.getSysRespTo();
+                                String pre_SysRespToTN = pre_SysRespTo.split(":")[1];
+                                for(int x=i; x<list.size(); x++){
+                                    Utterance tempUtt = (Utterance)(list.get(x).get(1));
+                                    if(tempUtt.getTurn().equals(pre_SysRespToTN)){
+                                        //rank + 2
+                                        this.increaseRank(list.get(x), 2);
+                                    }
+                                }//closes looking for prev utt's res-to and add 2 to that utt's rank.
+                            }//closes prev utt contains exactly too.                        
+                            else{
+                                if(firstExactly){
+                                    //if didn't find, increase last utt 1 once.
+                                    this.increaseRank(list.get(i), 1);
+                                    firstExactly = false;
+                                }
+                            }
+                        }//closes if curr utt contains exactly
+
+                        //m2w: code 312, good point case. look for "?" and/or "why",4/3/11 11:38 AM
+                        if(cur_raw_content.toLowerCase().contains("good point") || cur_raw_content.toLowerCase().contains("good question")
+                                || cur_raw_content.contains("说的好")|| cur_raw_content.contains("问的好")|| cur_raw_content.contains("有道理")
+                                ){
+                            //if previous utt also fits the case, then set to prev's link_to
+                            if(( pre_raw_content.contains("good point") || pre_raw_content.contains("good question")
+                                    || cur_raw_content.contains("说的好")|| cur_raw_content.contains("问的好")|| cur_raw_content.contains("有道理")
+                                    ) && prev_utt.getSysRespTo() != null){
+                                String pre_SysRespTo = prev_utt.getSysRespTo();
+                                String pre_SysRespToTN = pre_SysRespTo.split(":")[1];
+                                for(int x=i; x<list.size(); x++){
+                                    Utterance tempUtt = (Utterance)(list.get(x).get(1));
+                                    if(tempUtt.getTurn().equals(pre_SysRespToTN)){
+                                        //rank + 2
+                                        this.increaseRank(list.get(x), 2);
+                                    }
+                                }//closes looking for prev utt's res-to and add 2 to that utt's rank.                            
+                                // if not , look for ? or why, then set.
+                            }else if(pre_content.contains("?") || pre_content.contains("why")
+                                        || pre_content.contains("为什么")|| pre_content.contains("怎么")
+                                        ){
+                                    this.increaseRank(list.get(i), 2);
+                            }else{
+                                if(firstGoodPoint){
+                                    this.increaseRank(list.get(i), 1);
+                                    firstGoodPoint = false;
+                                }
+                            }
+                        }
+
+                        
+
+                         //m2w : i agree can't be responsing to a question. 3/24/11 11:17 AM
+//                        if(cur_content.contains("agree") && pre_raw_content.contains("?")){
+//                                    continue;
+//                                }
+                         //m2w : curr contains true, and previous shouldn't contains should or true, 3/24/11 11:17 AM
+//                        if(cur_content.contains("true") && (pre_content.contains("should") || pre_content.contains("true"))){
+//                                    continue;
+//                                }
+
+
+
+
+        
+//                        ===== m2w : previous utt contains matching cases. 4/4/11 2:41 PM ======
+                        //m2w : code 33 , certain types of conditions, if fits, set link_to, set to the utt; 4/1/11 1:52 PM
+                        //m2w: split to several cases. since 4/4/11 2:48 PM.
+                        //m2w: chinese: donesn't check curr utt anymore, if prev utt contains these, rank +;
+
+
+                        if(lengthCal(prev_utt) >= 3){
+
+                            //m2w: guessing case
+                            if(pre_content.contains("might be") || pre_content.contains("可能")
+                                    || pre_content.contains("might have") || pre_content.contains("也许")
+                                    || pre_content.contains("could be") || pre_content.contains("应该")
+                                    || pre_content.contains("could have")   || pre_content.contains("如果")
+                                    || pre_content.contains("may be")   || pre_content.contains("要是")
+                                    || pre_content.contains("maybe")    || pre_content.contains("像是")
+                                    || pre_content.contains("may have") || pre_content.contains("好像")
+                                    || pre_content.contains("perhaps")  || pre_content.contains("或许")
+                                    || pre_content.contains("probably") || pre_content.contains("似乎")
+                                    || pre_content.contains("seems")
+                                    || pre_content.contains("seem")
+                                    || (pre_content.contains("either") && pre_content.contains("or"))
+                                    || (pre_content.matches(".*不是.*就是.*"))
+                                    
+                                    ){
+                                //rank + 2.
+                                this.increaseRank(list.get(i), 2);
+                                
+
+                                //m2w: degree case
+                            }else if (pre_content.contains("really")            || pre_content.contains("真的")
+                                    || pre_content.contains("definatly")        || pre_content.contains("肯定")
+                                    || pre_content.contains("especially")       || pre_content.contains("特别是")
+                                    || pre_content.contains("apparently")       || pre_content.contains("明显")
+                                    || pre_content.contains("regardless")       || pre_content.contains("无论")
+                                    || pre_content.contains("some how")         || pre_content.contains("最多")
+                                    || pre_content.contains("somehow")          || pre_content.contains("全部")
+                                    || pre_content.contains("most")             || pre_content.contains("最少")
+                                    || pre_content.contains("at all")           || pre_content.contains("只要")
+                                    || pre_content.contains("at least")         || pre_content.contains("只有")
+                                    || pre_content.contains("as long as")       
+                                    || pre_content.contains("only")             
+                                    || pre_content.contains("best")             || pre_content.contains("最")
+                                    || pre_content.contains("worst")            || (pre_content.contains("太") && !pre_content.contains("太阳") && !pre_content.contains("太极")&& !pre_content.contains("太平"))
+                                    || pre_content.contains("est ") // 4/5/11 12:00 PM 
+                                    || pre_raw_content.contains("it's so ") || pre_raw_content.contains("its so ") || pre_content.contains("那么的")
+                                    || pre_raw_content.contains("that's so ") || pre_raw_content.contains("thats so ")
+                                    || pre_raw_content.contains("are so ") || pre_raw_content.contains("r so ")                                    
+                                    ){
+                                //rank + 2
+                                this.increaseRank(list.get(i), 2);
+                                
+                                //m2w: opinion case
+                            }else if ((pre_content.contains("i think")          || pre_content.matches(".*我.*想.*")    
+                                    || pre_raw_content.contains("i'm thinking") || pre_raw_content.contains("im thinking")
+                                    || pre_content.contains("i was thinking")   
+                                    || pre_content.contains("i believe")        || pre_content.matches(".*我.*相信.*")    
+                                    || pre_content.contains("i guess")          || pre_content.contains("我猜")
+                                    || pre_content.contains("because")          || pre_content.contains("因为")
+                                    || pre_content.matches(".*对.*?.*")
+                                    || pre_raw_content.endsWith("right?")) && (!pre_content.contains("why i think"))
+                                    ){
+                                    //rank + 2
+                                this.increaseRank(list.get(i), 2);
+                                
+                                //m2w: order & propossal case
+                            }else if (pre_content.contains("how about")         || pre_content.contains("要不")  || pre_content.contains("不如")|| pre_content.contains("不然")
+                                    || pre_content.contains("need to")          || pre_content.contains("必须") 
+                                    || pre_content.contains("should be")        || pre_content.contains("我得")  || pre_content.contains("他得") || pre_content.contains("她得") || pre_content.contains("你得") 
+                                    || (pre_content.contains("should") && pre_raw_content.contains("?"))        || pre_content.matches(".*能.*?.*")
+                                    || pre_content.contains("we can")           || pre_content.contains("们能")  || pre_content.contains("们可以")  
+                                    || pre_content.contains("you may")          || pre_content.contains("你能")  || pre_content.contains("你可以") 
+                                    // 4/5/11 12:02 PM
+                                    || pre_content.contains("u may") 
+                                    //4/5/11 12:02 PM
+                                    || pre_content.contains("you should")       || pre_content.contains("应该")
+                                    //4/5/11 12:02 PM
+                                    || pre_content.contains("u should") 
+                                    || pre_raw_content.contains("shouldn't")    || pre_content.contains("不应该")
+                                    || pre_raw_content.contains("should've")
+                                    || (pre_content.contains("would you") && pre_raw_content.contains("?"))     || pre_content.matches(".*可以.*?.*")
+                                    || (pre_content.contains("could you") && pre_raw_content.contains("?"))     || pre_content.matches(".*可否.*?.*")
+                                    || (pre_content.contains("can you") && pre_raw_content.contains("?"))
+                                    ){
+                                    //rank + 2
+                                    this.increaseRank(list.get(i), 2);
+                                
+                                //m2w: other case
+                            }else if (pre_content.contains("sometimes")         || pre_content.contains("有时候")
+                                    || pre_content.contains("somewhere")        || pre_content.contains("有的地方")
+                                    || pre_content.contains("everyone")         || pre_content.contains("所有人") || pre_content.contains("大家")
+                                    || pre_content.contains("anything")         || pre_content.contains("任何")|| pre_content.contains("所有") || pre_content.contains("任意")
+                                    || pre_content.contains("that's why")       || pre_content.contains("这就是为什么")
+                                    || pre_content.contains("anything can")     || pre_content.contains("所以")
+                                                                                || pre_content.contains("不一定")
+                                    || pre_raw_content.contains("it ") && pre_raw_content.contains(" depend")
+                                    ){
+                                    //rank + 1
+                                    this.increaseRank(list.get(i), 1);
+                                    
+                                //m2w: prev_utt contains cnd key words, if there isn't any thing to match, check this then pass down
+                            }else if ((pre_content.contains("yes ") 
+                                    || (pre_content.contains("yea ") && !pre_content.contains("year"))
+                                    || (pre_content.contains("true ") && !pre_content.contains("be true"))
+                                    || pre_content.contains("agree ")
+                                    || pre_content.contains("exactly ")
+                                    || pre_content.equals("是") || pre_content.equals("就是") || pre_content.matches(".*对") || pre_content.matches(".*好") || pre_content.contains("没错") || pre_content.contains("恩") 
+                                    //excluded "because" put into opinion. 4/5/11 11:54 AM
+                                    //edcluded prev_utt 's dialog act is agree-accept. 4/16/11 3:00 PM
+                                    ) && !prev_utt.getTag().toLowerCase().contains("agree-accept")){
+
+                                //rank + 1
+                                this.increaseRank(list.get(i), 1);
+                            }else{
+                                //do nothing, continue the loop
+                            }//ends all the else ifs
+                        }//ends if length cal > 3
+                    }//ends if speaker is the same                    
+//                }//ends if index > 1
+            }//ends for loop
+            return list;
+        }//ends method
+        
+        /**
+         * m2w: chinese ver: increase the ith previous utt's rank by x.
+         * @param subList
+         * @param increasement x
+         */
+        private void increaseRank(ArrayList subList, int increasement){
+            int rank = (Integer)(subList.get(2));
+            rank += increasement;
+            subList.set(2, rank);
+        }
 //     =====================================confirmation & deny short type util=====================================
         /**
          * m2w: judge the current utterance , see if it's confirmation & deny type
@@ -1850,7 +2473,55 @@ public class CommunicationLinkX{
                         }
                 }
         }
-	
+	private void evaluate(int curr_index, int sys_turn, String which_case, int rank){
+//                System.out.println("in eval: " + curr_index + "|" + sys_turn);
+		String curr_turn_no = utts.get(curr_index).getTurn();
+		String link_to = utts.get(curr_index).getRespTo();
+//                System.out.println("link to: " + link_to);
+		if(link_to.indexOf(":")!=-1){
+			String[] lkto = link_to.split(":");
+			int anno_turn =0;
+			if(lkto[1].contains(".")){
+				anno_turn = (int) Double.parseDouble(lkto[1]);
+			}else{
+				anno_turn = Integer.parseInt(lkto[1]);
+			}
+//                        if(anno_turn - sysTurnNo > 50) System.out.println("error is here"); 
+			if(sys_turn == anno_turn){
+				hit++;
+                                if(doHitReport){
+                                    this.genReport(curr_turn_no, sys_turn, anno_turn, which_case, "HIT");
+//                                    switch (rank) {
+//                                        case 4: {hits4++; break;}
+//                                        case 5: {hits5++; break;}
+//                                        case 6: {hits6++; break;}
+//                                        case 7: {hits7++; break;}
+//                                        case 8: {hits8++; break;}
+//                                        case 9: {hits9++; break;}
+//                                        case 10: {hits10++; break;}
+//                                            
+//                                    }
+                                }
+                                //added long and short statistics
+                                if(which_case.startsWith("Long:")){
+                                    long_hit++;
+                                }
+                                if(which_case.startsWith("Short:")){
+                                    short_hit++;
+                                }
+                                if(which_case.startsWith("Short: cnd:")){
+                                    short_cnd_hit++;
+                                }
+                                if(which_case.startsWith("Long: cnd:")){
+                                    long_cnd_hit++;
+                                }
+                        }else{
+                            if(doMissReport){
+                                this.genReport(curr_turn_no, sys_turn, anno_turn, which_case, "MISSED");
+                            }
+                        }
+                }
+        }
 
         /**
          * m2w : xin's method. Looking for identical nouns in previous utts(for NOUN_SIM turns, which is now set to 5)
@@ -2103,7 +2774,16 @@ public class CommunicationLinkX{
 //            break;
         }
 
-
+        private void setResToTN(int index, int res_to_TN, Utterance curr_utt, String which_case, int rank){
+//            System.out.println("in set res-to");
+            String sysRespTo = utts.get(res_to_TN -1).getSpeaker() + ":" + res_to_TN;
+//            System.out.println(sysRespTo);
+            evaluate(index, res_to_TN, which_case, rank);
+            curr_utt.setRespTo(sysRespTo);
+//            System.out.println("res_to after set: " + utts.get(index).getRespTo());
+//            System.out.println();
+            
+        }
 
 }
 
