@@ -149,10 +149,12 @@ public class CommunicationLinkX{
                     String content = contentExtraction(u_content).toLowerCase();
                     int turn_length = ParseTools.wordCount(content);
                     if(turn_length < SHORT_THRESHOLD){
-                            shortUtterance(index);
+//                            shortUtterance(index);
+                        shortUttRank(index);
                             SHORT_UTT_STATICS++;
                     } else{
-                            longUtterance(index);
+//                            longUtterance(index);
+                        shortUttRank(index);
                             LONG_UTT_STATICS++;
                     }
 
