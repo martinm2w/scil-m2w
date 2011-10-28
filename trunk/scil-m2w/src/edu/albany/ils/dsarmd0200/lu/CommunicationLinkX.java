@@ -78,8 +78,8 @@ public class CommunicationLinkX{
     //report controlling. 5/13/11 2:09 PM
     private boolean doHitReport = true;
     private boolean doMissReport = true;
-    private boolean doFinalReport = false; // whether print out the final report at the end of each file or not. 4/27/11 12:40 PM
-    private boolean doGenReport = false; // whether print out the evaluation(miss and hit) or not. 4/27/11 12:40 PM
+    private boolean doFinalReport = true; // whether print out the final report at the end of each file or not. 4/27/11 12:40 PM
+    private boolean doGenReport = true; // whether print out the evaluation(miss and hit) or not. 4/27/11 12:40 PM
 
     //added 7/27/11 12:47 PM
     private boolean isEnglish_ = false;
@@ -149,12 +149,12 @@ public class CommunicationLinkX{
                     String content = contentExtraction(u_content).toLowerCase();
                     int turn_length = ParseTools.wordCount(content);
                     if(turn_length < SHORT_THRESHOLD){
-//                            shortUtterance(index);
-                        shortUttRank(index);
+                            shortUtterance(index);
+//                        shortUttRank(index);
                             SHORT_UTT_STATICS++;
                     } else{
-//                            longUtterance(index);
-                        shortUttRank(index);
+                            longUtterance(index);
+//                        shortUttRank(index);
                             LONG_UTT_STATICS++;
                     }
 
@@ -191,7 +191,9 @@ public class CommunicationLinkX{
 
                 //m2w: first judge the utterance, see if it's "confirmation & deny and short" 3/22/11 5:26 PM
                 if(!found && judgingCnDSht(utt_content, utt)){
-                    found = calCnDSht(index,found);
+//                    found = calCnDSht(index,found);
+                    shortUttRank(index);
+                    found = true;
                     SHORT_UTT_CND_STATICS++;
                 }
 
@@ -266,6 +268,8 @@ public class CommunicationLinkX{
 //                m2w: 4/9/11 11:06 PM
                 if(!found && judgingCnDLong(cur_raw_content, utt)){
                     found = calCnDLong(index,found);
+//                    shortUttRank(index);
+                    found = true;
                     LONG_UTT_CND_STATICS++;
                 }
                 if(!found){
@@ -390,6 +394,7 @@ public class CommunicationLinkX{
             Utterance currUtt = utts.get(index);
 //            System.out.println("testing: in short utt rank");
             //if curr utt is the first. thus list is empty.
+            
             if(!list.isEmpty()){
 //                System.out.println("testing: in short utt rank, list is not empty");
                 list = calRankShort(list, index);
@@ -407,7 +412,7 @@ public class CommunicationLinkX{
 //                Utterance currUtt = (Utterance)list.get(0).get(1);
 //                System.out.println( " res_to: " + res_to + "rank : "+ list.get(0).get(2));
                 int rank = (Integer)list.get(0).get(2);
-                this.setResToTN(index, res_to, currUtt, "Short Rgetank",rank);
+                this.setResToTN(index, res_to, currUtt, "Short Rank",rank);
 //                System.out.println("testing: in short utt rank, after set res-to");
                 
             }//closes if is empty.
