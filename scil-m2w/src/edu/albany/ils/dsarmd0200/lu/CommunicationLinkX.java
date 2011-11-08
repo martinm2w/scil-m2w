@@ -57,23 +57,17 @@ public class CommunicationLinkX{
     private static final int LONG_WORD_SIM_LENGTH_CHECK = 6;//m2w : utt length for doing check words sim, (8), 4/20/11 10:23 AM
     private static final int SHORT_WORD_SIM_LENGTH_CHECK = 5;//M2W: added short and long for different checks. (5) 4/20/11 10:23 AM
     private static final double WORD_SIM_THRESHOLD = 0.7; // m2w : for word sim 4/16/11 3:10 PM
-    private static int LONG_UTT_STATICS;// m2w: for statistics 4/10/11 12:53 PM
-    private static int LONG_UTT_CND_STATICS;// m2w: for statistics 4/10/11 12:53 PM
-    private static int SHORT_UTT_STATICS;// m2w: for statistics 4/10/11 12:53 PM
-    private static int SHORT_UTT_CND_STATICS;// m2w: for statistics 4/10/11 12:53 PM
+    private static int long_utt_statics;// m2w: for statistics 4/10/11 12:53 PM
+    private static int long_utt_cnd_statics;// m2w: for statistics 4/10/11 12:53 PM
+    private static int short_utt_statics;// m2w: for statistics 4/10/11 12:53 PM
+    private static int short_utt_cnd_statics;// m2w: for statistics 4/10/11 12:53 PM
     private static final int LONG_UTT_SIM_LOOK_BACK = 4; // m2w : long utt sim. 4/20/11 3:09 PM
     private static final double SHORT_SYN_SIM_THRESH = 0.2; //for calsimbysyn method 4/10/11 12:54 PM
     private static final double LONG_SYN_SIM_THRESH = 0.3; //for calsimbysyn method 4/10/11 12:55 PM
     private static final int LONG_SET_AS_DEFAULT_LOOK_BACK = 4;
     private static Wordnet wn;
 //    private static Wordnet wn = new Wordnet();
-    private int short_hit;
-    private int long_hit;
-    private int short_cnd_hit;
-    private int long_cnd_hit;
-    private int yes_count;
-    private int i_r_count;
-    private int qm_count;
+    
 
     //report controlling. 5/13/11 2:09 PM
     private boolean doHitReport = true;
@@ -87,8 +81,37 @@ public class CommunicationLinkX{
 
     //added 10/30/11 8:20 PM, for english ver ranklist
     private static final int RANK_LIST_SIZE = 5; // size means how many preivous utts to include in to the list.
-
     
+    //for statistics 11/8/11 9:40 AM. 
+    //old
+    private int short_hit;
+    private int long_hit;
+    private int short_cnd_hit;
+    private int long_cnd_hit;
+    private int yes_count;
+    private int i_r_count;
+    private int qm_count;
+    //11/8/11 9:40 AM 
+    //which previous utt was linked to.
+    private int short_1_count_anno = 0;
+    private int short_2_count_anno = 0;
+    private int short_3_count_anno = 0;
+    private int short_4_count_anno = 0;
+    
+    private int short_1_count_auto = 0;
+    private int short_2_count_auto = 0;
+    private int short_3_count_auto = 0;
+    private int short_4_count_auto = 0;
+    
+    private int long_1_count_anno = 0;
+    private int long_2_count_anno = 0;
+    private int long_3_count_anno = 0;
+    private int long_4_count_anno = 0;
+    
+    private int long_1_count_auto = 0;
+    private int long_2_count_auto = 0;
+    private int long_3_count_auto = 0;
+    private int long_4_count_auto = 0;
     
         /**
          * m2w : constructor , get all utterances for one file, and remove the .1 and .0 turns in the file.
@@ -104,10 +127,10 @@ public class CommunicationLinkX{
             this.utts = new ArrayList<Utterance>(utts_);
             StanfordPOSTagger.initialize();
             ParseTools.initialize();
-            LONG_UTT_STATICS = 0;
-            SHORT_UTT_STATICS = 0;
-            LONG_UTT_CND_STATICS = 0;
-            SHORT_UTT_CND_STATICS = 0;
+            long_utt_statics = 0;
+            short_utt_statics = 0;
+            long_utt_cnd_statics = 0;
+            short_utt_cnd_statics = 0;
                        
         }
 
@@ -117,29 +140,11 @@ public class CommunicationLinkX{
          */
         public void collectCLFtsX()
         {
-//            System.out.println("in cmm_link");
-//            CommunicationLinkX.checkUttTurnsInCMDLine(utts);
 //    	1. loop through all utt, get speakernames(hashset)
     	for(int i=0; i<utts.size(); i++)
     	{
             Utterance u_speaker = utts.get(i);
             speaker_names.add(u_speaker.getSpeaker().toLowerCase());
-
-//            if(utts.get(i).getContent().toLowerCase().equals("yes")){
-//                yes_count++;
-////                String tempResTo = utts.get(i).getRespTo();
-////                if(!tempResTo.equals("") && tempResTo.indexOf(":") != -1){
-////                    int toTurn = Integer.parseInt(tempResTo.split(":")[1]) - 1;
-////                    String catype = utts.get(toTurn).getTag();
-////                    if(catype.toLowerCase().contains("information-request")){
-////                        i_r_count++;
-////                    }
-////                    if(utts.get(toTurn).getContent().contains("?")){
-////                        qm_count++;
-////                    }
-//                }
-                
-//            }
     	}
 
 //      2.loop through all utts, if commActType equals "response_to", do the calculation and get the turn no. of which turn is responsed to.
@@ -154,11 +159,11 @@ public class CommunicationLinkX{
                     if(turn_length < SHORT_THRESHOLD){
                             shortUtterance(index);
 //                        shortUttRank(index);
-                            SHORT_UTT_STATICS++;
+                            short_utt_statics++;
                     } else{
                             longUtterance(index);
 //                        shortUttRank(index);
-                            LONG_UTT_STATICS++;
+                            long_utt_statics++;
                     }
 
             }
@@ -171,9 +176,10 @@ public class CommunicationLinkX{
             System.out.println("Precision: " + (double)((double)hit)/((double)response_to_count));
     //        System.out.println("Number of short utts: " + SHORT_UTT_STATICS + ". CdN: " + SHORT_UTT_CND_STATICS);
     //        System.out.println("Number of long utts: " + LONG_UTT_STATICS + ". CdN: " + LONG_UTT_CND_STATICS);
-            System.out.println("Number of short utts: " + SHORT_UTT_STATICS + ", short hit: "+ short_hit +". CdN: " + SHORT_UTT_CND_STATICS + ", cnd hit: "+ short_cnd_hit);
-            System.out.println("Number of long utts: " + LONG_UTT_STATICS + ", long hit: "+ long_hit +". CdN: " + LONG_UTT_CND_STATICS + ", cnd hit: "+ long_cnd_hit);
+            System.out.println("Number of short utts: " + short_utt_statics + ", short hit: "+ short_hit +". CdN: " + short_utt_cnd_statics + ", cnd hit: "+ short_cnd_hit);
+            System.out.println("Number of long utts: " + long_utt_statics + ", long hit: "+ long_hit +". CdN: " + long_utt_cnd_statics + ", cnd hit: "+ long_cnd_hit);
     //        System.out.println("yes count: "+ yes_count +", ir count: "+ i_r_count + "qm: " +qm_count);
+            this.calAndPrintWhichPrevStat(short_utt_statics, long_utt_statics);
         }
     }
     
@@ -197,7 +203,7 @@ public class CommunicationLinkX{
 //                    found = calCnDSht(index,found);
                     shortUttRank(index);
                     found = true;
-                    SHORT_UTT_CND_STATICS++;
+                    short_utt_cnd_statics++;
                 }
 
                 //m2w : calculate if there are similar words in curr and prev utts.//4/10/11 8:37 AM
@@ -273,7 +279,7 @@ public class CommunicationLinkX{
                     found = calCnDLong(index,found);
 //                    shortUttRank(index);
 //                    found = true;
-                    LONG_UTT_CND_STATICS++;
+                    long_utt_cnd_statics++;
                 }
                 if(!found){
                     found = this.calUttSimilarity(index, LONG_UTT_SIM_LOOK_BACK, found, "Long: utt sim in longUtterance");
@@ -420,7 +426,7 @@ public class CommunicationLinkX{
                             Utterance temputt = (Utterance)(list.get(i).get(1));
                             String turn_num = temputt.getTurn();
                             int rank = (Integer)list.get(i).get(2);
-                           System.out.println("turn: " + turn_num + ", rank is: " + rank);
+//                           System.out.println("turn: " + turn_num + ", rank is: " + rank);
                     }
 
                 int rank = (Integer)list.get(0).get(2);
@@ -2583,7 +2589,8 @@ public class CommunicationLinkX{
         }
 
         /**
-         * m2w : this method does the error analyze, it print's the code, automated result and annotated result for comparation.
+         * m2w : not using this old version.
+         * this method does the error analyze, it print's the code, automated result and annotated result for comparation.
          * @param curr_turn_no
          * @param auto_turn_no
          * @param anno_turn_no
@@ -2615,8 +2622,16 @@ public class CommunicationLinkX{
 		System.out.println("Syst: "+ auto_turn_no + "(" + sUtt.getSpeaker() + "): " + sUtt.getContent() + "  |  C["+ sUtt.getCommActType() +"]D["+ sUtt.getTag() +"]");
 		System.out.println("Anno: "+ anno_turn_no + "(" + aUtt.getSpeaker() + "): " + aUtt.getContent() + "  |  C["+ aUtt.getCommActType() +"]D["+ aUtt.getTag() +"]");
 		System.out.println();
+                
+                //for statistics, 11/8/11 9:44 AM
+                //which previous utt
+                int prev_auto = Integer.parseInt(curr_turn_no) - auto_turn_no;
+                int prev_anno = Integer.parseInt(curr_turn_no) - anno_turn_no;
+                this.addToWhichPrevStat(prev_auto, prev_anno, which_case);
             }
 	}
+        
+        
 
 //      ========================================testing methods===========================================
 
@@ -2818,6 +2833,82 @@ public class CommunicationLinkX{
             
         }
 
+
+
+//==============================================statistics methods==================================
+/**
+         * m2w: this method is for summing up the counts of which previous utt did anno/auto result has linked to.
+         * for statistics
+         * @param prev_auto
+         * @param prev_anno
+         * @param which_case 
+         */
+        private void addToWhichPrevStat(int prev_auto, int prev_anno, String which_case){
+            
+            //short
+            if(which_case.toLowerCase().contains("short")){
+                switch(prev_auto){
+                    case 1 : short_1_count_auto++; break;
+                    case 2 : short_2_count_auto++; break;
+                    case 3 : short_3_count_auto++; break;
+                    case 4 : short_4_count_auto++; break;
+                }
+                switch(prev_anno){
+                    case 1 : short_1_count_anno++; break; 
+                    case 2 : short_2_count_anno++; break; 
+                    case 3 : short_3_count_anno++; break; 
+                    case 4 : short_4_count_anno++; break; 
+                }
+            }
+            
+            //long
+            if(which_case.toLowerCase().contains("long00...........")){
+                switch(prev_auto){
+                    case 1 : long_1_count_auto++; break;
+                    case 2 : long_2_count_auto++; break;
+                    case 3 : long_3_count_auto++; break;
+                    case 4 : long_4_count_auto++; break;
+                }
+                switch(prev_anno){
+                    case 1 : long_1_count_anno++; break; 
+                    case 2 : long_2_count_anno++; break; 
+                    case 3 : long_3_count_anno++; break; 
+                    case 4 : long_4_count_anno++; break; 
+                }
+            }
+            
+        }
+        
+        private void calAndPrintWhichPrevStat(int short_utt_statics, int long_utt_statics){
+        
+            System.out.println("--------which prev stat---------");
+            System.out.println("counts: ");
+            System.out.println("short \t anno \t auto");
+            System.out.println("1: \t " + short_1_count_auto + " \t " + short_1_count_anno);
+            System.out.println("2: \t " + short_2_count_auto + " \t " + short_2_count_anno);
+            System.out.println("3: \t " + short_3_count_auto + " \t " + short_3_count_anno);
+            System.out.println("4: \t " + short_4_count_auto + " \t " + short_4_count_anno);
+            System.out.println("long \t anno \t auto");
+            System.out.println("1: \t " + long_1_count_auto + " \t " + long_1_count_anno);
+            System.out.println("2: \t " + long_2_count_auto + " \t " + long_2_count_anno);
+            System.out.println("3: \t " + long_3_count_auto + " \t " + long_3_count_anno);
+            System.out.println("4: \t " + long_4_count_auto + " \t " + long_4_count_anno);
+            System.out.println("");
+            System.out.println("precentage: ");
+            System.out.println("short \t anno \t auto");
+            System.out.println("1: \t " + (double)short_1_count_auto/(double)short_utt_statics + " \t " + (double)short_1_count_anno/(double)short_utt_statics);
+            System.out.println("2: \t " + (double)short_2_count_auto/(double)short_utt_statics + " \t " + (double)short_2_count_anno/(double)short_utt_statics);
+            System.out.println("3: \t " + (double)short_3_count_auto/(double)short_utt_statics + " \t " + (double)short_3_count_anno/(double)short_utt_statics);
+            System.out.println("4: \t " + (double)short_4_count_auto/(double)short_utt_statics + " \t " + (double)short_4_count_anno/(double)short_utt_statics);
+            System.out.println("long \t anno \t auto");
+            System.out.println("1: \t " + (double)long_1_count_auto/(double)short_utt_statics + " \t " + (double)long_1_count_anno/(double)short_utt_statics);
+            System.out.println("2: \t " + (double)long_2_count_auto/(double)short_utt_statics + " \t " + (double)long_2_count_anno/(double)short_utt_statics);
+            System.out.println("3: \t " + (double)long_3_count_auto/(double)short_utt_statics + " \t " + (double)long_3_count_anno/(double)short_utt_statics);
+            System.out.println("4: \t " + (double)long_4_count_auto/(double)short_utt_statics + " \t " + (double)long_4_count_anno/(double)short_utt_statics);
+        }
+
+
+
 }
 
 //==============================================not-in-use methods==================================
@@ -2875,3 +2966,4 @@ public class CommunicationLinkX{
      */
     
     // ===========================================old methods=======================================
+

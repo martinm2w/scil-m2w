@@ -184,7 +184,13 @@ public class Assertions {
 		XMLParse xp = xmlps_.get(i);
 		utts_ = (ArrayList)docs_utts_.get(i);
 		all_utts_.addAll(utts_);
+                
+                calCommLink(xp);//added
 		buildALocalTopicList(phr_ch, xp);
+//                MesoTopic mt = new MesoTopic();//added
+//                mt.calMesoTopic((String)doc_names_.get(i), utts_, xp, phr_ch, wn_, nls_);//added
+//		mts_.add(mt);//added
+//                ArrayList spks = new ArrayList(parts_.values());//added
 	    }
 	    ArrayList spks = new ArrayList(parts_.values());
 	    for (int k = 0; k < spks.size(); k++) {
@@ -359,11 +365,13 @@ public class Assertions {
 
     public void calTaskFocus(int i) {
 	//task_focus
-	MesoTopic mt = (MesoTopic)mts_.get(i);
-	TaskFocus tf = new TaskFocus();
-	gch_.setTaskFocus(tf);
-	tf.calTaskFocus(mt, utts_);
-	gch_.setTaskFocus(tf);
+        if(!mts_.isEmpty()){
+            MesoTopic mt = (MesoTopic)mts_.get(i);
+            TaskFocus tf = new TaskFocus();
+            gch_.setTaskFocus(tf);
+            tf.calTaskFocus(mt, utts_);
+            gch_.setTaskFocus(tf);
+        }
 	//System.out.println("@MSM: " + String.valueOf(tf.getMSM()));
 	//System.out.println("@MGM: " + String.valueOf(tf.getMGM()));
 	//System.out.println("Task Focus: " + String.valueOf(tf.getTaskFocus()));
