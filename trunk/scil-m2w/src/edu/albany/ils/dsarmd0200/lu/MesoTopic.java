@@ -20,7 +20,13 @@ public class MesoTopic {
     public final int THRESHOLD_FILE_SIZE_LARGE = 10;//m2w: changed to 5. 4/13/11 12:45 PM
     public final int THRESHOLD_FILE_SIZE_SMALL = 5;//m2w: changed to 5. 4/13/11 12:45 PM
     public int THRESHOLD; // m2w: created 2 new fields 4/13/11 1:05 PM
+    
+    //m2w: this variable stores the meso topics lists.
+    //m2w: each sub-list is a meso topic, ArrayList<String> , 
+    //m2w: starts with the topic name at the 0'th index, following by the metions utterance turn numbers in Strings.
+    //10/21/11 11:24 AM
     private ArrayList<ArrayList<String>> meso_topics_ = new ArrayList<ArrayList<String>>();
+    
     private ArrayList utts_ = null;
     public static final int SHORT_LIST_THRESH = 3;// m2w: removing after parsing, if list length shorter than... then remove 4/21/11 3:06 PM
 
