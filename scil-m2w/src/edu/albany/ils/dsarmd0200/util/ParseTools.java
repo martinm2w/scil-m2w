@@ -337,17 +337,15 @@ public abstract class ParseTools {
                                 char c = tmp.charAt(index++);
                                 Character cc = c;
                                 String tempString = cc.toString();
-        //                        System.out.println(tempString);
+//                                System.out.println(tempString);
                                 //testing booleans 
-//                                boolean a1;
                                 if ((tempString.matches("[\\u4E00-\\u9FA5]") // if is chinese word, just add it
                                         //or if is english word
                                         || ((Character.isLetter(c) || Character.isDigit(c)) && inaword == false))){
                                         retval++;
-                                        
                                         //if is chinese char, it's not in an english word.
                                         if (!tempString.matches("[\\u4E00-\\u9FA5]")) inaword = true;
-        //                                System.out.println("a1= " + a1);
+//                                        System.out.println("a1= " + a1);
                                 }
                                 //chinese don't have spaces in them. this is why lenght = 1. commented 8/4/11 10:49 AM
         			 else if (Character.isWhitespace(c)) inaword = false;
