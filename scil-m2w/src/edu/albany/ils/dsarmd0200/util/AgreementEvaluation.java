@@ -40,22 +40,24 @@ public class AgreementEvaluation {
     }
     
     private void agEval(){
-        this.buildUttLists("/home/ruobo/develop/scil0200/data/testing_agreement");
-        ArrayList results = this.calAgreements();
-        System.out.println("processing: " + doc_names_.get(0) + " and "+ doc_names_.get(1));
-        System.out.println("res_to precision: " + results.get(0));
-        System.out.println("link_to precision: " + results.get(1));
-        System.out.println("anno1 diff to anno2: ");
-        for(Object anno1_diff_utt : (ArrayList)results.get(2)){
-            Utterance tempUtt = (Utterance)anno1_diff_utt;
-            System.out.println("turn[" + tempUtt.getTurn() + "]\tspk[" + tempUtt.getSpeaker() + "]\tcmtype[" + tempUtt.getCommActType() + "]\tcontent: " + tempUtt.getContent());
-        }
-        System.out.println("anno2 diff to anno1: ");
-        for(Object anno2_diff_utt : (ArrayList)results.get(3)){
-            Utterance tempUtt = (Utterance)anno2_diff_utt;
-            System.out.println("turn[" + tempUtt.getTurn() + "]\tspk[" + tempUtt.getSpeaker() + "]\tcmtype[" + tempUtt.getCommActType() + "]\tcontent: " + tempUtt.getContent());
-        }
-        
+        this.buildUttLists("/home/ruobo/scil0200/data/testing_agreement");
+//        ArrayList results = this.calAgreements();
+//        System.out.println("processing: " + doc_names_.get(0) + " and "+ doc_names_.get(1));
+//        System.out.println("res_to precision: " + results.get(0));
+//        System.out.println("link_to precision: " + results.get(1));
+//        System.out.println("anno1 diff to anno2: ");
+//        for(Object anno1_diff_utt : (ArrayList)results.get(2)){
+//            Utterance tempUtt = (Utterance)anno1_diff_utt;
+//            System.out.println("turn[" + tempUtt.getTurn() + "]\tspk[" + tempUtt.getSpeaker() + "]\tcmtype[" + tempUtt.getCommActType() + "]\tcontent: " + tempUtt.getContent());
+//        }
+//        System.out.println("anno2 diff to anno1: ");
+//        for(Object anno2_diff_utt : (ArrayList)results.get(3)){
+//            Utterance tempUtt = (Utterance)anno2_diff_utt;
+//            System.out.println("turn[" + tempUtt.getTurn() + "]\tspk[" + tempUtt.getSpeaker() + "]\tcmtype[" + tempUtt.getCommActType() + "]\tcontent: " + tempUtt.getContent());
+//        }
+
+        this.calAgreementKAlpha();
+
     }
         
     
@@ -221,7 +223,265 @@ public class AgreementEvaluation {
 //                System.out.println("testing: " + tempUtt.getTurn() + " : " + tempUtt.getContent());
         }
     }
-    
+
+    /**
+     * m2w: calculating agreement using krippendorf's alpha algorithm.
+     */
+    private void calAgreementKAlpha(){
+        ArrayList calResults = new ArrayList();
+        ArrayList<Utterance> anno1UttList = (ArrayList<Utterance>)docs_utts_.get(0);//all utts of anno1 file
+        ArrayList<Utterance> anno2UttList = (ArrayList<Utterance>)docs_utts_.get(1);//all utts of anno2 file
+        //add each res_to's utt to the list. calculate afterwards
+//        System.out.println("1turn \t 2turn");
+        for(Utterance tempUtt : anno1UttList)
+            System.out.print(" " + tempUtt.getTurn()) ;
+        System.out.println();
+        for(Utterance tempUtt : anno2UttList)
+            System.out.print(" " + tempUtt.getTurn() );
+        System.out.println();
+        //delete turns that only in 1 anno1 file
+        for(int i = 0; i < anno1UttList.size(); i++){
+            String tempTurnNo1 = anno1UttList.get(i).getTurn();
+            boolean deleteCurrTurn = true;
+            for(int j = 0; j < anno2UttList.size(); j++){
+                String tempTurnNo2 = anno2UttList.get(i).getTurn();
+                if(tempTurnNo1.equalsIgnoreCase(tempTurnNo2))
+                    deleteCurrTurn = false;
+            }
+            if(deleteCurrTurn)
+                anno1UttList.remove(i);
+        }
+        for(int i = 0; i < anno2UttList.size(); i++){
+            String tempTurnNo2 = anno2UttList.get(i).getTurn();
+            boolean deleteCurrTurn = true;
+            for(int j = 0; j < anno1UttList.size(); j++){
+                String tempTurnNo1 = anno1UttList.get(i).getTurn();
+                if(tempTurnNo2.equalsIgnoreCase(tempTurnNo1))
+                    deleteCurrTurn = false;
+            }
+            if(deleteCurrTurn)
+                anno2UttList.remove(i);
+        }
+        System.out.println("after");
+        for(Utterance tempUtt : anno1UttList)
+            System.out.print(" " + tempUtt.getTurn()) ;
+        System.out.println();
+        for(Utterance tempUtt : anno2UttList)
+            System.out.print(" " + tempUtt.getTurn() );
+        System.out.println();
+
+
+        //==========================================================\
+        double[] anno2_data = new double[anno2UttList.size()];
+        double[] anno1_data = new double[anno1UttList.size()];
+        double[][] dataList = new double[2][anno1UttList.size()];
+
+        System.out.println();
+        //anno1 list building
+        for(int i = 0; i < anno1UttList.size(); i++){
+            String tempCommAct = "";
+            Utterance tempUtt = anno1UttList.get(i);
+            tempCommAct = tempUtt.getCommActType().toLowerCase();
+            if(tempCommAct.equalsIgnoreCase("response-to")){
+                anno1_data[i] = 1d;
+            }else if(tempCommAct.equalsIgnoreCase("addressed-to")){
+                anno1_data[i] = 0d;
+            }else if(tempCommAct.equalsIgnoreCase("continuation-of")){
+                anno1_data[i] = 0d;
+            }else{
+                anno1_data[i] = Double.MAX_VALUE;
+            }
+            System.out.print(" " + anno1_data[i]);
+        }
+        System.out.println();
+        //anno2 list building
+        for(int i = 0; i < anno2UttList.size(); i++){
+            String tempCommAct = "";
+            Utterance tempUtt = anno2UttList.get(i);
+            tempCommAct = tempUtt.getCommActType().toLowerCase();
+            if(tempCommAct.equalsIgnoreCase("response-to")){
+                anno2_data[i] = 1d;
+            }else if(tempCommAct.equalsIgnoreCase("addressed-to")){
+                anno2_data[i] = 0d;
+            }else if(tempCommAct.equalsIgnoreCase("continuation-of")){
+                anno2_data[i] = 0d;
+            }else{
+                anno2_data[i] = Double.MAX_VALUE;
+            }
+            System.out.print(" " + anno2_data[i]);
+        }
+        System.out.println();
+
+        //add to dataList. 
+        dataList[0] = anno1_data;
+        dataList[1] = anno2_data;
+
+//        Alpha alpha4 = new Alpha(new NominalMetric(false));
+//        System.out.println(kpalpha.agreement(dataList));
+        Alpha alpha1 = new Alpha(new NominalMetric(true));
+        Alpha alpha2 = new Alpha(new IntervalMetric());
+        Alpha alpha3 = new Alpha(new RatioMetric());
+        System.out.println("agreement on communication act");
+        System.out.println("alpha nominal = " + alpha1.agreement(dataList));
+        System.out.println("alpha interval = " + alpha2.agreement(dataList));
+        System.out.println("alpha ratio = " + alpha3.agreement(dataList));
+//        System.out.println(kpalpha.agreement(link_to_data));
+
+        //res-to agreement cal
+        ArrayList<Utterance> anno1_res_to_list = new ArrayList<Utterance>();
+        ArrayList<Utterance> anno2_res_to_list = new ArrayList<Utterance>();
+
+        //add each res_to's utt to the list. calculate afterwards
+        for(Utterance tempUtt : anno1UttList){
+            if(tempUtt.getCommActType().equalsIgnoreCase("response-to")){
+                anno1_res_to_list.add(tempUtt);
+            }
+        }
+        for(Utterance tempUtt : anno2UttList){
+            if(tempUtt.getCommActType().equalsIgnoreCase("response-to")){
+                anno2_res_to_list.add(tempUtt);
+            }
+        }
+
+                //building the data array for alpha's algorithm.
+        ArrayList<Double> alpha_res_to_anno1 = new ArrayList<Double>();
+        ArrayList<Double> alpha_res_to_anno2 = new ArrayList<Double>();
+        ArrayList<Double> alpha_link_to_anno1 = new ArrayList<Double>();
+        ArrayList<Double> alpha_link_to_anno2 = new ArrayList<Double>();
+
+//        for(Utterance tempUtt : anno1_res_to_list){
+        for(int i = 0; i < anno1_res_to_list.size(); i++){
+            Utterance tempUtt = anno1_res_to_list.get(i);
+            String anno1_turn = tempUtt.getTurn();
+            String anno1_spk_name = tempUtt.getSpeaker();
+            String anno1_link_to = tempUtt.getRespTo();
+
+            alpha_res_to_anno1.add(1d);
+            alpha_link_to_anno1.add(1d);
+            alpha_res_to_anno2.add(0d);
+            alpha_link_to_anno2.add(0d);
+//            for(Utterance anno2Utt : anno2_res_to_list){
+            for(int j = 0; j < anno2_res_to_list.size(); j++){
+                Utterance anno2Utt = anno2_res_to_list.get(j);
+                String anno2_turn = anno2Utt.getTurn();
+                String anno2_spk_name = anno2Utt.getSpeaker();
+                String anno2_link_to = anno2Utt.getRespTo();
+                if(anno1_turn.equals(anno2_turn) && anno1_spk_name.equalsIgnoreCase(anno2_spk_name)){
+                    alpha_res_to_anno2.set(i, 1d);
+                    //2. calculation of link_to precision.
+                    if(anno1_link_to.equalsIgnoreCase(anno2_link_to)){
+                        alpha_link_to_anno2.set(i, 1d);
+                    }
+                }
+            }
+        }
+        //==========================================================
+//
+//        //building the data array for alpha's algorithm.
+//        ArrayList<Double> alpha_res_to_anno1 = new ArrayList<Double>();
+//        ArrayList<Double> alpha_res_to_anno2 = new ArrayList<Double>();
+//        ArrayList<Double> alpha_link_to_anno1 = new ArrayList<Double>();
+//        ArrayList<Double> alpha_link_to_anno2 = new ArrayList<Double>();
+//
+////        for(Utterance tempUtt : anno1_res_to_list){
+//        for(int i = 0; i < anno1_res_to_list.size(); i++){
+//            Utterance tempUtt = anno1_res_to_list.get(i);
+//            String anno1_turn = tempUtt.getTurn();
+//            String anno1_spk_name = tempUtt.getSpeaker();
+//            String anno1_link_to = tempUtt.getRespTo();
+//
+//            alpha_res_to_anno1.add(1d);
+//            alpha_link_to_anno1.add(1d);
+//            alpha_res_to_anno2.add(0d);
+//            alpha_link_to_anno2.add(0d);
+////            for(Utterance anno2Utt : anno2_res_to_list){
+//            for(int j = 0; j < anno2_res_to_list.size(); j++){
+//                Utterance anno2Utt = anno2_res_to_list.get(j);
+//                String anno2_turn = anno2Utt.getTurn();
+//                String anno2_spk_name = anno2Utt.getSpeaker();
+//                String anno2_link_to = anno2Utt.getRespTo();
+//                if(anno1_turn.equals(anno2_turn) && anno1_spk_name.equalsIgnoreCase(anno2_spk_name)){
+//                    alpha_res_to_anno2.set(i, 1d);
+//                    //2. calculation of link_to precision.
+//                    if(anno1_link_to.equalsIgnoreCase(anno2_link_to)){
+//                        alpha_link_to_anno2.set(i, 1d);
+//                    }
+//                }
+//            }
+//        }
+//
+//        //testing lists
+//        System.out.println(alpha_res_to_anno1.size());
+//        System.out.println(alpha_res_to_anno1);
+//        System.out.println(alpha_res_to_anno2.size());
+//        System.out.println(alpha_res_to_anno2);
+//        System.out.println(alpha_link_to_anno1.size());
+//        System.out.println(alpha_link_to_anno1);
+//        System.out.println(alpha_link_to_anno2.size());
+//        System.out.println(alpha_link_to_anno2);
+//
+//        System.out.println("----"+anno1_res_to_list.size());
+//
+//        //build arrays
+//        double [] res_to_anno1_array = new double[alpha_res_to_anno1.size()];
+//        double [] res_to_anno2_array = new double[alpha_res_to_anno2.size()];
+//        double [] link_to_anno1_array = new double[alpha_link_to_anno1.size()];
+//        double [] link_to_anno2_array = new double[alpha_link_to_anno2.size()];
+//        for(int i = 0; i < alpha_res_to_anno1.size(); i++){
+//            res_to_anno1_array[i] = alpha_res_to_anno1.get(i);
+//        }
+//        for(int i = 0; i < alpha_res_to_anno2.size(); i++){
+//            res_to_anno2_array[i] = alpha_res_to_anno2.get(i);
+//        }
+//        for(int i = 0; i < alpha_link_to_anno1.size(); i++){
+//            link_to_anno1_array[i] = alpha_link_to_anno1.get(i);
+//        }
+//        for(int i = 0; i < alpha_link_to_anno2.size(); i++){
+//            link_to_anno2_array[i] = alpha_link_to_anno2.get(i);
+//        }
+//        //testing arrays
+//        System.out.println(res_to_anno1_array.length);
+//        System.out.println(res_to_anno2_array.length);
+//        System.out.println(link_to_anno1_array.length);
+//        System.out.println(link_to_anno2_array.length);
+//        ArrayList<ArrayList<Double>> res_to_data_list = new ArrayList<ArrayList<Double>>();
+//        ArrayList<ArrayList<Double>> link_to_data_list = new ArrayList<ArrayList<Double>>();
+//        res_to_data_list.add(alpha_res_to_anno1); res_to_data_list.add(alpha_res_to_anno2);
+//        link_to_data_list.add(alpha_link_to_anno1); link_to_data_list.add(alpha_link_to_anno2);
+
+//        double[][] res_to_data = new double[2][alpha_res_to_anno1.size()];
+//        double[][] link_to_data = new double[2][alpha_link_to_anno1.size()];
+//        res_to_data[0] = res_to_anno1_array;
+//        res_to_data[1] = res_to_anno2_array;
+//        link_to_data[0] = link_to_anno1_array;
+//        link_to_data[1] = link_to_anno2_array;
+//
+//        res_to_data[0] = ;
+//        res_to_data_list.toArray(res_to_data);
+//        link_to_data_list.toArray(link_to_data);
+
+//        Metric metric_res_to = new Metric();
+        
+//        System.out.println(alpha3.agreement(res_to_data));
+//        kpalpha.main(args);
+
+
+
+                //p
+//        int hit = 0;
+//        outter:
+//        for(int i = 0; i < anno1_data.length; i++){
+////                System.out.println(anno1_data[i]);
+////                System.out.println(anno2_data[i]);
+//            if(anno1_data[i] == anno2_data[i]){
+//                hit++;
+//            }
+//        }
+//        System.out.println(hit);
+//        System.out.println((double)hit / (double)anno1_data.length);
+
+    }
+
     private ArrayList calAgreements(){
         ArrayList calResults = new ArrayList();
         ArrayList<Utterance> anno1UttList = (ArrayList<Utterance>)docs_utts_.get(0);
