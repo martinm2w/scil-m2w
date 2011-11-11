@@ -306,7 +306,7 @@ public class Util {
      * m2w: parsing Chinese string into HashMap<CN, ArrayList<CNStr>>, English in the same map too. each word as an entry in the ArrayList.
      * @param the utterance
      * @return the array of the utterance, chinese comes first, enlish and the end of the chinese.
-     * @date 8/9/11 2:37 PM
+     * @date 8/12/11 2:37 PM
      */
     public static HashMap<String, ArrayList<String>> uttToWdsChinese(String utt){
         HashMap<String, ArrayList<String>> wordMap = new HashMap<String, ArrayList<String>>();
