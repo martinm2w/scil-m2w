@@ -1,12 +1,5 @@
 package edu.albany.ils.dsarmd0200.lu;
 
-/**
- * m2w: this file is modified to improve the performance. commented all old methods, modified ,created new methods, wrote all new comments. 
- * @file: CommunicationLinkX.java
- * @author: Xin Shi * 
- * @lastupdate: 5/13/11 2:10 PM version 13-02
- */
-
 import edu.albany.ils.dsarmd0200.util.*;
 import edu.albany.ils.dsarmd0200.evaltag.*;
 import java.io.FileWriter;
@@ -17,6 +10,12 @@ import java.util.AbstractCollection;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+/**
+ * m2w: this class is modified to improve the performance. commented all old methods, modified ,created new methods, wrote all new comments.
+ * @file: CommunicationLinkX.java
+ * @author: Xin Shi *
+ * @lastupdate: 5/13/11 2:10 PM version 13-02
+ */
 public class CommunicationLinkXChinese{
     
 //  ==================================Attributes===================================================
