@@ -365,7 +365,8 @@ public class CommunicationLinkXChinese{
 
         /**
          * m2w: calculate and set res-to by calculating 10/9 previous utt's rank(how much is it likely to be the correct res-to).
-         * @param index 
+         * @param index
+         * @last 08/21/11 9:06 AMM
          */
         private void shortUttRank(int index){
             ArrayList<ArrayList> list = buildRankList(index);
