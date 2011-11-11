@@ -2063,7 +2063,7 @@ public class CommunicationLinkXChinese{
          * @param index
          * @param found
          * @return found
-         * @date 8/10/11 2:43 PM 
+         * @date 8/13/11 2:43 PM
          */
         private boolean checkWordSimilarity(int index, boolean found, String which_case){
 
