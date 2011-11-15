@@ -45,7 +45,7 @@ public class AgreementEvaluation {
 //        this.buildUttLists("/home/ruobo/scil0200/data/testing_agreement");
         this.buildUttLists("/home/ruobo/develop/scil0200/data/testing_agreement");
 
-        this.calAgreementKAlpha();
+//        this.calAgreementKAlpha();
 
 //        ArrayList results = this.calAgreements();
 //        System.out.println("processing: " + doc_names_.get(0) + " and "+ doc_names_.get(1));
@@ -483,6 +483,60 @@ public class AgreementEvaluation {
         
         
         return calResults;
+    }
+    
+    /**
+     * m2w: making this method because ting wants some misleading utts examples.
+     */
+    private void printBothUtts(){
+        ArrayList<Utterance> anno1UttList = (ArrayList<Utterance>)docs_utts_.get(0);//all utts of anno1 file
+        ArrayList<Utterance> anno2UttList = (ArrayList<Utterance>)docs_utts_.get(1);//all utts of anno2 file
+        
+////        //verifying uttlist before deleting.---->
+//        for(Utterance tempUtt : anno1UttList)
+//            System.out.print(" " + tempUtt.getTurn()) ;
+//        System.out.println();
+//        for(Utterance tempUtt : anno2UttList)
+//            System.out.print(" " + tempUtt.getTurn() );
+//        System.out.println();
+////        //<----verifying uttlist before deleting.
+        
+        //delete turns that only in anno1 file
+        for(int i = 0; i < anno1UttList.size(); i++){
+            String tempTurnNo1 = anno1UttList.get(i).getTurn();
+            boolean deleteCurrTurn = true;
+            for(int j = 0; j < anno2UttList.size(); j++){
+                String tempTurnNo2 = anno2UttList.get(i).getTurn();
+                if(tempTurnNo1.equalsIgnoreCase(tempTurnNo2))
+                    deleteCurrTurn = false;
+            }
+            if(deleteCurrTurn)
+                anno1UttList.remove(i);
+        }
+        //delete turns that only in anno2 file
+        for(int i = 0; i < anno2UttList.size(); i++){
+            String tempTurnNo2 = anno2UttList.get(i).getTurn();
+            boolean deleteCurrTurn = true;
+            for(int j = 0; j < anno1UttList.size(); j++){
+                String tempTurnNo1 = anno1UttList.get(i).getTurn();
+                if(tempTurnNo2.equalsIgnoreCase(tempTurnNo1))
+                    deleteCurrTurn = false;
+            }
+            if(deleteCurrTurn)
+                anno2UttList.remove(i);
+        }
+        
+        
+        for(int i = 0; i < anno1UttList.size(); i++){
+            Utterance utt1 = anno1UttList.get(i);
+            Utterance utt2 = anno2UttList.get(i);
+            
+            
+            System.out.println();
+            System.out.println("(" + utt1.getTurn() + ")"  );
+            
+            
+        }
     }
     
 }
