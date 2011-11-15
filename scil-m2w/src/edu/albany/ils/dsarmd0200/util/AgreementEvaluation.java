@@ -350,6 +350,41 @@ public class AgreementEvaluation {
         System.out.println("alpha nominal = " + alpha1.agreement(dataList1));
         System.out.println("alpha interval = " + alpha2.agreement(dataList1));
         System.out.println("alpha ratio = " + alpha3.agreement(dataList1));
+        
+        //generating input data for spss software
+        System.out.println("below is for spss");
+        System.out.print("turn");
+        for(Utterance tempUtt : anno1UttList){
+            System.out.print("\t" + tempUtt.getTurn());
+        }
+        System.out.println();
+        System.out.println("--res-to---");
+        //anno1
+        System.out.print("danielle");
+        for(int i = 0; i < dataList[0].length; i++){
+            System.out.print("\t" + dataList[0][i]);
+        }
+        System.out.println();
+        //anno2
+        System.out.print("lauren");
+        for(int i = 0; i < dataList[1].length; i++){
+            System.out.print("\t" + dataList[1][i]);
+        }
+        
+        System.out.println();
+        System.out.println("---link-to---");
+        //anno1
+        System.out.print("danielle");
+        for(int i = 0; i < dataList1[0].length; i++){
+            System.out.print("\t" + dataList1[0][i]);
+        }
+        System.out.println();
+        //anno2
+        System.out.print("lauren");
+        for(int i = 0; i < dataList1[1].length; i++){
+            System.out.print("\t" + dataList1[1][i]);
+        }
+        System.out.println();
 //        System.out.println(kpalpha.agreement(link_to_data));
     }
 
