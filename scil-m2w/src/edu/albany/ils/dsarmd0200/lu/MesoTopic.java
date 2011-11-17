@@ -33,14 +33,15 @@ public class MesoTopic {
     //	====================================cal method=============================================
     /**
      * m2w: This method is to calculate the Mesotopic of a certain input document. It is called from the Assertions Class.
-     *
+     *      saving these many args is for later improvements.
      * @param filename
      * @param utts_
      * @param xp XMLParse
      * @param check PhraseCheck
      * @param wn Wordnet
+     * @date 11/17/11 1:23 PM updated. 
      */
-    public void calMesoTopic(String filename, ArrayList utts_, XMLParse xp, PhraseCheck check, Wordnet wn, NounList nl){
+    public void calMesoTopic(String filename, ArrayList utts_, XMLParse xp, PhraseCheck check, Wordnet wn, NounList nl, boolean isAutomated){
 
 //        ArrayList<String> topicAList = new ArrayList<String>();// where i save the whole list
         //m2w : added the threshold of small or large files. 4/13/11 1:07 PM
@@ -50,15 +51,45 @@ public class MesoTopic {
         }else{
             THRESHOLD = THRESHOLD_FILE_SIZE_SMALL;
         }
+        ArrayList<AChain> a = new ArrayList<AChain>();
         
-        //FindVerb fv = new FindVerb();
-        //NounList nl = new NounList(xp, wn, check, utts_);
-        //nl.createList(fv);
-        ArrayList <AChain> a = nl.getChains();
-
+        //added annotated mode. m2w 11/17/11 3:33 PM
+        if(isAutomated){
+            a = nl.getChains();
+        }else{
+            a = nl.getAChains();
+        }
+        
         this.buildMesoTopic(a, xp);
     }
 
+    public void calMesoTopicNew(LocalTopics lts_, ArrayList utts_){
+        this.utts_ = utts_;
+        if(this.utts_.size() > 200){
+            THRESHOLD = THRESHOLD_FILE_SIZE_LARGE;
+        }else{
+            THRESHOLD = THRESHOLD_FILE_SIZE_SMALL;
+        }
+        //changing the structure into my structure;
+        //and adding to the mesotopics
+        //m2w 11/17/11 4:21 PM
+        ArrayList<ArrayList<String>> mylts = new ArrayList<ArrayList<String>>();
+        for(Object lt : lts_){
+            ArrayList<String> mylt = new ArrayList<String>();//each local topic, 
+            LocalTopic templt = (LocalTopic)lt;
+            String word = templt.getContent().getWord();//topic name
+            mylt.add(word);//adding 0th index, the topic.
+            ArrayList<NounToken> subMentions = templt.getMentions();
+            for(NounToken nt : subMentions){
+                mylt.add(String.valueOf(nt.getTurnNo()));
+            }
+            if ((mylt.size()-1) >= THRESHOLD){
+                meso_topics_.add(mylt);
+            }
+        }
+        //sort and calculation.
+        meso_topics_ = MesoTopic.sortTopicList(meso_topics_);
+    }
 //	===================================util methods=============================================
     /**
      * m2w: This method is used in calMesotopic method. It is to build the mesotopic list by adding tempList which get from the AChain Obj.
@@ -72,6 +103,8 @@ public class MesoTopic {
 		    AChain temp = a.get(i);
 		    ArrayList<String> tempList = temp.getChain(a, xp);
 		    tempList = this.removeBRep(tempList);
+                    //m2w: checking each topic and legth. 11/17/11 1:42 PM
+//                    System.out.println("size: " + tempList.size());                    
 //                    System.out.println("thresh: " + THRESHOLD);
 		    //check the mesotopic threshold
 		    if ((tempList.size()-1) >= THRESHOLD){
@@ -81,8 +114,6 @@ public class MesoTopic {
 
 		}
         meso_topics_ = MesoTopic.sortTopicList(meso_topics_);
-        
-
     }
 
     /**
@@ -223,7 +254,7 @@ public class MesoTopic {
         
         return mt;
     }
-
+ 
     /**
      * m2w : this class is to extract the merge method from the mergeSameTopic method. to make it simpler. merge the two sublists, and use the topic of the longer one, and sort the topic
      * @time 3/14/11 2:35 PM
@@ -319,6 +350,22 @@ public class MesoTopic {
         return mt;
     }
 
+    /**
+     * m2w: printing out the topic list.
+     * @date 11/17/11 1:43 PM
+     */
+    public void printMesoTopics(){
+        if(!meso_topics_.isEmpty()){
+            for(ArrayList<String> sublist : meso_topics_){
+                for(String tempStr : sublist){
+                    System.out.print(tempStr + "\t");
+                }
+                System.out.println();
+            }
+        }else{
+            System.out.println("meso topic is empty");
+        }
+    }
 //=========================================setters & getters==============================================
     /**
      * @return the meso_topics_
