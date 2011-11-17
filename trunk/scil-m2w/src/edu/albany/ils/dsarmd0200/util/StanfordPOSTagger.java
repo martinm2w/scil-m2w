@@ -104,7 +104,7 @@ public abstract class StanfordPOSTagger{
 		String forTagging = "";
                 String retval = "";
                if(!param.equals("/")){     // is a direcotry error
-                    System.out.println("string input : " + param);
+		   //System.out.println("string input : " + param);
                     List segList = classifier.segmentString(param);
                     for(Object a : segList){
                         forTagging += (String)a + " ";
@@ -118,8 +118,9 @@ public abstract class StanfordPOSTagger{
                             System.err.println("Error tagging " + param);
                             e.printStackTrace();
                     }
-                    System.out.println(retval);
+                    //System.out.println(retval);
                }
+	       if (retval != null) retval = retval.replaceAll("#", "/");
             return retval;
 	}
         
