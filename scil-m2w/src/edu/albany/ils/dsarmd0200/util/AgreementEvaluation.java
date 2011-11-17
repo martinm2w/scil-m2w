@@ -44,7 +44,7 @@ public class AgreementEvaluation {
     private void agEval(){
 //        this.buildUttLists("/home/ruobo/scil0200/data/testing_agreement");
         this.buildUttLists("/home/ruobo/develop/scil0200/data/testing_agreement");
-
+        this.printBothUtts();
 //        this.calAgreementKAlpha();
 
 //        ArrayList results = this.calAgreements();
@@ -532,10 +532,20 @@ public class AgreementEvaluation {
             Utterance utt2 = anno2UttList.get(i);
             
             
+            
+            System.out.print(utt1.getTurn() + "\t" + utt1.getSpeaker() + "\t" + utt1.getContent() + "\t");
+            if(utt1.getCommActType().equalsIgnoreCase("response-to")){
+                System.out.print(utt1.getRespTo());
+            }else{
+                System.out.print(" ");
+            }
+            System.out.print("\t");
+            if(utt2.getCommActType().equalsIgnoreCase("response-to")){
+                System.out.print(utt2.getRespTo());
+            }else{
+                System.out.print(" ");
+            }
             System.out.println();
-            System.out.println("(" + utt1.getTurn() + ")"  );
-            
-            
         }
     }
     

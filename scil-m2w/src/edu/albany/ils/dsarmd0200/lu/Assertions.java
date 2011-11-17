@@ -4,7 +4,7 @@ package edu.albany.ils.dsarmd0200.lu;
  * @Author: Ting Liu
  * @Date: 01/28/2010
  * This class is used to judge the positive and negative
- * support for one local topic 
+ * support for one local topic
  */
 
 import java.io.*;
@@ -22,7 +22,7 @@ import org.xml.sax.*;
 
 public class Assertions {
     public Assertions(String data_path) {
-	Settings.initialize();
+        Settings.initialize();
 	ParseTools.initialize();
 	PronounFormMatching.initialize();
 	GenderCheck.initialize();
@@ -31,20 +31,11 @@ public class Assertions {
 	docs_path_ = data_path;
 //	System.out.println("Preparing...");
 
-	if ((Settings.getValue (Settings.WEB_SERVICE)).equals ("no"))
-	    {
-		loadAndParseTraining ();
-		loadAndParse();
-                this.setLanguageAndInitPosTaggers();
-	    }
-	else
-	    {
-		loadAndParseTraining ();
-                this.setLanguageAndInitPosTaggers();
-		QueryListener ql = new QueryListener (this);
-		ql.start ();
 
-	    }
+        loadAndParseTraining ();
+		loadAndParse();
+        this.setLanguageAndInitPosTaggers();
+
 	/*
 	if (Settings.getValue(Settings.PROCESS_TYPE).equals("automated")) {
 	    preprocess();
@@ -73,65 +64,119 @@ public class Assertions {
 
     public void makeAssertions() {
         //Lin Added 08/05/2011
-                
+
                 for (int j = 0; j < tr_utts_.size(); j++){
 		    String utterance = ((Utterance)tr_utts_.get(j)).getUtterance();
                     String noEmotes = ParseTools.removeEmoticons(utterance);
+                    //noEmotes = noEmotes.replace("，", "");
+                    //noEmotes = noEmotes.replaceAll("[？]+", "questionmark");
+
                     String tmpTagged="";
-		    if ((Settings.getValue(Settings.LANGUAGE)).equals("english")){
-			tmpTagged=StanfordPOSTagger.tagString(noEmotes);
-		    }
-		    else if ((Settings.getValue(Settings.LANGUAGE)).equals("chinese"))
-			{    
-			    tmpTagged=StanfordPOSTagger.tagChineseString(noEmotes);
+                    if ((Settings.getValue(Settings.LANGUAGE)).equals("english"))
+			{ tmpTagged=StanfordPOSTagger.tagString (noEmotes);
 			}
+		    else if ((Settings.getValue(Settings.LANGUAGE)).equals("chinese"))
+                    {
+                       tmpTagged=StanfordPOSTagger.tagChineseString(noEmotes);
+                    }
                     String tagged = tmpTagged.trim();
                     String spcTagged=tmpTagged.replaceAll("/"+"([A-Z]+)*"+" ", " ");
                     ((Utterance)tr_utts_.get(j)).setTaggedContent(tagged);
                     ((Utterance)tr_utts_.get(j)).setSpaceTaggedContent(spcTagged);
-                    
+
                     //System.out.println("sTmp: "+utts_.get(j).getTaggedContent());
                 }
         //end of Lin
-	
-	for (int i = 0; i < docs_utts_.size(); i++) {
+
+        for (int i = 0; i < docs_utts_.size(); i++) {
 	    String fn = (String)doc_names_.get(i);
-	    System.out.println("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$\nprocessing: " + fn);
+	    System.err.println("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$\nprocessing: " + fn);
 	    //utts_ = (ArrayList)docs_utts_.get(i);
 	    all_utts_.clear();
-	    all_utts_.addAll(tr_utts_);
+            all_utts_.addAll(tr_utts_);
 	    gch_ = new GroupCohesion();
 	    if (Settings.getValue(Settings.PROCESS_TYPE).equals("automated")) {
 		PhraseCheck phr_ch = (PhraseCheck)phr_checks_.get(i);
 		XMLParse xp = xmlps_.get(i);
 		utts_ = (ArrayList)docs_utts_.get(i);
-                
+
                 //Lin Added 08/05/2011
+               //try{
+               // String strTagFile=docs_path_+((String)doc_names_.get(i))+".txt";
+               // BufferedWriter bufferedWriterTagFile = null;
+               // bufferedWriterTagFile = new BufferedWriter(new FileWriter(strTagFile));
+
                 for (int j = 0; j < utts_.size(); j++){
-		    String utterance = utts_.get(j).getUtterance().toString();
+		    Utterance utt_ = utts_.get(j);
+		    String utterance = utt_.getUtterance().toString();
                     String noEmotes = ParseTools.removeEmoticons(utterance);
+                    //noEmotes = noEmotes.replaceAll("，", "");
+                    //noEmotes = noEmotes.replaceAll("？", "questionmark");
                     //String tmpTagged=StanfordPOSTagger.tagChineseString(noEmotes);
+		    //System.out.println("parsing: " + utterance);
 		    String tmpTagged="";
 		    if ((Settings.getValue(Settings.LANGUAGE)).equals("english")){
-			tmpTagged=StanfordPOSTagger.tagString(noEmotes);
+			//tmpTagged=StanfordPOSTagger.tagString(noEmotes);
+			SentenceSplitter sp = new SentenceSplitter ();
+			ArrayList splitUtterance = null;
+			if (noEmotes.length() > 200) {
+			    splitUtterance = sp.split (noEmotes);
+			}
+			if (splitUtterance == null || splitUtterance.size () == 1)
+			    {
+				tmpTagged=StanfordPOSTagger.tagString(noEmotes);
+			    }
+			else 
+			    {
+				String temps = "";
+				for (int k = 0; k < splitUtterance.size (); k++)
+				    {
+					String toTag = (String) splitUtterance.get (k);
+					//System.out.println ("toTag: " + toTag);
+					String temp = StanfordPOSTagger.tagString ((String) splitUtterance.get (k));
+					//System.out.println("tagged: " + temp);
+					temps = temps + " " + temp;
+					
+				    }
+				tmpTagged = temps.trim();
+			    }
+			
 		    }
 		    else if ((Settings.getValue(Settings.LANGUAGE)).equals("chinese"))
 			{    
 			    tmpTagged=StanfordPOSTagger.tagChineseString(noEmotes);
 			}
                     String tagged = tmpTagged.trim();
+		    //System.out.println("tagged: " + tagged);
+		    //if (tagged == null) {System.out.println("tagged is null: " + noEmotes); continue;}
                     String spcTagged=tmpTagged.replaceAll("/"+"([A-Z]+)*"+" ", " ");
-                    utts_.get(j).setTaggedContent(tagged);
-                    utts_.get(j).setSpaceTaggedContent(spcTagged);
-                    j=j;
+                    utt_.setTaggedContent(tagged);
+                    utt_.setSpaceTaggedContent(spcTagged);
                     //System.out.println("sTmp: "+utts_.get(j).getTaggedContent());
+               //     bufferedWriterTagFile.write(tagged);
+               //     bufferedWriterTagFile.newLine();
                 }
+
+
+               //     bufferedWriterTagFile.flush();
+               //     bufferedWriterTagFile.close();
+               //     continue;
+               //}catch (Exception ioe )
+	       //{
+	       //	ioe.printStackTrace ();
+	       //}
+
                 //end of Lin
-		
-		all_utts_.addAll(utts_);
+
+                all_utts_.addAll(utts_);
 		tagCommType();
 		//System.exit(0);
 		tagDAct();
+		/*
+		for (int ii = 0; ii < utts_.size(); ii++) {
+		    System.out.println ("utt tagged: " + utts_.get(ii).getTaggedContent());
+		}
+		*/
 		calCommLink(xp);
 		buildLocalTopicList(phr_ch, xp);
 
@@ -171,26 +216,23 @@ public class Assertions {
 		System.out.println("====================================================================================");
 		for (int k = 0; k < utts_.size(); k++) {
 		    Utterance utt_ = (Utterance)utts_.get(k);
-		    System.out.println(utt_.getTurn() + " || " + utt_.getSpeaker() + " || " + utt_.getTag() + " || " + utt_.getCommActType() 
-				       + " || " + utt_.getRespTo() + ": " + utt_.getSubSentence() + " ---- " + utt_.getTaggedSubSentence());
+		    System.out.println(utt_.getTurn() + " || " + utt_.getSpeaker() + " || " + utt_.getTag() + " || " + utt_.getCommActType()
+				       + " || " + utt_.getRespTo() + ": " + utt_.getContent());
 		}
 		*/
 
                 //mt.clear();
                 //tf.clear();
-                
+
 	    }else {
 		PhraseCheck phr_ch = (PhraseCheck)phr_checks_.get(i);
 		XMLParse xp = xmlps_.get(i);
 		utts_ = (ArrayList)docs_utts_.get(i);
 		all_utts_.addAll(utts_);
                 
-                calCommLink(xp);//added
+//                calCommLink(xp);//added
 		buildALocalTopicList(phr_ch, xp);
-//                MesoTopic mt = new MesoTopic();//added
-//                mt.calMesoTopic((String)doc_names_.get(i), utts_, xp, phr_ch, wn_, nls_);//added
-//		mts_.add(mt);//added
-//                ArrayList spks = new ArrayList(parts_.values());//added
+                System.out.println("annotated ----------------------------------");
 	    }
 	    ArrayList spks = new ArrayList(parts_.values());
 	    for (int k = 0; k < spks.size(); k++) {
@@ -204,23 +246,30 @@ public class Assertions {
 	    prxmlp_ = new PtsReportXMLParser(Settings.getValue(Settings.REPORT) + fn.split("\\.")[0] + "_AssertionReport.xml");
 	    prxmlp_.initClaim();
 	    prxmlp_.setDataUnit(fn.split("\\.")[0], fn.split("\\.")[0]);
+	    System.err.println("@Topic Control");
 	    calTpCtl(i);
+	    System.err.println("@Involvement Control");
 	    System.out.println("@Involvement");
 	    calInv(i);
+	    System.err.println("@Task Control");
 	    System.out.println("@Task Control");
 	    calTkCtl(i);
+	    System.err.println("@Expressive Disagreement");
 	    System.out.println("@Expressive Disagreement");
 	    calExDis(i);
+	    System.err.println ("@Leadership");
 	    System.out.println ("@Leadership");
 	    calLeader();
+	    System.err.println("@Agreement");
 	    System.out.println("@Agreement");
 	    calAgr();
+	    System.err.println("@Task Focus");
 	    System.out.println("@Task Focus");
 	    calTaskFocus(i);
 	    System.out.println("@Sociability Measure...");
 	    calSociability();
 	    //System.out.println("\n\nProcessing L...");
-	    //System.out.println("\n\nProcessing Sociability Measure...");
+	    System.err.println("\n\nProcessing Sociability Measure...");
 	    calGroupCohesion(i);
 	    //System.out.println("\n\nprocessing topic disagreement...");
 	    //calTpDis(i);
@@ -237,23 +286,29 @@ public class Assertions {
 	if ((Settings.getValue (Settings.WEB_SERVICE)).equals ("yes"))
 	    {
 		String DIR = "/home/samirashaikh/sshaikh/develop/NLTEST/scil0200/data/webservice/";
+		File dir_file = new File (DIR);
+		String files [] = dir_file.list ();
+		String filename = "";
+		if (files.length == 1)
+		    filename = files [0];
+
 		String BACKUP = "/home/samirashaikh/sshaikh/develop/NLTEST/scil0200/data/backup/";
-		String QUERY_FILE = "webservice.txt";
-		
-		
-		String cmd = "mv " + DIR + "/" + QUERY_FILE + " " + BACKUP + "/" + getTimeStamp () + QUERY_FILE;
+		//String QUERY_FILE = "webservice.txt";
+
+
+		String cmd = "mv " + DIR + filename +  " " + BACKUP;
 		Process moveQueryFile = null;
 		try
 		    {
 			moveQueryFile = Runtime.getRuntime ().exec (cmd);
 			InputStreamReader myIStreamReader = new InputStreamReader (moveQueryFile.getInputStream ());
 			BufferedReader bufferedReader = new BufferedReader (myIStreamReader);
-			
+
 			String line;
 			while ((line = bufferedReader.readLine ()) != null)
 			    {
 				System.err.println (line);
-    }
+			    }
 			InputStreamReader myErrorStreamReader = new InputStreamReader (moveQueryFile.getErrorStream ());
 			BufferedReader bufferedErrorReader = new BufferedReader (myErrorStreamReader);
 			String eLine;
@@ -265,7 +320,7 @@ public class Assertions {
 			if (moveQueryFile.waitFor () != 0)
 			    System.err.println ("ERROR" + moveQueryFile.exitValue ());
 			else System.err.println ("moved query file");
-			
+
 			myIStreamReader.close ();
 		    }
 		catch (Exception ioe )
@@ -273,7 +328,7 @@ public class Assertions {
 			ioe.printStackTrace ();
 		    }
 	    }
-                            
+
     }
 
     public void preprocess() {
@@ -281,13 +336,13 @@ public class Assertions {
 	    PhraseCheck phr_ch = (PhraseCheck)phr_checks_.get(i);
 	    XMLParse xp = xmlps_.get(i);
 	    utts_ = (ArrayList)docs_utts_.get(i);
-	    System.out.println("processing document " + i);
+	    //System.out.println("processing document " + i);
 	    all_utts_.clear();
 	    all_utts_.addAll(tr_utts_);
 	    all_utts_.addAll(utts_);
 	    tagCommType();
 	    //System.exit(0);
-	    System.out.println("go into tagDAct...");
+	    //System.out.println("go into tagDAct...");
 	    tagDAct();
 	    calCommLink(xp);
 	    //System.out.println("------------Generate Meso-topics of " + (String)doc_names_.get(i));
@@ -295,7 +350,7 @@ public class Assertions {
 	    //mt.callMesoTopic((String)doc_names_.get(i), utts_, xp, phr_ch, wn_);
 	}
 	//System.out.println("utts_: \n" + utts_);
-	
+
     }
 
     public void tagCommType() {
@@ -323,21 +378,21 @@ public class Assertions {
 
         // modified by Laura, May 5th, 2011
         if(Boolean.valueOf(Settings.getValue("splitUtterance"))){
-            System.out.println("Laura debug: before splitting, size = " + utts_.size());
+            //System.out.println("Laura debug: before splitting, size = " + utts_.size());
             SplitTestingUtterance stu = new SplitTestingUtterance(utts_);
             stu.startSplitting();
             ArrayList<Utterance> splittedUtts = stu.getSplittedUtts();
-            System.out.println("Laura debug: after splitting, size = " + splittedUtts.size());
+            //System.out.println("Laura debug: after splitting, size = " + splittedUtts.size());
             TreeMap<Integer, Integer> turnNoSplitNo = stu.getTurnNoSplitNo();
-            System.out.println("splitted turns and quantities: " + turnNoSplitNo);
+            //System.out.println("splitted turns and quantities: " + turnNoSplitNo);
 
             daT = new DialogueActType(all_utts_, tr_utts_, utts_, splittedUtts, turnNoSplitNo);
         }
         else{
-            daT = new DialogueActType(all_utts_, tr_utts_, utts_);
+	daT = new DialogueActType(all_utts_, tr_utts_, utts_);
         }
 
-        
+
 	daT.tagIt();
 	for (int i = 0; i < utts_.size(); i++) {
 	    Utterance utt_ = (Utterance)utts_.get(i);
@@ -366,18 +421,20 @@ public class Assertions {
     public void calTaskFocus(int i) {
 	//task_focus
         if(!mts_.isEmpty()){
-            MesoTopic mt = (MesoTopic)mts_.get(i);
-            TaskFocus tf = new TaskFocus();
-            gch_.setTaskFocus(tf);
-            tf.calTaskFocus(mt, utts_);
-            gch_.setTaskFocus(tf);
+	MesoTopic mt = (MesoTopic)mts_.get(i);
+	TaskFocus tf = new TaskFocus();
+	gch_.setTaskFocus(tf);
+	tf.calTaskFocus(mt, utts_);
+	gch_.setTaskFocus(tf);
+        }else{
+           System.out.println("mts_ is Empty"); 
         }
 	//System.out.println("@MSM: " + String.valueOf(tf.getMSM()));
 	//System.out.println("@MGM: " + String.valueOf(tf.getMGM()));
 	//System.out.println("Task Focus: " + String.valueOf(tf.getTaskFocus()));
 	//System.out.println("-----------------------------------------------");
 	//System.out.println();
-	
+
     }
 
     public void calSociability() {
@@ -464,7 +521,7 @@ public class Assertions {
 //	    double agreed_per = spk.getAgreed() / total_agreed;
 //	    System.out.println(/*"The actural score of ATX of " + */spk.getName() + /*" is: "*/ " : " + agreed_per);
 //	}
-	
+
     }
 
     public void calTpDis(int j) {
@@ -524,7 +581,7 @@ public class Assertions {
 	    //System.out.println("==========================================");
 	    //System.out.println(spk.getTC());
 	}
-	
+
 	keys = new ArrayList(parts_.keySet());
 	for (int i = 1; i < keys.size(); i++) {
 	    String key1 = (String)keys.get(i);
@@ -558,9 +615,9 @@ public class Assertions {
 		    spk2.getTC().incCLTIR();
 		}
 	    }
-	}	
-	    
-	    
+	}
+
+
 	//System.out.println("\n\n%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%");
 	//process LTI quintile
 	ArrayList spks = new ArrayList();
@@ -589,7 +646,7 @@ public class Assertions {
 		spks.add(spk1);
 		spks_LTI.add(spk1_LTI);
 	    }
-	}	
+	}
 	ArrayList rank = new ArrayList();
 	rank.add(1);
 	for (int j = 1; j < spks_LTI.size(); j++) {
@@ -606,7 +663,7 @@ public class Assertions {
 	System.out.println("\n++++++++++++++++++++++++++++++++\ncalculate Topic Control - LTI quintile");
 	calQuintile(spks_LTI, spks, "TPC", "LTI", null);
 	*/
-	
+
 	//process SMT quintile
 	spks = new ArrayList();
 	ArrayList spks_SMT = new ArrayList();
@@ -634,7 +691,7 @@ public class Assertions {
 		spks.add(spk1);
 		spks_SMT.add(spk1_SMT);
 	    }
-	}	
+	}
 	/*
 	System.out.println("\n++++++++++++++++++++++++++++++++\ncalculate Topic Control -  SMT quintile: ");
 	calQuintile(spks_SMT, spks, "TPC", "SMT", null);
@@ -666,12 +723,12 @@ public class Assertions {
 		spks.add(spk1);
 		spks_CS.add(spk1_CS);
 	    }
-	}	
+	}
 	/*
 	System.out.println("\n++++++++++++++++++++++++++++++++\ncalculate Topic Control -  CS quintile");
 	calQuintile(spks_CS, spks, "TPC", "CS", null);
 	*/
-	
+
 	//process TL quintile
 	spks = new ArrayList();
 	double total_tl = 0;
@@ -701,7 +758,7 @@ public class Assertions {
 		spks.add(spk1);
 		spks_TL.add(spk1_TL);
 	    }
-	}	
+	}
 	for (int i = 0; i < keys.size(); i++) {
 	    String key1 = (String)keys.get(i);
 	    Speaker spk1 = parts_.get(key1);
@@ -739,7 +796,7 @@ public class Assertions {
 		spks.add(spk1);
 		spks_CLTI.add(spk1_CLTI);
 	    }
-	}	
+	}
 	/*
 	    System.out.println("++++++++++++++++++++++++++++++++\ncalculate CLTI quintile");
 	    calQuintile(spks_CLTI, spks, "TPC", "CLTI", null);
@@ -750,9 +807,9 @@ public class Assertions {
 	    spk1.getTC().calPower();
 	    //System.out.println("The topic control merged socre of " + spk1.getName() + " is: " + spk1.getTC().getPower());
 	}
-	
-	
-	
+
+
+
 	//process Power quintile
 	spks = new ArrayList();
 	ArrayList spks_Power = new ArrayList();
@@ -780,7 +837,7 @@ public class Assertions {
 		spks.add(spk1);
 		spks_Power.add(spk1_Power);
 		}
-	}	
+	}
 	rank = new ArrayList();
 	rank.add(1);
 	for (int j = 1; j < spks_Power.size(); j++) {
@@ -878,7 +935,7 @@ public class Assertions {
                     // modified by Laura, Apirl 13, 2011
 		    System.out.println(/*"The quintile score " + */((String)spks.get(j)) + /*" is: "*/ " : " + 1);// + " --- actual score: " + di);
 		    qscs.put(id_spk, 1);
-		}	    
+		}
 	    }
 	} else {
 	    for (int j = 0; j < dis.size(); j++) {
@@ -942,7 +999,7 @@ public class Assertions {
 		    val_evi.add(qscs.get(id_spk));
 		    val_evi.add(evidence.toString());
 		    final_qscs.put(id_spk, val_evi);
-		}			
+		}
 		prxmlp_.setTopicControl(final_qscs);
 	    } else {
 		for (int j = 0; j < dis.size(); j++) {
@@ -1005,13 +1062,13 @@ public class Assertions {
 		if (di == qt_thrs[0]) {
 		    if (ass_type.equals("TPC")) {
 			((Speaker)spks.get(j)).setTpQScore(3, ind_type);
-			
+
 		    } else if (ass_type.equals("INV")) {
 			((Speaker)spks.get(j)).setInvQScore(3, ind_type);
 		    }
                     // modified by Laura, Apirl 13, 2011
 		    System.out.println(/*"The quintile score of " + */((Speaker)spks.get(j)).getName() + " : " /*+ 3 + " --- actual score: "*/ + di);
-		    //System.out.println("The actual count of 
+		    //System.out.println("The actual count of
 		    out_spks.add(((Speaker)spks.get(j)).getName());
 		    out_qts.add(3);
 		    out_acts.add(di);
@@ -1043,7 +1100,7 @@ public class Assertions {
 		    out_acts.add(di);
 		    out_actcs.add(((Speaker)spks.get(j)).sizeOfILTs());
 		    qscs.put(id_spk, 1);
-		}	    
+		}
 	    }
 	} else {
 	    for (int j = 0; j < dis.size(); j++) {
@@ -1169,7 +1226,7 @@ public class Assertions {
 		    val_evi.add(qscs.get(id_spk));
 		    val_evi.add(evidence.toString());
 		    final_qscs.put(id_spk, val_evi);
-		}			
+		}
 		//prxmlp_.setTopicControl(final_qscs);
 	    } else {
 		for (int j = 0; j < dis.size(); j++) {
@@ -1207,8 +1264,8 @@ public class Assertions {
 	}
 	System.out.println();
 	*/
-	
-	
+
+
     }
 
     public void calTkCtl(int j) {
@@ -1295,7 +1352,7 @@ public class Assertions {
 		}
 	    }
 	}
-	    
+
 	//System.out.println("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%");
 	//process NPI quintile
 	ArrayList spks = new ArrayList();
@@ -1324,7 +1381,7 @@ public class Assertions {
 		spks.add(spk1);
 		spks_NPI.add(spk1_NPI);
 	    }
-	}	
+	}
 	//System.out.println("\n++++++++++++++++++++++++++++++++\ncalculate Involvement - NPI quintile");
 	/*
 	System.out.print("NPI");
@@ -1357,7 +1414,7 @@ public class Assertions {
 		spks.add(spk1);
 		spks_TI.add(spk1_TI);
 	    }
-	}	
+	}
 	//System.out.println("\n++++++++++++++++++++++++++++++++\ncalculate Involvement - TI quintile");
 	/*
 	System.out.print("TI");
@@ -1390,7 +1447,7 @@ public class Assertions {
 		spks.add(spk1);
 		spks_TCI.add(spk1_TCI);
 	    }
-	}	
+	}
 	//System.out.println("\n++++++++++++++++++++++++++++++++\ncalculate Involvement - TCI quintile: " + spks_TCI);
 	/*
 	System.out.print("TCI");
@@ -1423,7 +1480,7 @@ public class Assertions {
 		spks.add(spk1);
 		spks_ALLOTP.add(spk1_ALLOTP);
 	    }
-	}	
+	}
 	//System.out.println("\n++++++++++++++++++++++++++++++++\ncalculate Involvement - ALLOTP quintile");
 	/*
 	System.out.print("ALLOTP");
@@ -1456,13 +1513,13 @@ public class Assertions {
 		spks.add(spk1);
 		spks_ASMI.add(spk1_ASMI);
 	    }
-	}	
+	}
 	//System.out.println("\n++++++++++++++++++++++++++++++++\ncalculate Involvement - ASMI quintile");
 	/*
 	System.out.print("ASMI");
 	calQuintile(spks_ASMI, spks, "INV", "ASMI", null);
 	*/
-	
+
 	/*
 	 */
 	for (int i = 0; i < keys.size(); i++) {
@@ -1498,7 +1555,7 @@ public class Assertions {
 		spks.add(spk1);
 		spks_Power.add(spk1_Power);
 	    }
-	}	
+	}
 	ArrayList rank = new ArrayList();
 	rank.add(1);
 	for (int j = 1; j < spks_Power.size(); j++) {
@@ -1513,39 +1570,31 @@ public class Assertions {
 	//System.out.println("++++++++++++++++++++++++++++++++\ncalculate Merged quintile");
 	calQuintile(spks_Power, spks, "INV", "Merged", rank);
     }
-    
+
     //}
 
     public void calCommLink(XMLParse xp) {
 	/*
-	for (int i = 0; i < docs_utts_.size(); i++) 
-	{		
+	for (int i = 0; i < docs_utts_.size(); i++)
+	{
 	    utts_ = (ArrayList<Utterance>)docs_utts_.get(i);
 	    //	    utts_ = cl.getUtts();
 	    */
-        if(isChinese_){
-            CommunicationLinkXChinese clx = new CommunicationLinkXChinese(utts_, wn_, isEnglish_, isChinese_);
-            clx.collectCLFtsX();
-	    utts_ = clx.getUtts();
-        }else{
-	CommunicationLinkX clx = new CommunicationLinkX(utts_, wn_, isEnglish_, isChinese_);
-            clx.collectCLFtsX();
-	    utts_ = clx.getUtts();
-        }
+	CommunicationLinkX clx = new CommunicationLinkX(utts_, isEnglish_, isChinese_);
 	    //cl.setUtts(utts_);
 	    //cl.calCLFts();
-//	    clx.collectCLFtsX();
-//	    utts_ = clx.getUtts();
+	    clx.collectCLFtsX();
+	    utts_ = clx.getUtts();
 	    //    	WriteXML wlx = new WriteXML(clx.getMap(),utts_);
 	    //    	wlx.outputXML();
 
-	    //}    
+	    //}
 	ArrayList tr_utts = new ArrayList();
 	CommunicationLink cl = new CommunicationLink(all_utts_, tr_utts, wn_, utts_, parts_);
 	cl.setUtts(utts_);
 	cl.callContOf();
 	utts_ = cl.getUtts();
-	
+
 	ArrayList cls = new ArrayList();
 	for(int index=0; index<utts_.size(); index++)
 	    {
@@ -1553,12 +1602,12 @@ public class Assertions {
 		    utts_.get(index).setRespTo("all-users");
 		    cls.add("all-users");
 		} else { cls.add(utts_.get(index).getRespTo()); }
-		
+
 		//System.out.println("Turn no " + (index+1) + " : " + utts_.get(index).getSysRespTo());
 	    }
 	xp.setCommActLinks(cls);
 	//	    WriteXML wx = new WriteXML(cl.getMap(),utts_);
-	//	    wx.outputXML(); 
+	//	    wx.outputXML();
     }
 
     public void loadAndParse() {
@@ -1693,7 +1742,7 @@ public class Assertions {
 							       "dsarmd",
 							       false,
 							       null);
-			//all_utts_.addAll(list);
+		        //all_utts_.addAll(list);
 			tr_utts_.addAll(list);
 		    }
 		}
@@ -1755,12 +1804,10 @@ public class Assertions {
 	    nls_ = new NounList(xp, wn_, phr_ch, utts_);
             if(isEnglish_){
 		    nls_.setEnglish(true);                
-            }
-            if(isUrdu_){
+            }else if(isUrdu_){
                 nls_.setUrdu (true);
                 nls_.setUrduPath (Settings.getValue (Settings.URDU_PATH));
-            }
-            if(isChinese_){
+            }else if(isChinese_){
                 nls_.setChinese (true);
 //                nls_.setCnwn(CNWN);
             }
@@ -1784,6 +1831,7 @@ public class Assertions {
 //                    StanfordPOSTagger.initializeChinese();
 //		}
 	    nls_.createList(fv);
+	    //nls_.printUniqueNouns();
         }
 	    /*
 	    if ((Settings.getValue (Settings.URDU)).equals("yes") )
@@ -1799,7 +1847,7 @@ public class Assertions {
 	    top10nouns_.clear();
 	    setTop10nouns();
 	    //}
-	
+
 	//end comment
 	/*comment it out for TkC*/
 	if (!is_tskc_) {
@@ -1823,15 +1871,22 @@ public class Assertions {
 	    System.out.println("size of mentions: " + lts_.sizeOfMentions());
 	    */
 	}
+	/*
+	System.out.println("local topics: " );
+	for (int i = 0; i < lts_.size(); i++) {
+	    LocalTopic lt_ = (LocalTopic)lts_.get(i);
+	    System.out.println("lt" + i + ": " + lt_);
+	}
+	*/
 	for (int k = 0; k < utts_.size(); k++) {
 	    Utterance utt_ = (Utterance)utts_.get(k);
-	    //System.out.println(utt_.getTurn() + " || " + utt_.getSpeaker() + " || " + utt_.getTag() + " || " + utt_.getCommActType() 
+	    //System.out.println(utt_.getTurn() + " || " + utt_.getSpeaker() + " || " + utt_.getTag() + " || " + utt_.getCommActType()
 	    //		       + " || " + utt_.getRespTo() + ": " + utt_.getTaggedContent());
 	}
 	//prxmlp_.setClaimCount(4 * parts_.size());
 	/*end comment*/
     }
-    
+
     public void buildALocalTopicList(PhraseCheck phr_ch, XMLParse xp) {
 	ArrayList nouns = new ArrayList();
 	lts_.clear();
@@ -1940,7 +1995,7 @@ public class Assertions {
 	    }
 	}
     }
-    
+
     public void setTop10nouns() {
 	ArrayList nouns = nls_.getNouns();
 	ArrayList top10Ids = new ArrayList();
@@ -1978,11 +2033,11 @@ public class Assertions {
     {
 	String to_return = "";
 	java.util.Calendar cal = java.util.Calendar.getInstance ();
-	to_return = to_return + cal.get (java.util.Calendar.YEAR) + "_" 
+	to_return = to_return + cal.get (java.util.Calendar.YEAR) + "_"
 	    + cal.get (java.util.Calendar.MONTH) + "_" +
-	    + cal.get (java.util.Calendar.DAY_OF_MONTH) + "_" + 
-	    + cal.get (java.util.Calendar.HOUR_OF_DAY) + "_" + 
-	    + cal.get (java.util.Calendar.MINUTE) + "_" + 
+	    + cal.get (java.util.Calendar.DAY_OF_MONTH) + "_" +
+	    + cal.get (java.util.Calendar.HOUR_OF_DAY) + "_" +
+	    + cal.get (java.util.Calendar.MINUTE) + "_" +
 	    + cal.get (java.util.Calendar.SECOND) + "_";
 	return to_return;
     }
@@ -2013,33 +2068,60 @@ public class Assertions {
      * @auther m2w: this method checks the config.txt file see which language was setup in it, then set the instance variables values, and initialize the pos taggers
      * @date 7/8/11 11:16 AM
      */
-    private void setLanguageAndInitPosTaggers(){
-        if ((Settings.getValue (Settings.LANGUAGE)).equals("english") )
-		{
-		    isEnglish_ = true;
-//		    nls_.setEnglish(true);
-                    StanfordPOSTagger.initialize();
-		}
-	    if ((Settings.getValue (Settings.LANGUAGE)).equals("urdu") )
-		{
-		    isUrdu_ = true;
-//		    nls_.setUrdu (true);
-//		    nls_.setUrduPath (Settings.getValue (Settings.URDU_PATH));
-		}
-            //m2w: chinese 5/17/11 1:39 PM
-            if ((Settings.getValue (Settings.LANGUAGE)).equals("chinese") )
-		{
-		    isChinese_ = true;
-//		    nls_.setChinese (true);
-                    StanfordPOSTagger.initializeChinese();
-                    System.out.println("init chinese done!!");
-		}
+    private void setLanguageAndInitPosTaggers()
+    {
+	if ((Settings.getValue (Settings.WEB_SERVICE)).equals ("no"))
+	    {
+		if ((Settings.getValue (Settings.LANGUAGE)).equals("english") )
+		    {
+			isEnglish_ = true;
+			//		    nls_.setEnglish(true);
+			StanfordPOSTagger.initialize();
+		    }
+		if ((Settings.getValue (Settings.LANGUAGE)).equals("urdu") )
+		    {
+			isUrdu_ = true;
+			//		    nls_.setUrdu (true);
+			//		    nls_.setUrduPath (Settings.getValue (Settings.URDU_PATH));
+		    }
+		//m2w: chinese 5/17/11 1:39 PM
+		if ((Settings.getValue (Settings.LANGUAGE)).equals("chinese") )
+		    {
+			isChinese_ = true;
+			//		    nls_.setChinese (true);
+			StanfordPOSTagger.initializeChinese();
+		    }
+	    }
+	else //is web service. figure out language from the data unit id
+	    {
+		String DIR = "/home/samirashaikh/sshaikh/develop/NLTEST/scil0200/data/webservice/";
+		File dir = new File (DIR);
+		String [] files = dir.list ();
+		if (files.length == 1)
+		    {
+			String filename = files [0];
+			if (filename.startsWith ("ZH"))
+			    {
+				System.err.println ("Setting Chinese");
+				isChinese_ = true;
+				StanfordPOSTagger.initializeChinese ();
+			    }
+			else if (filename.startsWith ("EN"))
+			    {
+				System.err.println ("Setting English");
+				isEnglish_ = true;
+				StanfordPOSTagger.initialize ();
+			    }
+		    }
+		else 
+		    System.err.println ("files in web service directory " + files.length);
+	    }
     }
-    
+
 //    private void initChineseWordnet(){
 //        CNWN = new ChineseWordnet("mysql", "localhost", "3306", "atur");
 //    }
-    
+
     public void printReport() {
 	prxmlp_.showSystemReport();
     }
@@ -2118,7 +2200,7 @@ public class Assertions {
                     while (!qFile.exists ())
                         {
                             try
-  
+
                                 {
                                     System.err.println ("Sleeping..");
                                     sleep (7000);
@@ -2137,7 +2219,7 @@ public class Assertions {
                             makeAssertions ();
 
 
-                            //first move the query file so we are absolutely sure for the thread                                                                                                                                                                                                                       
+                            //first move the query file so we are absolutely sure for the thread
 			    String cmd = "mv " + DIR + "/" + QUERY_FILE + " " + BACKUP + "/" + assertions.getTimeStamp () + QUERY_FILE;
                             Process moveQueryFile = null;
                             try

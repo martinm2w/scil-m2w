@@ -12,7 +12,7 @@ import edu.stanford.nlp.process.*;
 public class StanfordParser 
 {
     Tree t;
-    //LexicalizedParser lp = new LexicalizedParser("/projects/SHARED/stanford-parser-2010-08-20/englishFactored.ser.gz");
+//    LexicalizedParser lp = new LexicalizedParser("/projects/SHARED/stanford-parser-2010-08-20/englishFactored.ser.gz");
     TokenizerFactory tf = PTBTokenizer.factory(false, new WordTokenFactory());
     TreePrint tp = new TreePrint("penn,typedDependenciesCollapsed");
     int count = 0;

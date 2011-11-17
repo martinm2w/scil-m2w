@@ -50,9 +50,8 @@ public abstract class Settings {
     public static final String LANGUAGE = "language";
     public static final String POS_ENGLISH_MODEL = "posEnglishModel";
     public static final String POS_CHINESE_MODEL = "posChineseModel";
-    public static final String POS_CHINESE_PROPS = "posChineseProps";
     public static final String CHINESE_SEG_DATA_DIR = "ChineseSegDataDir";
-
+    public static final String POS_CHINESE_PROPS = "posChineseProps";
 
     
     public static void initialize(){
