@@ -95,7 +95,9 @@ public class Assertions {
 	    all_utts_.clear();
             all_utts_.addAll(tr_utts_);
 	    gch_ = new GroupCohesion();
+            boolean isAutomated = false;
 	    if (Settings.getValue(Settings.PROCESS_TYPE).equals("automated")) {
+                isAutomated = true;
 		PhraseCheck phr_ch = (PhraseCheck)phr_checks_.get(i);
 		XMLParse xp = xmlps_.get(i);
 		utts_ = (ArrayList)docs_utts_.get(i);
@@ -182,8 +184,13 @@ public class Assertions {
 
                 //meso_topic and task_focus
                 //System.out.println("------------Generate Meso-topics of " + (String)doc_names_.get(i));
+//                //testing nls1_ contents . m2w 11/17/11 12:26 PM.
+//                for(int k = 0; k < nls_.getNouns().size(); k ++ ){
+//                    NounToken tempNT = nls_.getNouns().get(k);
+//                    System.out.println(tempNT.getWord());
+//                }
                 MesoTopic mt = new MesoTopic();
-                mt.calMesoTopic((String)doc_names_.get(i), utts_, xp, phr_ch, wn_, nls_);
+                mt.calMesoTopic((String)doc_names_.get(i), utts_, xp, phr_ch, wn_, nls_, isAutomated);
 		mts_.add(mt);
                 //ArrayList<ArrayList<String>> mts = mt.getMeso_topics_();
                 //testing the mesotopic list
@@ -225,14 +232,20 @@ public class Assertions {
                 //tf.clear();
 
 	    }else {
+                isAutomated = false;
+                System.out.println("annotated ----------------------------------");
 		PhraseCheck phr_ch = (PhraseCheck)phr_checks_.get(i);
 		XMLParse xp = xmlps_.get(i);
 		utts_ = (ArrayList)docs_utts_.get(i);
 		all_utts_.addAll(utts_);
-                
+                               
 //                calCommLink(xp);//added
 		buildALocalTopicList(phr_ch, xp);
-                System.out.println("annotated ----------------------------------");
+                MesoTopic mt = new MesoTopic();
+                mt.calMesoTopicNew(lts_, utts_);
+//                mt.calMesoTopic((String)doc_names_.get(i), utts_, xp, phr_ch, wn_, nlsA_, isAutomated);
+                mt.printMesoTopics();
+		mts_.add(mt);
 	    }
 	    ArrayList spks = new ArrayList(parts_.values());
 	    for (int k = 0; k < spks.size(); k++) {
@@ -1955,12 +1968,12 @@ public class Assertions {
 	Collections.sort(spks_);
 	//only for invlovement
 	//if (is_inv_) {
-	    nls1_ = nouns;
-	    sortNTs(nls1_);
-	    top10nouns_.clear();
-	    setATop10nouns();
-	    //}
-	//done for involvement
+        nls1_ = nouns;
+        sortNTs(nls1_);
+        top10nouns_.clear();
+        setATop10nouns();
+
+        //done for involvement
 	for (int i = 0; i < nouns.size(); i++) {
 	    NounToken nt = (NounToken)nouns.get(i);
 	    String spk = nt.getSpeaker();
@@ -2151,6 +2164,7 @@ public class Assertions {
     private String train_path_ = null;
     private NounList nls_ = null;
     private ArrayList nls1_ = null;
+    private NounList nlsA_ = null; // m2w : for mesotopic annotated mode. 11/17/11 2:01 PM
     private HashMap<String, Speaker> parts_ = new HashMap<String, Speaker>();
     private LocalTopics lts_ = new LocalTopics();
     private ArrayList top10nouns_ = new ArrayList();

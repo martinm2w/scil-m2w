@@ -87,6 +87,33 @@ public class NounList {
 	pc = phr_ch;
 	xp = x;
     }
+    
+    /**
+     * m2w: this constructor is for the mesotopic calculation in annotated mode. because the buildATopicList in 
+     * Assertion.java returns a list of NounTokens, not a NounList object.
+     * @param x
+     * @param wparam
+     * @param check
+     * @param utts_
+     * @param nounlist 
+     * @date 11/17/11 1:03 PM
+     */
+    public NounList(XMLParse x, Wordnet wparam, PhraseCheck check, ArrayList utts_, ArrayList<NounToken> nounlist){
+		nouns = nounlist;
+		speakTokens = new HashMap<String, Integer>();
+		pronounTargets = new HashMap<Integer, PronounResolution2>();
+		utterances = x.getUtterances();
+		speakers = x.getSpeakers();
+		wrdnt = wparam;
+		commacts = x.getCommActs();
+		links = x.getCommActLinks();
+		turn_no = x.getTurnNo();
+		xp = x;
+		this.pc = check;
+		this.utts_ = utts_;
+                created = true;
+    }
+    
 
     public void countThP() {
         for (int i = 0; i < nouns.size(); i++) {
@@ -327,6 +354,9 @@ public class NounList {
 		for (int i = 0; i < nouns.size(); i++)
 		{
 			NounToken temp = nouns.get(i);
+                        //testing passed in nountoken. m2w 11/17/11 3:26 PM
+//                        System.out.print(temp.ID + " " + temp.word + " " + temp.subsequentMentions + " " + temp.firstAMention()+ " " + temp.firstMention());
+//                        System.out.println();
 			//filter the topic
 			if(!TopicFilter.needFiltered(temp.getWord()))
 			{
@@ -357,6 +387,49 @@ public class NounList {
 		return retval;
 	}
 
+        /**
+         * m2w: this is for mesotopic calculation in annotated mode. changed into using .firstAMention()
+         * @return 
+         * @date 11/17/11 3:29 PM
+         */
+        public ArrayList <AChain> getAChains(){
+		ArrayList <AChain> retval = new ArrayList<AChain>();
+		for (int i = 0; i < nouns.size(); i++){
+			NounToken temp = nouns.get(i);
+                        //testing passed in nountoken. m2w 11/17/11 3:26 PM
+//                        System.out.print(temp.ID + " " + temp.word + " " + temp.subsequentMentions + " " + temp.firstAMention()+ " " + temp.firstMention());
+//                        System.out.println();
+			//filter the topic
+			if(!TopicFilter.needFiltered(temp.getWord())){
+				if (temp.firstAMention()){
+					String word = temp.getWord();
+					int loc = temp.getTurnNo();
+					String target = "";
+					AChain newNode = new AChain();
+					// 1: root word
+					// 2. turn number of root word
+					// 3. reference word
+					// 4. turn number of reference word
+					newNode.add(word, loc, target, -1);
+				
+					ArrayList <NounToken> submen = getSubsequentMentions(temp);
+					for (int j = 0; j < submen.size(); j++)
+					{
+						NounToken curnoun = submen.get(j);
+						String word2 = curnoun.getWord();
+						int loc2 = curnoun.getTurnNo();
+						newNode.add(word2, loc2, word, loc);
+					}
+					retval.add(newNode);
+				}
+			}
+		}
+		return retval;
+	}
+        
+        
+        
+        
 	//convenient tabbed output for chains
 	public void printChains(){
 		for (int i = 0; i < nouns.size(); i++){
@@ -529,6 +602,7 @@ public class NounList {
 				String tagged = StanfordPOSTagger.tagString(utt_.getSubSentence()).trim();
 				utt_.setTaggedSubSentence(tagged);
 			    }
+                            System.out.println(utt_.getTaggedContent());
 			    String [] tagsplit=utt_.getTaggedContent().split("\\s+"); 
 			    // get words and phrases in one utterance, saves WORDS WITH TAGS from each utterance
 			    // into arraylist tokens Eg. A/Atag B/Btag
