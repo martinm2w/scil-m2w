@@ -39,9 +39,10 @@ public class MesoTopic {
      * @param xp XMLParse
      * @param check PhraseCheck
      * @param wn Wordnet
-     * @date 11/17/11 1:23 PM updated. 
+     * @date 11/17/11 1:23 PM updated.
+     * @update: not using this method anymore.
      */
-    public void calMesoTopic(String filename, ArrayList utts_, XMLParse xp, PhraseCheck check, Wordnet wn, NounList nl, boolean isAutomated){
+    public void calMesoTopic(String filename, ArrayList utts_, XMLParse xp, PhraseCheck check, Wordnet wn, NounList nl){
 
 //        ArrayList<String> topicAList = new ArrayList<String>();// where i save the whole list
         //m2w : added the threshold of small or large files. 4/13/11 1:07 PM
@@ -51,18 +52,21 @@ public class MesoTopic {
         }else{
             THRESHOLD = THRESHOLD_FILE_SIZE_SMALL;
         }
-        ArrayList<AChain> a = new ArrayList<AChain>();
         
-        //added annotated mode. m2w 11/17/11 3:33 PM
-        if(isAutomated){
-            a = nl.getChains();
-        }else{
-            a = nl.getAChains();
-        }
+        //FindVerb fv = new FindVerb();
+        //NounList nl = new NounList(xp, wn, check, utts_);
+        //nl.createList(fv);
+        ArrayList <AChain> a = nl.getChains();
         
         this.buildMesoTopic(a, xp);
     }
 
+    /**
+     * m2w: this new method is using the lts localtopic object which Ting generated, to get the mesotopic.
+     * @param lts_
+     * @param utts_ 
+     * @date 11/18/11 11:34 AM
+     */
     public void calMesoTopicNew(LocalTopics lts_, ArrayList utts_){
         this.utts_ = utts_;
         if(this.utts_.size() > 200){
@@ -103,8 +107,6 @@ public class MesoTopic {
 		    AChain temp = a.get(i);
 		    ArrayList<String> tempList = temp.getChain(a, xp);
 		    tempList = this.removeBRep(tempList);
-                    //m2w: checking each topic and legth. 11/17/11 1:42 PM
-//                    System.out.println("size: " + tempList.size());                    
 //                    System.out.println("thresh: " + THRESHOLD);
 		    //check the mesotopic threshold
 		    if ((tempList.size()-1) >= THRESHOLD){

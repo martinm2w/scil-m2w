@@ -95,9 +95,7 @@ public class Assertions {
 	    all_utts_.clear();
             all_utts_.addAll(tr_utts_);
 	    gch_ = new GroupCohesion();
-            boolean isAutomated = false;
 	    if (Settings.getValue(Settings.PROCESS_TYPE).equals("automated")) {
-                isAutomated = true;
 		PhraseCheck phr_ch = (PhraseCheck)phr_checks_.get(i);
 		XMLParse xp = xmlps_.get(i);
 		utts_ = (ArrayList)docs_utts_.get(i);
@@ -184,13 +182,9 @@ public class Assertions {
 
                 //meso_topic and task_focus
                 //System.out.println("------------Generate Meso-topics of " + (String)doc_names_.get(i));
-//                //testing nls1_ contents . m2w 11/17/11 12:26 PM.
-//                for(int k = 0; k < nls_.getNouns().size(); k ++ ){
-//                    NounToken tempNT = nls_.getNouns().get(k);
-//                    System.out.println(tempNT.getWord());
-//                }
                 MesoTopic mt = new MesoTopic();
-                mt.calMesoTopic((String)doc_names_.get(i), utts_, xp, phr_ch, wn_, nls_, isAutomated);
+//                mt.calMesoTopic((String)doc_names_.get(i), utts_, xp, phr_ch, wn_, nls_);
+                mt.calMesoTopicNew(lts_, utts_);//changed to new method , using lts object. m2w 11/18/11 11:01 AM
 		mts_.add(mt);
                 //ArrayList<ArrayList<String>> mts = mt.getMeso_topics_();
                 //testing the mesotopic list
@@ -232,19 +226,15 @@ public class Assertions {
                 //tf.clear();
 
 	    }else {
-                isAutomated = false;
-                System.out.println("annotated ----------------------------------");
 		PhraseCheck phr_ch = (PhraseCheck)phr_checks_.get(i);
 		XMLParse xp = xmlps_.get(i);
 		utts_ = (ArrayList)docs_utts_.get(i);
 		all_utts_.addAll(utts_);
                                
-//                calCommLink(xp);//added
 		buildALocalTopicList(phr_ch, xp);
                 MesoTopic mt = new MesoTopic();
-                mt.calMesoTopicNew(lts_, utts_);
-//                mt.calMesoTopic((String)doc_names_.get(i), utts_, xp, phr_ch, wn_, nlsA_, isAutomated);
-                mt.printMesoTopics();
+                mt.calMesoTopicNew(lts_, utts_);//using new method. m2w 11/18/11 11:02 AM
+//                mt.calMesoTopic((String)doc_names_.get(i), utts_, xp, phr_ch, wn_, nlsA_);
 		mts_.add(mt);
 	    }
 	    ArrayList spks = new ArrayList(parts_.values());
@@ -435,19 +425,20 @@ public class Assertions {
 	//task_focus
         if(!mts_.isEmpty()){
 	MesoTopic mt = (MesoTopic)mts_.get(i);
+//        mt.printMesoTopics();
 	TaskFocus tf = new TaskFocus();
 	gch_.setTaskFocus(tf);
 	tf.calTaskFocus(mt, utts_);
 	gch_.setTaskFocus(tf);
+//        System.out.println("@MSM: " + String.valueOf(tf.getMSM()));
+//	System.out.println("@MGM: " + String.valueOf(tf.getMGM()));
+//	System.out.println("Task Focus: " + String.valueOf(tf.getTaskFocus()));
+//	System.out.println("-----------------------------------------------");
+//	System.out.println();
         }else{
            System.out.println("mts_ is Empty"); 
         }
-	//System.out.println("@MSM: " + String.valueOf(tf.getMSM()));
-	//System.out.println("@MGM: " + String.valueOf(tf.getMGM()));
-	//System.out.println("Task Focus: " + String.valueOf(tf.getTaskFocus()));
-	//System.out.println("-----------------------------------------------");
-	//System.out.println();
-
+	
     }
 
     public void calSociability() {
@@ -2164,7 +2155,6 @@ public class Assertions {
     private String train_path_ = null;
     private NounList nls_ = null;
     private ArrayList nls1_ = null;
-    private NounList nlsA_ = null; // m2w : for mesotopic annotated mode. 11/17/11 2:01 PM
     private HashMap<String, Speaker> parts_ = new HashMap<String, Speaker>();
     private LocalTopics lts_ = new LocalTopics();
     private ArrayList top10nouns_ = new ArrayList();
