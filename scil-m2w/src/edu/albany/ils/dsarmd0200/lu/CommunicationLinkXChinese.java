@@ -2,13 +2,7 @@ package edu.albany.ils.dsarmd0200.lu;
 
 import edu.albany.ils.dsarmd0200.util.*;
 import edu.albany.ils.dsarmd0200.evaltag.*;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.PrintWriter;
 import java.util.*;
-import java.util.AbstractCollection;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  * m2w: this class is modified to improve the performance. commented all old methods, modified ,created new methods, wrote all new comments.
@@ -80,7 +74,8 @@ public class CommunicationLinkXChinese{
     private boolean doHitReport = true;
     private boolean doMissReport = true;
     private boolean doFinalReport = true; // whether print out the final report at the end of each file or not. 4/27/11 12:40 PM
-    private boolean doGenReport = true; // whether print out the evaluation(miss and hit) or not. 4/27/11 12:40 PM
+    private boolean doHitorMissReport = false; // whether print out the evaluation(miss and hit) or not. 4/27/11 12:40 PM
+    private boolean doCompleteAnalysis = true; // m2w 11/22/11 11:48 AM , this is for the complete utts analysis. 
 
     //added 7/27/11 12:47 PM
     private boolean isEnglish_ = false;
@@ -175,6 +170,11 @@ public class CommunicationLinkXChinese{
 //                            System.out.println("long: "+content + " - length: " + turn_length);
                     }
 
+            }else{
+                if(doCompleteAnalysis){
+                    System.out.print(u_content.getTurn() + "\t" + u_content.getSpeaker() + "\t" + u_content.getContent());
+                    System.out.println();
+                }
             }
     	}
 //            System.out.println("out of cmm_link");
@@ -2655,17 +2655,22 @@ public class CommunicationLinkXChinese{
          * @param code
          */
         public void genReport(String curr_turn_no, int auto_turn_no, int anno_turn_no, String which_case, String hitOrNot){
-            if(doGenReport){
+            Utterance cUtt = utts.get(Integer.parseInt(curr_turn_no) - 1);
+            Utterance sUtt = utts.get(auto_turn_no - 1);
+            Utterance aUtt = utts.get(anno_turn_no - 1);
+            if(doHitorMissReport){
 //                System.out.println("in gen");
-                Utterance cUtt = utts.get(Integer.parseInt(curr_turn_no) - 1);
-                Utterance sUtt = utts.get(auto_turn_no - 1);
-                Utterance aUtt = utts.get(anno_turn_no - 1);
                 System.out.println(hitOrNot + "!!!   " + " -- " + which_case);
 		System.out.println("turn: "+ curr_turn_no + "(" + cUtt.getSpeaker() + "): " + cUtt.getContent() + "  |  C["+ cUtt.getCommActType() +"]D["+ cUtt.getTag() +"]");
 		System.out.println("Syst: "+ auto_turn_no + "(" + sUtt.getSpeaker() + "): " + sUtt.getContent() + "  |  C["+ sUtt.getCommActType() +"]D["+ sUtt.getTag() +"]");
 		System.out.println("Anno: "+ anno_turn_no + "(" + aUtt.getSpeaker() + "): " + aUtt.getContent() + "  |  C["+ aUtt.getCommActType() +"]D["+ aUtt.getTag() +"]");
 		System.out.println();
-                
+                //generating
+            }
+            //m2w: added 11/22/11 11:49 AM, for complete doc analysis.
+            if(doCompleteAnalysis){
+                System.out.print(cUtt.getTurn() + "\t" + cUtt.getSpeaker() + "\t" + cUtt.getContent() + "\t" + sUtt.getSpeaker() + ":" +sUtt.getTurn() + "\t" + cUtt.getRespTo()+ "\t" + which_case + "\t" + hitOrNot);
+                System.out.println();
             }
 	}
 
