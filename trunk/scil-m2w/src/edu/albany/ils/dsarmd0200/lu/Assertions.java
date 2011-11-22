@@ -230,7 +230,8 @@ public class Assertions {
 		XMLParse xp = xmlps_.get(i);
 		utts_ = (ArrayList)docs_utts_.get(i);
 		all_utts_.addAll(utts_);
-                               
+                calCommLink(xp);
+                          
 		buildALocalTopicList(phr_ch, xp);
                 MesoTopic mt = new MesoTopic();
                 mt.calMesoTopicNew(lts_, utts_);//using new method. m2w 11/18/11 11:02 AM
@@ -1584,15 +1585,17 @@ public class Assertions {
 	    utts_ = (ArrayList<Utterance>)docs_utts_.get(i);
 	    //	    utts_ = cl.getUtts();
 	    */
-	CommunicationLinkX clx = new CommunicationLinkX(utts_, isEnglish_, isChinese_);
-	    //cl.setUtts(utts_);
-	    //cl.calCLFts();
-	    clx.collectCLFtsX();
-	    utts_ = clx.getUtts();
-	    //    	WriteXML wlx = new WriteXML(clx.getMap(),utts_);
-	    //    	wlx.outputXML();
-
-	    //}
+        //added if chinese calCommLink version. m2w 11/22/11 11:38 AM.
+        if(isChinese_){
+            CommunicationLinkXChinese clx = new CommunicationLinkXChinese(utts_, wn_, isEnglish_, isChinese_);
+            clx.collectCLFtsX();
+            utts_ = clx.getUtts();
+        }else{
+            CommunicationLinkX clx = new CommunicationLinkX(utts_, isEnglish_, isChinese_);
+            clx.collectCLFtsX();
+            utts_ = clx.getUtts();
+        }
+	    
 	ArrayList tr_utts = new ArrayList();
 	CommunicationLink cl = new CommunicationLink(all_utts_, tr_utts, wn_, utts_, parts_);
 	cl.setUtts(utts_);
