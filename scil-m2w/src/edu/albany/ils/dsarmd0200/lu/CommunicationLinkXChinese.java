@@ -71,27 +71,51 @@ public class CommunicationLinkXChinese{
     private int qm_count;
 
     //report controlling. 5/13/11 2:09 PM
-    private boolean doHitReport = true;
-    private boolean doMissReport = true;
+    private boolean doHitReport = true; // keep these true for stats 11/30/11 2:45 PM
+    private boolean doMissReport = true;// keep these true for stats jie11/30/11 2:45 PM
     private boolean doFinalReport = true; // whether print out the final report at the end of each file or not. 4/27/11 12:40 PM
     private boolean doHitorMissReport = false; // whether print out the evaluation(miss and hit) or not. 4/27/11 12:40 PM
-    private boolean doCompleteAnalysis = true; // m2w 11/22/11 11:48 AM , this is for the complete utts analysis. 
+    private boolean doCompleteAnalysis = false; // m2w 11/22/11 11:48 AM , this is for the complete utts analysis. 
+    private boolean doRankHitStatistics = false; // m2w 11/30/11 1:00 PM  , this is for the rank calculation link to statistics.
+    private boolean doLinkToStatistics = false;  // m2w 11/30/11 12:28 PM , this is for the link to which previous statistics.
+    private boolean doNwordLinkToStatistics = true; // m2w 11/30/11 12:59 PM , this is for the 1 word length turns link to statistics.
+    private int uttLengthNForStat = 6;
+//    private 
 
     //added 7/27/11 12:47 PM
     private boolean isEnglish_ = false;
     private boolean isChinese_ = false;
     
-    private int $prevIn4Count = 0;
-    
     //statistics chinese:
-    private int hits4 = 0;
+    private int $prevIn4Count = 0;
+    private int hits4 = 0;  //doRankHitSatistics 11/30/11 12:50 PM
     private int hits5 = 0;
     private int hits6 = 0;
     private int hits7 = 0;
     private int hits8 = 0;
     private int hits9 = 0;
     private int hits10 = 0;
-
+    private int linkto1 = 0; // doLinkToStatistics 11/30/11 12:39 PM
+    private int linkto2 = 0;
+    private int linkto3 = 0;
+    private int linkto4 = 0;
+    private int linkto5 = 0;
+    private int linkto6 = 0;
+    private int linkto7 = 0;
+    private int linkto8 = 0;
+    private int linkto9 = 0;
+    private int linkto10 = 0;
+    private int _Nlinkto1 = 0;
+    private int _Nlinkto2 = 0;
+    private int _Nlinkto3 = 0;
+    private int _Nlinkto4 = 0;
+    private int _Nlinkto5 = 0;
+    private int _Nlinkto6 = 0;
+    private int _Nlinkto7 = 0;
+    private int _Nlinkto8 = 0;
+    private int _Nlinkto9 = 0;
+    private int _Nlinkto10 = 0;
+    
     
     
         /**
@@ -119,57 +143,33 @@ public class CommunicationLinkXChinese{
         /**
          * m2w : it is called in the Assertion class, this is the initiate calculation method
          */
-        public void collectCLFtsX()
-        {
-//            System.out.println("in cmm_link");
-//            CommunicationLinkX.checkUttTurnsInCMDLine(utts);
+        public void collectCLFtsX(){
 //    	1. loop through all utt, get speakernames(hashset)
-    	for(int i=0; i<utts.size(); i++)
-    	{
+    	for(int i=0; i<utts.size(); i++){
             Utterance u_speaker = utts.get(i);
             speaker_names.add(u_speaker.getSpeaker().toLowerCase());
-
-//            if(utts.get(i).getContent().toLowerCase().equals("yes")){
-//                yes_count++;
-////                String tempResTo = utts.get(i).getRespTo();
-////                if(!tempResTo.equals("") && tempResTo.indexOf(":") != -1){
-////                    int toTurn = Integer.parseInt(tempResTo.split(":")[1]) - 1;
-////                    String catype = utts.get(toTurn).getTag();
-////                    if(catype.toLowerCase().contains("information-request")){
-////                        i_r_count++;
-////                    }
-////                    if(utts.get(toTurn).getContent().contains("?")){
-////                        qm_count++;
-////                    }
-//                }
-                
-//            }
     	}
 
 //      2.loop through all utts, if commActType equals "response_to", do the calculation and get the turn no. of which turn is responsed to.
-    	for(int index=0; index<utts.size(); index++)
-    	{
+    	for(int index=0; index<utts.size(); index++){
             Utterance u_content = utts.get(index);
 //            System.out.println("turn_no: " + u_content.getTurn() + " index: " + index);
-            if(u_content.getCommActType().equals(RESPONSE_TO))
-            {
+            if(u_content.getCommActType().equals(RESPONSE_TO)){
                     response_to_count++;
                     String content = contentExtraction(u_content).toLowerCase();
                     int turn_length = ParseTools.wordCountChinese(content);
                     if(turn_length < SHORT_THRESHOLD){
-//                            shortUtterance(index);
                             shortUttRank(index);
                             SHORT_UTT_STATICS++;
                             //testing 8/2/11 12:47 PM
 //                            System.out.println( "short: "+ content + " - length: " + turn_length);
-                    } else{
+                    }else{
 //                            longUtterance(index);
                             shortUttRank(index);
                             LONG_UTT_STATICS++;
                             //testing 8/2/11 12:47 PM
 //                            System.out.println("long: "+content + " - length: " + turn_length);
                     }
-
             }else{
                 if(doCompleteAnalysis){
                     System.out.print(u_content.getTurn() + "\t" + u_content.getSpeaker() + "\t" + u_content.getContent());
@@ -177,25 +177,61 @@ public class CommunicationLinkXChinese{
                 }
             }
     	}
-//            System.out.println("out of cmm_link");
     	// here print out the final result after done with each file.
         if(doFinalReport){
             System.out.println("Hit: " + hit);
             System.out.println("Number of response utt: " + response_to_count);
             System.out.println("Precision: " + (double)((double)hit)/((double)response_to_count));
-    //        System.out.println("Number of short utts: " + SHORT_UTT_STATICS + ". CdN: " + SHORT_UTT_CND_STATICS);
-    //        System.out.println("Number of long utts: " + LONG_UTT_STATICS + ". CdN: " + LONG_UTT_CND_STATICS);
             System.out.println("Number of short utts: " + SHORT_UTT_STATICS + ", short hit: "+ short_hit +". CdN: " + SHORT_UTT_CND_STATICS + ", cnd hit: "+ short_cnd_hit);
             System.out.println("Number of long utts: " + LONG_UTT_STATICS + ", long hit: "+ long_hit +". CdN: " + LONG_UTT_CND_STATICS + ", cnd hit: "+ long_cnd_hit);
-//            System.out.println("4: " + hits4);
-//            System.out.println("5: " + hits5);
-//            System.out.println("6: " + hits6);
-//            System.out.println("7: " + hits7);
-//            System.out.println("8: " + hits8);
-//            System.out.println("9: " + hits9);
-//            System.out.println("10: " + hits10);
-//            System.out.println($prevIn4Count);
     //        System.out.println("yes count: "+ yes_count +", ir count: "+ i_r_count + "qm: " +qm_count);
+        }
+        
+        //m2w 11/30/11 2:33 PM rank stat
+        if (doRankHitStatistics){
+            System.out.println("doRankHitSatistics: ");
+            System.out.println("4: " + hits4);
+            System.out.println("5: " + hits5);
+            System.out.println("6: " + hits6);
+            System.out.println("7: " + hits7);
+            System.out.println("8: " + hits8);
+            System.out.println("9: " + hits9);
+            System.out.println("10: " + hits10);
+            System.out.println($prevIn4Count);
+        }
+        
+        //m2w 11/30/11 2:33 PM link to stat
+        if(doLinkToStatistics){
+            System.out.println();
+            System.out.println("doLinkToStatistics: " + uttLengthNForStat);
+            System.out.println("1\t " + linkto1 + " \t " + (double)linkto1 / (double)response_to_count);
+            System.out.println("2\t " + linkto2 + " \t " + (double)linkto2 / (double)response_to_count);
+            System.out.println("3\t " + linkto3 + " \t " + (double)linkto3 / (double)response_to_count);
+            System.out.println("4\t " + linkto4 + " \t " + (double)linkto4 / (double)response_to_count);
+            System.out.println("5\t " + linkto5 + " \t " + (double)linkto5 / (double)response_to_count);
+            System.out.println("6\t " + linkto6 + " \t " + (double)linkto6 / (double)response_to_count);
+            System.out.println("7\t " + linkto7 + " \t " + (double)linkto7 / (double)response_to_count);
+            System.out.println("8\t " + linkto8 + " \t " + (double)linkto8 / (double)response_to_count);
+            System.out.println("9\t " + linkto9 + " \t " + (double)linkto9 / (double)response_to_count);
+            System.out.println("10\t " + linkto10 + " \t " + (double)linkto10 / (double)response_to_count);
+        }
+        
+        //m2w 11/30/11 2:34 PM 1 word link to stat
+        if(doNwordLinkToStatistics){
+            System.out.println();
+            int sumLinkTo = _Nlinkto1 + _Nlinkto2 + _Nlinkto3 + _Nlinkto4 + _Nlinkto5 + _Nlinkto6 + _Nlinkto7 + _Nlinkto8 + _Nlinkto9 + _Nlinkto10;
+            System.out.println("doNwordLinkToStatistics: ");
+            System.out.println("1\t " + _Nlinkto1 + " \t " + (double)_Nlinkto1 / (double)sumLinkTo);
+            System.out.println("2\t " + _Nlinkto2 + " \t " + (double)_Nlinkto2 / (double)sumLinkTo);
+            System.out.println("3\t " + _Nlinkto3 + " \t " + (double)_Nlinkto3 / (double)sumLinkTo);
+            System.out.println("4\t " + _Nlinkto4 + " \t " + (double)_Nlinkto4 / (double)sumLinkTo);
+            System.out.println("5\t " + _Nlinkto5 + " \t " + (double)_Nlinkto5 / (double)sumLinkTo);
+            System.out.println("6\t " + _Nlinkto6 + " \t " + (double)_Nlinkto6 / (double)sumLinkTo);
+            System.out.println("7\t " + _Nlinkto7 + " \t " + (double)_Nlinkto7 / (double)sumLinkTo);
+            System.out.println("8\t " + _Nlinkto8 + " \t " + (double)_Nlinkto8 / (double)sumLinkTo);
+            System.out.println("9\t " + _Nlinkto9 + " \t " + (double)_Nlinkto9 / (double)sumLinkTo);
+            System.out.println("10\t " + _Nlinkto10 + " \t " + (double)_Nlinkto10 / (double)sumLinkTo);
+            System.out.println("sum\t" + sumLinkTo);
         }
     }
     
@@ -323,10 +359,6 @@ public class CommunicationLinkXChinese{
                                                 if(pre_raw_content.indexOf('?')!=-1)
                                                 {
                                                         found = true;
-//                                                        map.put(Integer.parseInt(utt.getTurn()), (utts.get(Integer.parseInt(utts.get(index).getTurn())-(i+1))).getSpeaker() + ":" + (Integer.parseInt(utts.get(index).getTurn())-i));
-//                                                        String SysRespTo = (utts.get(Integer.parseInt(utts.get(index).getTurn())-(i+1))).getSpeaker() + ":" + (Integer.parseInt(utts.get(index).getTurn())-i);
-//                                                        evaluate(index,Integer.parseInt(utts.get(index).getTurn())-i,"Long: Question Mark");
-//                                                        utt.setRespTo(SysRespTo);
                                                         this.setRespTo(index, i, utt, "Long: Question Mark");
                                                         break;
                                                 }
@@ -1490,10 +1522,6 @@ public class CommunicationLinkXChinese{
                         }
                     //the setting should be put here because after skipping what you can skip, you can just set the response_to,it's in the for loop.3/23/11 10:24 AM
                         found = true;
-//                        map.put(Integer.parseInt(utt.getTurn()), (utts.get(Integer.parseInt(utts.get(index).getTurn())-(i+1))).getSpeaker() + ":" + (Integer.parseInt(utts.get(index).getTurn())-i));
-//                        String sysRespTo = (utts.get(Integer.parseInt(utts.get(index).getTurn())-(i+1))).getSpeaker() + ":" + (Integer.parseInt(utts.get(index).getTurn())-i);
-//                        evaluate(index,Integer.parseInt(utts.get(index).getTurn())-i,31);
-//                        utt.setRespTo(sysRespTo);
                         this.setRespTo(index, i, utt, which_case);
                         break;
                 }//ends if index > 1 
@@ -2042,10 +2070,6 @@ public class CommunicationLinkXChinese{
                         }
                     //the setting should be put here because after skipping what you can skip, you can just set the response_to,it's in the for loop.3/23/11 10:24 AM
                         found = true;
-//                        map.put(Integer.parseInt(utt.getTurn()), (utts.get(Integer.parseInt(utts.get(index).getTurn())-(i+1))).getSpeaker() + ":" + (Integer.parseInt(utts.get(index).getTurn())-i));
-//                        String sysRespTo = (utts.get(Integer.parseInt(utts.get(index).getTurn())-(i+1))).getSpeaker() + ":" + (Integer.parseInt(utts.get(index).getTurn())-i);
-//                        evaluate(index,Integer.parseInt(utts.get(index).getTurn())-i,31);
-//                        utt.setRespTo(sysRespTo);
                         this.setRespTo(index, i, utt, which_case);
                         break;
                 }//ends if index > 1
@@ -2554,54 +2578,61 @@ public class CommunicationLinkXChinese{
                 }
         }
 	
+        /**
+         * m2w: this is rank version methods used evaluate method.
+         * @param curr_index
+         * @param sys_turn
+         * @param which_case
+         * @param rank 
+         * @date 11/30/11 12:38 PM
+         */
          private void evaluate(int curr_index, int sys_turn, String which_case, int rank){
-//                System.out.println("in eval: " + curr_index + "|" + sys_turn);
-		String curr_turn_no = utts.get(curr_index).getTurn();
-		String link_to = utts.get(curr_index).getRespTo();
-//                System.out.println("link to: " + link_to);
-		if(link_to.indexOf(":")!=-1){
-			String[] lkto = link_to.split(":");
-			int anno_turn =0;
-			if(lkto[1].contains(".")){
-				anno_turn = (int) Double.parseDouble(lkto[1]);
-			}else{
-				anno_turn = Integer.parseInt(lkto[1]);
-			}
-//                        if(anno_turn - sysTurnNo > 50) System.out.println("error is here"); 
-			if(sys_turn == anno_turn){
-				hit++;
-                                if(doHitReport){
-                                    this.genReport(curr_turn_no, sys_turn, anno_turn, which_case, "HIT");
-                                    switch (rank) {
-                                        case 4: {hits4++; break;}
-                                        case 5: {hits5++; break;}
-                                        case 6: {hits6++; break;}
-                                        case 7: {hits7++; break;}
-                                        case 8: {hits8++; break;}
-                                        case 9: {hits9++; break;}
-                                        case 10: {hits10++; break;}
-                                            
-                                    }
-                                }
-                                //added long and short statistics
-                                if(which_case.startsWith("Long:")){
-                                    long_hit++;
-                                }
-                                if(which_case.startsWith("Short:")){
-                                    short_hit++;
-                                }
-                                if(which_case.startsWith("Short: cnd:")){
-                                    short_cnd_hit++;
-                                }
-                                if(which_case.startsWith("Long: cnd:")){
-                                    long_cnd_hit++;
-                                }
-                        }else{
-                            if(doMissReport){
-                                this.genReport(curr_turn_no, sys_turn, anno_turn, which_case, "MISSED");
-                            }
-                        }
+            String curr_turn_no = utts.get(curr_index).getTurn();
+            String link_to = utts.get(curr_index).getRespTo();
+            if(link_to.indexOf(":")!=-1){
+                String[] lkto = link_to.split(":");
+                int anno_turn =0;
+                if(lkto[1].contains(".")){
+                    anno_turn = (int) Double.parseDouble(lkto[1]);
+                }else{
+                    anno_turn = Integer.parseInt(lkto[1]);
                 }
+                if(sys_turn == anno_turn){
+                    hit++;
+                    if(doHitReport){
+                        this.genReport(curr_turn_no, sys_turn, anno_turn, which_case, "HIT");
+                        if(doRankHitStatistics){
+                            switch (rank) {
+                                case 4: {hits4++; break;}
+                                case 5: {hits5++; break;}
+                                case 6: {hits6++; break;}
+                                case 7: {hits7++; break;}
+                                case 8: {hits8++; break;}
+                                case 9: {hits9++; break;}
+                                case 10: {hits10++; break;}
+                            }
+                        }//closes doRankHitStatistics
+                    }
+
+                    //added long and short statistics
+                    if(which_case.startsWith("Long:")){
+                        long_hit++;
+                    }
+                    if(which_case.startsWith("Short:")){
+                        short_hit++;
+                    }
+                    if(which_case.startsWith("Short: cnd:")){
+                        short_cnd_hit++;
+                    }
+                    if(which_case.startsWith("Long: cnd:")){
+                        long_cnd_hit++;
+                        }
+                }else{
+                    if(doMissReport){
+                        this.genReport(curr_turn_no, sys_turn, anno_turn, which_case, "MISSED");
+                    }
+                }
+            }
         }
 	
 
@@ -2632,22 +2663,6 @@ public class CommunicationLinkXChinese{
         }
 
         /**
-         * m2w : this method does the error analyze, it print's the code, automated result and annotated result for comparation.
-         * @param curr_turn_no
-         * @param auto_turn_no
-         * @param anno_turn_no
-         * @param code
-         */
-        public void errorAnalysis(String curr_turn_no, int auto_turn_no, int anno_turn_no, int code){
-		System.out.println("Turn " + curr_turn_no + "(" + utts.get(Integer.parseInt(curr_turn_no)-1).getSpeaker() + "): " +
-		utts.get(Integer.parseInt(curr_turn_no)-1).getContent());
-		System.out.println("Code: " + code);
-		System.out.println("System thought it linked to " + auto_turn_no + "(" + utts.get(auto_turn_no - 1).getSpeaker() + "): " + utts.get(auto_turn_no - 1).getContent());
-		System.out.println("Annotated linked to " + anno_turn_no + "(" + utts.get(anno_turn_no - 1).getSpeaker() + "): " + utts.get(anno_turn_no - 1).getContent());
-		System.out.println();
-	}
-
-        /**
          * m2w : analyze the repsonse_to . 3/28/11 3:25 PM
          * @param curr_turn_no
          * @param auto_turn_no
@@ -2658,6 +2673,8 @@ public class CommunicationLinkXChinese{
             Utterance cUtt = utts.get(Integer.parseInt(curr_turn_no) - 1);
             Utterance sUtt = utts.get(auto_turn_no - 1);
             Utterance aUtt = utts.get(anno_turn_no - 1);
+            int cUttTurn = Integer.parseInt(cUtt.getTurn());
+            int aUttTurn = Integer.parseInt(aUtt.getTurn());
             if(doHitorMissReport){
 //                System.out.println("in gen");
                 System.out.println(hitOrNot + "!!!   " + " -- " + which_case);
@@ -2672,6 +2689,44 @@ public class CommunicationLinkXChinese{
                 System.out.print(cUtt.getTurn() + "\t" + cUtt.getSpeaker() + "\t" + cUtt.getContent() + "\t" + sUtt.getSpeaker() + ":" +sUtt.getTurn() + "\t" + cUtt.getRespTo()+ "\t" + which_case + "\t" + hitOrNot);
                 System.out.println();
             }
+            
+            //m2w: added 11/30/11 2:25 PM, for link to stat.
+            if(doLinkToStatistics){
+                int which_prev = cUttTurn - aUttTurn;
+                switch (which_prev) {
+                    case 1 : {linkto1++; break;} 
+                    case 2 : {linkto2++; break;} 
+                    case 3 : {linkto3++; break;}
+                    case 4 : {linkto4++; break;}
+                    case 5 : {linkto5++; break;}
+                    case 6 : {linkto6++; break;}
+                    case 7 : {linkto7++; break;}
+                    case 8 : {linkto8++; break;}
+                    case 9 : {linkto9++; break;}
+                    case 10 : {linkto10++; break;}
+                }
+            }//closes if doLinkTostat
+            
+            //m2w: added 11/30/11 2:25 PM, for 1 word turn link to stat.
+            if(doNwordLinkToStatistics){
+                //if curr turn is 1 word long.
+                if(this.lengthCal(cUtt) == uttLengthNForStat){
+                    //do stat
+                    int which_prev = cUttTurn - aUttTurn;
+                    switch (which_prev) {
+                        case 1 : {_Nlinkto1++; break;} 
+                        case 2 : {_Nlinkto2++; break;} 
+                        case 3 : {_Nlinkto3++; break;}
+                        case 4 : {_Nlinkto4++; break;}
+                        case 5 : {_Nlinkto5++; break;}
+                        case 6 : {_Nlinkto6++; break;}    
+                        case 7 : {_Nlinkto7++; break;}
+                        case 8 : {_Nlinkto8++; break;}
+                        case 9 : {_Nlinkto9++; break;}
+                        case 10 : {_Nlinkto10++; break;}
+                    }
+                }
+            }//closes if do 1 word link stat
 	}
 
         private boolean isChineseStr(String s){
@@ -3011,4 +3066,3 @@ public class CommunicationLinkXChinese{
 
 
     // ===========================================old methods=======================================
-
