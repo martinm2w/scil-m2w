@@ -805,15 +805,15 @@ public class CommunicationLinkXChinese{
                 //if is digits:
                 if(currCharString.matches("\\d")){
                     if(prevCharString == null || !prevCharString.matches("\\d")){
-                        englishString = new StringBuffer(""); //creat new buffer instance,
-                        englishString.append(currCharString); //append curr char to buffer
+                        digitString = new StringBuffer(""); //creat new buffer instance,
+                        digitString.append(currCharString); //append curr char to buffer
                     }
                     if(prevCharString != null && prevCharString.matches("\\d")){
-                        englishString.append(currCharString);
+                        digitString.append(currCharString);
                     }
                     if(nextCharString == null || !nextCharString.matches("\\d")){
-                        stringList.add(englishString.toString()); //add buffer's string to list.
-                        englishString = null;
+                        stringList.add(digitString.toString()); //add buffer's string to list.
+                        digitString = null;
                     }
                 }//closes digits
 
