@@ -55,11 +55,11 @@ public class CommunicationLinkXChinese{
                         }else if(turn_length >= 6 && turn_length <= 9){
                             lookBackHowManyTurns = 7;
                         }
-                        shortUttRank(index);
+                        calRank(index);
                         SHORT_UTT_STATICS++;
                     }else{
                         lookBackHowManyTurns = 10; 
-                        shortUttRank(index);
+                        calRank(index);
                         LONG_UTT_STATICS++;
                     }
             }else{
@@ -133,39 +133,31 @@ public class CommunicationLinkXChinese{
          * @param index
          * @last 08/21/11 9:06 AM
          */
-        private void shortUttRank(int index){
+        private void calRank(int index){
             ArrayList<ArrayList> list = buildRankList(index);
-            Utterance currUtt = utts.get(index);
-//            System.out.println("testing: in short utt rank");
+            Utterance curr_utt = utts.get(index);
             //if curr utt is the first. thus list is empty.
             if(!list.isEmpty()){
-//                System.out.println("testing: in short utt rank, list is not empty");
-                list = calRankShort(list, index);
-//                for(int i = 0; i < list.size(); i++){
-//                    if((Integer)list.get(i).get(2) > 0){
-//                        System.out.print(list.get(i).get(0) + " ");
-//                        System.out.print(((Utterance)list.get(i).get(1)).getContent() + " " );
-//                        System.out.println(list.get(i).get(2));
-//                    }
-//                }
-//                System.out.println("testing: in short utt rank, after cal rank short");
+                //change here if you want to change rank calculation methods.
+                list = this.calRank_FindName(curr_utt, list);
+                list = this.calRank_RepeatingWords(curr_utt, list);// 12/6/11 4:50 PM
+                list = this.calRank_WordSim(curr_utt, list);
+                list = this.calRank_CaseMatching(curr_utt, list);
+                
                 int res_to = 0;
                 res_to = getHighestRankTN(list, index);
-//                System.out.println("testing: in short utt rank, after get highest rank turn number");
-//                Utterance currUtt = (Utterance)list.get(0).get(1);
-//                System.out.println( " res_to: " + res_to + "rank : "+ list.get(0).get(2));
                 int rank = (Integer)list.get(0).get(2);
-                this.setResToTN(index, res_to, currUtt, "Short Rgetank",rank);
-//                System.out.println("testing: in short utt rank, after set res-to");
-                
+                this.setResToTN(index, res_to, curr_utt, "Short Rgetank",rank);
             }//closes if is empty.
         }//closes method.
         
         /**
          * m2w: build the rank list for previous utts. ArrayList<ArrayList>
-         * index 0 : the "i" , index - i = which previous utt.
-         * index 1 : the i'th previous utt.
-         * index 2 : the rank of this previous utt.
+         * list: previous utts' info extracted into lists.
+         * sublist: 
+         * index 0 : the "i" , index - i = which previous utt. (int)
+         * index 1 : the i'th previous Utterance Object.       (Utterance)
+         * index 2 : the rank of this previous utt.            (int)
          * @param index
          * @return the rank list
          * @date 8/23/11 11:31 AM
@@ -186,53 +178,6 @@ public class CommunicationLinkXChinese{
         }
         
         
-        /**
-         * m2w: calculate the ranks of each previous utts and return the list.
-         * @param list
-         * @param index
-         * @return 
-         */
-        private ArrayList<ArrayList> calRankShort(ArrayList<ArrayList> list, int index){
-            Utterance curr_utt = utts.get(index);
-            list = this.calRankUtilFindName(curr_utt, list);
-            list = this.calRankUtilWordSim(curr_utt, list);
-            list = this.calRankUtilCaseMatching(curr_utt, list);
-            return list;
-        }
-        
-        private ArrayList<ArrayList> calRankLong(ArrayList<ArrayList> list, int index){
-            Utterance curr_utt = utts.get(index);
-            return list;
-        }
-        
-        /**
-         * m2w: get the highest rank turn number form the list.
-         * 1. sort the list in descending order according to the list's index 2 entry's value.
-         * 2. get the highest ranked turn and its turn number.
-         * @param list
-         * @return 
-         * @date 8/23/11 11:15 AM
-         */
-        private int getHighestRankTN(ArrayList<ArrayList> list, int index){
-            int highestRankTN = 0;
-            Collections.sort(list, new Comparator(){
-                @Override
-                public int compare(Object ob1, Object ob2){
-                    int o1Rank = 0;
-                    int o2Rank = 0;
-                    o1Rank = (Integer)(((ArrayList)ob1).get(2));
-                    o2Rank = (Integer)(((ArrayList)ob2).get(2));
-                    //descending order
-                    return o2Rank - o1Rank;
-                }
-            });
-            if((Integer)(list.get(0).get(2)) < 2){
-                return Integer.parseInt(utts.get(index - 1).getTurn());
-            }
-            Utterance highestUtt = (Utterance)list.get(0).get(1);
-            highestRankTN = Integer.parseInt(highestUtt.getTurn());
-            return highestRankTN;
-        }
           
         /**
          * 
@@ -240,7 +185,7 @@ public class CommunicationLinkXChinese{
          * @param list
          * @return 
          */
-        private ArrayList<ArrayList> calRankUtilFindName(Utterance curr_utt, ArrayList<ArrayList> list){
+        private ArrayList<ArrayList> calRank_FindName(Utterance curr_utt, ArrayList<ArrayList> list){
             int rank = 0;
             String curr_speaker = curr_utt.getSpeaker().toLowerCase();
             String cur_content = contentExtraction(curr_utt);
@@ -295,7 +240,7 @@ public class CommunicationLinkXChinese{
             return list;
         }
         
-        private ArrayList<ArrayList> calRankUtilWordSim(Utterance curr_utt, ArrayList<ArrayList> list){
+        private ArrayList<ArrayList> calRank_WordSim(Utterance curr_utt, ArrayList<ArrayList> list){
 
             String curr_speaker = curr_utt.getSpeaker().toLowerCase();
             String cur_content = contentExtraction(curr_utt);
@@ -391,7 +336,7 @@ public class CommunicationLinkXChinese{
             return list;
         }//ends method
         
-        private ArrayList<ArrayList> calRankUtilCaseMatching(Utterance curr_utt, ArrayList<ArrayList> list){
+        private ArrayList<ArrayList> calRank_CaseMatching(Utterance curr_utt, ArrayList<ArrayList> list){
             Utterance utt = curr_utt;
             String curr_speaker = curr_utt.getSpeaker().toLowerCase();
             String cur_content = contentExtraction(curr_utt).toLowerCase();
@@ -740,6 +685,71 @@ public class CommunicationLinkXChinese{
         }//ends method
         
         /**
+         * m2w: this methods calculates the utt list, looking for repeating words in current and previous utts.
+         * @param curr_utt
+         * @param list
+         * @return 
+         * @date 12/6/11 1:10 PM
+         */
+        private ArrayList<ArrayList> calRank_RepeatingWords(Utterance curr_utt, ArrayList<ArrayList> list){
+            int rankToIncrease = 0;
+            ArrayList<String> currUttStringList = this.uttToStringList(curr_utt);
+            //loop through list.
+            for(int i = 0; i < list.size(); i++){
+                ArrayList<String> prevUttSTringList = this.uttToStringList((Utterance)list.get(i).get(1));//index 1 is the Utterance Object.
+                //calculating rank to increase.
+                rankToIncrease = this.repeatingWords_util(currUttStringList, prevUttSTringList);
+                this.increaseRank(list.get(i), rankToIncrease);
+            }
+            return list;
+        }
+        
+        /**
+         * m2w: this is a util method for the calRankUtilRepeatingWords(), just to make the code more readable 
+         * 1. if u want to change the rank increasing algorithm, here is where u wanna look at.
+         * @return 
+         * @date 12/6/11 3:26 PM.
+         */
+        private int repeatingWords_util(ArrayList<String> currStringList, ArrayList<String> prevStringList){
+            int rankToIncrease = 0;
+            curr:
+            for(int i = 0; i < currStringList.size(); i++){
+                String currTempStr = currStringList.get(i);
+                prev:
+                for(int j = 0; j < prevStringList.size(); j++){
+                    String prevTempStr = prevStringList.get(j);
+                    //if english word and digits
+                    if(currTempStr.matches("\\w") || currTempStr.matches("\\d")){
+                        if(currTempStr.equalsIgnoreCase(prevTempStr)){
+                            rankToIncrease += 3;
+                        }
+                    //if chinse word
+                    }else if(currTempStr.matches("[\\u4E00-\\u9FA5]")){
+                        //if char match ,start a loop
+                        if(currTempStr.equalsIgnoreCase(prevTempStr)){
+                            rankToIncrease++;
+                            int currRemainLength = currStringList.size() - i;
+                            int prevRemainLength = prevStringList.size() - j;
+                            int length = java.lang.Math.min(currRemainLength, prevRemainLength);
+                            loop:
+                            for(int x = 1; x < length; x++){
+                                String currStrNext = currStringList.get(i+x);
+                                String prevStrNext = prevStringList.get(j+x);
+                                if(currStrNext.equalsIgnoreCase(prevStrNext)){
+                                    rankToIncrease = rankToIncrease + x + 1; //2 consecutive, +2, 3 consecutive +2 +3  = 5 , 4 consecutive +2+3+4 = +9
+                                }else{
+                                    break loop;
+                                }
+                            }//closes loop
+                        }//closes if first match
+                    }//close else if chinse.
+                }//close prev loop
+            }//close curr loop.
+            return rankToIncrease;
+        }
+        
+        
+        /**
          * m2w: chinese ver: increase the ith previous utt's rank by x.
          * @param subList
          * @param increasement x
@@ -748,6 +758,71 @@ public class CommunicationLinkXChinese{
             int rank = (Integer)(subList.get(2));
             rank += increasement;
             subList.set(2, rank);
+        }
+        
+        /**
+         * m2w: this method is for parsing 1 utt into a ArrayList<String>
+         * 1. each chinese char is 1 entry
+         * 2. every consecutive english word is 1 entry
+         * 3. every consecutive digits is 1 entry.
+         * @param utt
+         * @return 
+         * @date 12/6/11 3:12 PM
+         */
+        private ArrayList<String> uttToStringList(Utterance utt){
+            String content = utt.getContent();
+            ArrayList<String> stringList = new ArrayList<String>();
+            for(int i = 0; i < content.length(); i++){
+                //if is chinese char, add to list
+                String currCharString = CommunicationLinkXChinese.charToString(content.charAt(i));
+                String nextCharString = null;
+                if(i < content.length() -1){
+                    nextCharString = CommunicationLinkXChinese.charToString(content.charAt(i+1));
+                }
+                String prevCharString = null;
+                if(i > 0){
+                    prevCharString = CommunicationLinkXChinese.charToString(content.charAt(i-1));
+                }
+                
+                //if is english:
+                if(currCharString.matches("\\w")){
+                    //if is the previous char is null(first) or is not english.
+                    if(prevCharString == null || !prevCharString.matches("\\w")){
+                        englishString = new StringBuffer(""); //creat new buffer instance,
+                        englishString.append(currCharString); //append curr char to buffer
+                    }
+                    //if previous char is not null and is english , add curr char to buffer
+                    if(prevCharString != null && prevCharString.matches("\\w")){
+                        englishString.append(currCharString);
+                    }
+                    //if next char is null or is not english, add buffer to list.
+                    if(nextCharString == null || !nextCharString.matches("\\w")){
+                        stringList.add(englishString.toString()); //add buffer's string to list.
+                        englishString = null;
+                    }
+                }//closes english
+                
+                //if is digits:
+                if(currCharString.matches("\\d")){
+                    if(prevCharString == null || !prevCharString.matches("\\d")){
+                        englishString = new StringBuffer(""); //creat new buffer instance,
+                        englishString.append(currCharString); //append curr char to buffer
+                    }
+                    if(prevCharString != null && prevCharString.matches("\\d")){
+                        englishString.append(currCharString);
+                    }
+                    if(nextCharString == null || !nextCharString.matches("\\d")){
+                        stringList.add(englishString.toString()); //add buffer's string to list.
+                        englishString = null;
+                    }
+                }//closes digits
+
+                //if is chinese
+                if(currCharString.matches("[\\u4E00-\\u9FA5]")){
+                    stringList.add(currCharString);
+                }//closes chinese
+            }//close for loop
+            return stringList;
         }
 
 //    ===============================================common util=============================================
@@ -764,20 +839,52 @@ public class CommunicationLinkXChinese{
             return turn_length;
         }
 
+        /**
+         * m2w: get the highest rank turn number form the list.
+         * 1. sort the list in descending order according to the list's index 2 entry's value.
+         * 2. get the highest ranked turn and its turn number.
+         * @param list
+         * @return 
+         * @date 8/23/11 11:15 AM
+         */
+        private int getHighestRankTN(ArrayList<ArrayList> list, int index){
+            int highestRankTN = 0;
+            Collections.sort(list, new Comparator(){
+                @Override
+                public int compare(Object ob1, Object ob2){
+                    int o1Rank = 0;
+                    int o2Rank = 0;
+                    o1Rank = (Integer)(((ArrayList)ob1).get(2));
+                    o2Rank = (Integer)(((ArrayList)ob2).get(2));
+                    //descending order
+                    return o2Rank - o1Rank;
+                }
+            });
+            if((Integer)(list.get(0).get(2)) < 2){
+                return Integer.parseInt(utts.get(index - 1).getTurn());
+            }
+            Utterance highestUtt = (Utterance)list.get(0).get(1);
+            highestRankTN = Integer.parseInt(highestUtt.getTurn());
+            return highestRankTN;
+        }
         
         /**
          * m2w : xin's method, extract content from an utterance and filter it, removing emo and punctuations.
          * @param utterance
          * @return
          */
-        private static String contentExtraction(Utterance utterance)
-        {
+        private static String contentExtraction(Utterance utterance){
             String content = utterance.getContent().toLowerCase();
             content = ParseTools.removeEmoticons(content);
-//            content = ParseTools.removePunctuation(content);
             return content;
         }
 	
+        private static String charToString(char c){
+            char tempWordChar = c;
+            char[] tempWordCharToString = {tempWordChar};
+            String word = new String(tempWordCharToString);
+            return word;
+        }
         
         /**
          * m2w: this is rank version methods used evaluate method.
@@ -984,13 +1091,15 @@ public class CommunicationLinkXChinese{
     //--------- instance attributes ---------------
     private ArrayList<Utterance> utts ;
     private HashSet<String> speaker_names = new HashSet<String>();          // all speakers names
-    private static final String RESPONSE_TO="response-to";
+    private int lookBackHowManyTurns = 0; //adding look back threshold according to statistics. 12/6/11 12:06 PM m2w
 //    private static Wordnet wn;
+    private StringBuffer englishString;
+    private StringBuffer digitString;
 
     //-------- threshold constants -----------------------------------------------------
     private static final double WORD_SIM_THRESHOLD = 0.7;               // m2w : for word sim 4/16/11 3:10 PM
     private static final int SHORTORLONG_THRESHOLD = 10;               // threshold < this threshold is considered short, else long
-    private int lookBackHowManyTurns = 0; //adding look back threshold according to statistics. 12/6/11 12:06 PM m2w
+    private static final String RESPONSE_TO="response-to";
     
     //------- report generation controlling parameters. --------------------------------    //  5/13/11 2:09 PM
     private boolean doHitReport = true; // keep these true for stats 11/30/11 2:45 PM
