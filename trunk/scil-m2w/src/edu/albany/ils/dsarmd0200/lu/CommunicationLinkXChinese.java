@@ -778,13 +778,14 @@ public class CommunicationLinkXChinese{
             return content;
         }
 	
+        
         /**
          * m2w: this is rank version methods used evaluate method.
          * @param curr_index
          * @param sys_turn
          * @param which_case
          * @param rank 
-         * @date 11/30/11 12:38 PM
+         * @date  11/30/11 12:38 PM
          */
          private void evaluate(int curr_index, int sys_turn, String which_case, int rank){
             String curr_turn_no = utts.get(curr_index).getTurn();
