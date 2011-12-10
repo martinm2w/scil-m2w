@@ -141,6 +141,7 @@ public class CommunicationLinkXChinese{
                 //change here if you want to change rank calculation methods.
                 list = this.calRank_FindName(curr_utt, list);
                 list = this.calRank_RepeatingWords(curr_utt, list);// 12/6/11 4:50 PM
+                list = this.calRank_QeustionMark(curr_utt, list);
                 list = this.calRank_WordSim(curr_utt, list);
                 list = this.calRank_CaseMatching(curr_utt, list);
                 
@@ -690,18 +691,45 @@ public class CommunicationLinkXChinese{
          * @date 12/6/11 1:10 PM
          */
         private ArrayList<ArrayList> calRank_RepeatingWords(Utterance curr_utt, ArrayList<ArrayList> list){
-            int rankToIncrease = 0;
+//            int rankToIncrease = 0;
             ArrayList<String> currUttStringList = this.uttToStringList(curr_utt);
             //loop through list.
             for(int i = 0; i < list.size(); i++){
                 ArrayList<String> prevUttSTringList = this.uttToStringList((Utterance)list.get(i).get(1));//index 1 is the Utterance Object.
                 //calculating rank to increase.
-                rankToIncrease = this.repeatingWords_util(currUttStringList, prevUttSTringList);
+                int rankToIncrease = this.repeatingWords_util(currUttStringList, prevUttSTringList);
                 this.increaseRank(list.get(i), rankToIncrease);
             }
             return list;
         }
 
+        /**
+         * m2w: this method calculates rank by looking for questionmarks.
+         * 1. 
+         * @param curr_utt
+         * @param list
+         * @return 
+         */
+        private ArrayList<ArrayList> calRank_QeustionMark(Utterance curr_utt, ArrayList<ArrayList> list){
+            //loop through list.
+            for(int i = 0; i < list.size(); i++){
+                int rankToIncrease = 0;
+                Utterance tempPrevUtt = (Utterance)list.get(i).get(1); // 1th index is the Uttrance Object
+                String prev_content = tempPrevUtt.getContent();
+                if(prev_content.contains(FULLQM) || prev_content.contains(HALFQM)){//if previous utt contains half/full question mark,
+                    System.out.println(prev_content);
+                    int distanceToCurrUtt = (int)list.get(i).get(0);
+                    //threshold is set to 6
+                    if(distanceToCurrUtt > QMTHRESH){  // if distance > 6
+                        rankToIncrease = 1; 
+                    }else{                      // if distance < 6
+                        rankToIncrease = QMTHRESH + 1 - distanceToCurrUtt; // closer distance, higher rank.
+                    }
+                }//closes prev utt contains question mark.
+                this.increaseRank(list.get(i), rankToIncrease);
+            }//closes for loop
+            return list;
+        }
 //    ===============================================util=============================================
                 /**
          * m2w: this is a util method for the calRankUtilRepeatingWords(), just to make the code more readable 
@@ -746,7 +774,6 @@ public class CommunicationLinkXChinese{
             }//close curr loop.
             return rankToIncrease;
         }
-
         
         /**
          * m2w: this method is for parsing 1 utt into a ArrayList<String>
@@ -813,7 +840,7 @@ public class CommunicationLinkXChinese{
             return stringList;
         }
         
-                /**
+        /**
          * m2w: chinese ver: increase the ith previous utt's rank by x.
          * @param subList
          * @param increasement x
@@ -1095,12 +1122,13 @@ public class CommunicationLinkXChinese{
     private StringBuffer englishString;
     private StringBuffer digitString;
 
-    //-------- threshold constants -----------------------------------------------------
+    //-------- threshold & constants -----------------------------------------------------
     private static final double WORD_SIM_THRESHOLD = 0.7;               // m2w : for word sim 4/16/11 3:10 PM
     private static final int SHORTORLONG_THRESHOLD = 10;               // threshold < this threshold is considered short, else long
     private static final String RESPONSE_TO="response-to";
     private static final String FULLQM = "\uFF1F";                      // m2w: created for question mark calculation. 
-    private static final String HALFQM = "\u003f";                      // m2w: 
+    private static final String HALFQM = "\u003f";                      // m2w: half width
+    private static final int QMTHRESH = 4;                              // m2w: threshold for question mark calculation. if > 6th previous utt, if has ?, rank + 1. else, closer to curr utt, rank higher.
     
     //------- report generation controlling parameters. --------------------------------    //  5/13/11 2:09 PM
     private boolean doHitReport = true; // keep these true for stats 11/30/11 2:45 PM
