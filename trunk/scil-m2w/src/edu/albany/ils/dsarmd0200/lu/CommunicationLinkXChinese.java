@@ -176,8 +176,6 @@ public class CommunicationLinkXChinese{
             }
             return list;
         }
-        
-        
           
         /**
          * 
@@ -703,8 +701,9 @@ public class CommunicationLinkXChinese{
             }
             return list;
         }
-        
-        /**
+
+//    ===============================================util=============================================
+                /**
          * m2w: this is a util method for the calRankUtilRepeatingWords(), just to make the code more readable 
          * 1. if u want to change the rank increasing algorithm, here is where u wanna look at.
          * @return 
@@ -747,18 +746,7 @@ public class CommunicationLinkXChinese{
             }//close curr loop.
             return rankToIncrease;
         }
-        
-        
-        /**
-         * m2w: chinese ver: increase the ith previous utt's rank by x.
-         * @param subList
-         * @param increasement x
-         */
-        private void increaseRank(ArrayList subList, int increasement){
-            int rank = (Integer)(subList.get(2));
-            rank += increasement;
-            subList.set(2, rank);
-        }
+
         
         /**
          * m2w: this method is for parsing 1 utt into a ArrayList<String>
@@ -824,8 +812,18 @@ public class CommunicationLinkXChinese{
             }//close for loop
             return stringList;
         }
-
-//    ===============================================common util=============================================
+        
+                /**
+         * m2w: chinese ver: increase the ith previous utt's rank by x.
+         * @param subList
+         * @param increasement x
+         */
+        private void increaseRank(ArrayList subList, int increasement){
+            int rank = (Integer)(subList.get(2));
+            rank += increasement;
+            subList.set(2, rank);
+        }
+        
         /**
          * m2w : this calculates the length(word count) of the utt.
          * @param utt
@@ -1086,6 +1084,7 @@ public class CommunicationLinkXChinese{
         
 //     ==================================Attributes===================================================
 //chinese char unicode representation : "[\\u4E00-\\u9FA5]"
+//full-width questionmark : \uff1f, half-width questionmark: \u003f
 //changed all instance vars to private. 4/18/11 2:06 PM
         
     //--------- instance attributes ---------------
@@ -1100,6 +1099,8 @@ public class CommunicationLinkXChinese{
     private static final double WORD_SIM_THRESHOLD = 0.7;               // m2w : for word sim 4/16/11 3:10 PM
     private static final int SHORTORLONG_THRESHOLD = 10;               // threshold < this threshold is considered short, else long
     private static final String RESPONSE_TO="response-to";
+    private static final String FULLQM = "\uFF1F";                      // m2w: created for question mark calculation. 
+    private static final String HALFQM = "\u003f";                      // m2w: 
     
     //------- report generation controlling parameters. --------------------------------    //  5/13/11 2:09 PM
     private boolean doHitReport = true; // keep these true for stats 11/30/11 2:45 PM
