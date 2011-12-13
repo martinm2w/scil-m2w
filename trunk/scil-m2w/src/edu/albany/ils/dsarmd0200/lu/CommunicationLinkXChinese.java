@@ -725,7 +725,7 @@ public class CommunicationLinkXChinese{
                 String prev_content = tempPrevUtt.getContent();
                 if(prev_content.contains(FULLQM) || prev_content.contains(HALFQM)){//if previous utt contains half/full question mark,
 //                    System.out.println(prev_content);
-                    int distanceToCurrUtt = (int)list.get(i).get(0);
+                    int distanceToCurrUtt = (Integer)list.get(i).get(0);
                     //threshold is set to 6
                     if(distanceToCurrUtt > QMTHRESH){  // if distance > 6
                         rankToIncrease = 1; 
