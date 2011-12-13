@@ -148,7 +148,8 @@ public class CommunicationLinkXChinese{
                 int res_to = 0;
                 res_to = getHighestRankTN(list, index);
                 int rank = (Integer)list.get(0).get(2);
-                this.setResToTN(index, res_to, curr_utt, "Short Rgetank",rank);
+                ArrayList<String> reason_list = (ArrayList<String>)list.get(0).get(3);
+                this.setResToTN(index, res_to, curr_utt, "Short Rgetank",rank, reason_list);
             }//closes if is empty.
         }//closes method.
         
@@ -159,6 +160,7 @@ public class CommunicationLinkXChinese{
          * index 0 : the "i" , index - i = which previous utt. (int)
          * index 1 : the i'th previous Utterance Object.       (Utterance)
          * index 2 : the rank of this previous utt.            (int)
+         * index 3 : the reason for increasing ranks           (ArrayList<String>) 12/12/11 11:56 AM
          * @param index
          * @return the rank list
          * @date 8/23/11 11:31 AM
@@ -170,9 +172,12 @@ public class CommunicationLinkXChinese{
                 Utterance prev_utt = utts.get(index - i);
                 int init_rank = 0;
                 ArrayList sub_list = new ArrayList();
+                //added reason list for statistics and analysis.  12/12/11 11:55 AM
+                ArrayList<String> reason_list = new ArrayList<String>();
                 sub_list.add(i);
                 sub_list.add(prev_utt);
                 sub_list.add(init_rank);
+                sub_list.add(reason_list); // 12/12/11 11:56 AM
                 if(!sub_list.isEmpty()) list.add(sub_list);
             }
             return list;
@@ -215,7 +220,7 @@ public class CommunicationLinkXChinese{
             if(name_found){
                 for(int i = 1; i<list.size(); i++){
                 Utterance prev_utt = (Utterance)(list.get(i).get(1));
-                int iRank = (Integer)(list.get(i).get(0));
+//                int iRank = (Integer)(list.get(i).get(0));
                 String preSpkName = prev_utt.getSpeaker().toLowerCase();
                 //if prev utt speaker's name matches the name we found in curr utt, rank + 5.
                     if(!preSpkName.equalsIgnoreCase(curr_speaker)){
@@ -224,13 +229,15 @@ public class CommunicationLinkXChinese{
                         if (curr_utt.getTag().toLowerCase().contains("opening") || cur_raw_content.contains("hi ")){
                             if((this.lengthCal(prev_utt) > 1) && preSpkName.equals(name) && this.lengthCal(prev_utt) > 1 && prev_utt.getTag().toLowerCase().contains("opening") ){
                                 //rank + 6
-                                iRank += 6;
-                                list.get(i).set(0, iRank);
+                                this.increaseRank(list.get(i), 6, "FindName_opening[6]");
+//                                iRank += 6;
+//                                list.get(i).set(0, iRank);
                             }
                         }else if(preSpkName.equals(name) && this.lengthCal(prev_utt) > 1){
                             //rank + 5
-                            iRank += 6;
-                            list.get(i).set(0, iRank);
+                            this.increaseRank(list.get(i), 6, "FindName[6]");
+//                            iRank += 6;
+//                            list.get(i).set(0, iRank);
                         }//ends if same name has found!
                     }//ends same name check
                 }//ends outter for loop
@@ -313,7 +320,7 @@ public class CommunicationLinkXChinese{
                                 //excluded prev_utt com_act_type is response-to. 4/16/11 3:30 PM
                                 if(swHit > 0 && !prev_utt.getCommActType().toLowerCase().contains("response-to")){
                                     //rank + 2
-                                    this.increaseRank(list.get(i), 2);
+                                    this.increaseRank(list.get(i), 2, "WordSim[2]");
                                 }//ends if hit > 0;
                             }//closes 4. if english not empty
                             
@@ -325,7 +332,7 @@ public class CommunicationLinkXChinese{
                                     String tempCurSubStr = tempCurrCNList.get(curIndex) + tempCurrCNList.get(curIndex - 1);
                                     //if prev utt contains curr sub string.
                                     if(pre_content.contains(tempCurSubStr)){
-                                        this.increaseRank(list.get(i), 2);
+                                        this.increaseRank(list.get(i), 2, "WordSim[2]");
                                     }//close if conatins curr sub string
                                 }//closes CN for loop.
                             }//closes 5. CN
@@ -363,7 +370,7 @@ public class CommunicationLinkXChinese{
 //                                && prev_utt.getTag().toLowerCase().contains("information-request")
                                 ){
                             //rank + 2
-                            this.increaseRank(list.get(i), 2);
+                            this.increaseRank(list.get(i), 2, "curr start with yes, prev has ? [2]");
                         }
 
                         //m2w: if curr and prev both contains "haha", should be laughing at the same utt.
@@ -377,7 +384,7 @@ public class CommunicationLinkXChinese{
                                 && this.lengthCal(prev_utt) > 1
                                 ){
                             //rank + 2
-                            this.increaseRank(list.get(i), 2);
+                            this.increaseRank(list.get(i), -2, "2 consecutive haha [-2]");
                             firstLol = false; // do + 2 once.
                         }
 
@@ -388,7 +395,7 @@ public class CommunicationLinkXChinese{
                                 && pre_raw_content.contains("?")
                                 ){
                             //rank + 2
-                            this.increaseRank(list.get(i), 2);
+                            this.increaseRank(list.get(i), 2, "pre: ?, cur: sure. [2]");
                         }
                         
                         //m2w: code 34, too, neither case 3/24/11 1:56 PM
@@ -406,7 +413,7 @@ public class CommunicationLinkXChinese{
                                 ))
                                 ){
                             //rank + 1
-                            this.increaseRank(list.get(i), 1);
+                            this.increaseRank(list.get(i), 1, "cur: neither, pre: not[1]" );
                             
                         }
                         
@@ -429,7 +436,7 @@ public class CommunicationLinkXChinese{
                                             || pre_content.matches(".*怎么[\\u4E00-\\u9FA5]+呢.*")
                                 ))){
                             //rank + 3
-                            this.increaseRank(list.get(i), 3);
+                            this.increaseRank(list.get(i), 3, "rhetorical question in pre[3]");
                        }
 
 //                        //m2w : code 35, wow case, wow about something, look for "i", 3/24/11 11:17 AM
@@ -458,7 +465,7 @@ public class CommunicationLinkXChinese{
                                     || prev_utt.getTag().toLowerCase().contains("disagree")
                                     )){
                                 //rank + 2
-                                this.increaseRank(list.get(i), 2);
+                                this.increaseRank(list.get(i), 2, "agree on pre denying[2]");
                             }
                         }
 
@@ -475,7 +482,7 @@ public class CommunicationLinkXChinese{
                                         || pre_content.contains("不好意思") 
                                         )){
                                 //rank + 3
-                            this.increaseRank(list.get(i), 3);
+                            this.increaseRank(list.get(i), 3, "it'ok - im sorry[3]");
                         }
 
 //                        //m2w: code 310, sorry check. if last utt has sorry too, link to last's link_to ,4/3/11 11:38 AM
@@ -503,14 +510,14 @@ public class CommunicationLinkXChinese{
                                     Utterance tempUtt = (Utterance)(list.get(x).get(1));
                                     if(tempUtt.getTurn().equals(pre_SysRespToTN)){
                                         //rank + 2
-                                        this.increaseRank(list.get(x), 2);
+                                        this.increaseRank(list.get(x), 2, "2 exactly [2]");
                                     }
                                 }//closes looking for prev utt's res-to and add 2 to that utt's rank.
                             }//closes prev utt contains exactly too.                        
                             else{
                                 if(firstExactly){
                                     //if didn't find, increase last utt 1 once.
-                                    this.increaseRank(list.get(i), 1);
+                                    this.increaseRank(list.get(i), 1, "1 exactly [1]");
                                     firstExactly = false;
                                 }
                             }
@@ -530,17 +537,17 @@ public class CommunicationLinkXChinese{
                                     Utterance tempUtt = (Utterance)(list.get(x).get(1));
                                     if(tempUtt.getTurn().equals(pre_SysRespToTN)){
                                         //rank + 2
-                                        this.increaseRank(list.get(x), 2);
+                                        this.increaseRank(list.get(x), 2 , "2 good point - to pre's link-to [2]");
                                     }
                                 }//closes looking for prev utt's res-to and add 2 to that utt's rank.                            
                                 // if not , look for ? or why, then set.
                             }else if(pre_content.contains("?") || pre_content.contains("why")
                                         || pre_content.contains("为什么")|| pre_content.contains("怎么")
                                         ){
-                                    this.increaseRank(list.get(i), 2);
+                                    this.increaseRank(list.get(i), 2, "good point - pre has ? and why[2]");
                             }else{
                                 if(firstGoodPoint){
-                                    this.increaseRank(list.get(i), 1);
+                                    this.increaseRank(list.get(i), 1, "good point - default [1]");
                                     firstGoodPoint = false;
                                 }
                             }
@@ -586,7 +593,7 @@ public class CommunicationLinkXChinese{
                                     
                                     ){
                                 //rank + 2.
-                                this.increaseRank(list.get(i), 2);
+                                this.increaseRank(list.get(i), 2, "pre:guessing [2]");
                                 
 
                                 //m2w: degree case
@@ -610,7 +617,7 @@ public class CommunicationLinkXChinese{
                                     || pre_raw_content.contains("are so ") || pre_raw_content.contains("r so ")                                    
                                     ){
                                 //rank + 2
-                                this.increaseRank(list.get(i), 2);
+                                this.increaseRank(list.get(i), 2, "pre: degree[2]");
                                 
                                 //m2w: opinion case
                             }else if ((pre_content.contains("i think")          || pre_content.matches(".*我.*想.*")    
@@ -623,7 +630,7 @@ public class CommunicationLinkXChinese{
                                     || pre_raw_content.endsWith("right?")) && (!pre_content.contains("why i think"))
                                     ){
                                     //rank + 2
-                                this.increaseRank(list.get(i), 2);
+                                this.increaseRank(list.get(i), 2, "pre: opinion[2]");
                                 
                                 //m2w: order & propossal case
                             }else if (pre_content.contains("how about")         || pre_content.contains("要不")  || pre_content.contains("不如")|| pre_content.contains("不然")
@@ -645,7 +652,7 @@ public class CommunicationLinkXChinese{
                                     || (pre_content.contains("can you") && pre_raw_content.contains("?"))
                                     ){
                                     //rank + 2
-                                    this.increaseRank(list.get(i), 2);
+                                    this.increaseRank(list.get(i), 2, " pre: order[2]");
                                 
                                 //m2w: other case
                             }else if (pre_content.contains("sometimes")         || pre_content.contains("有时候")
@@ -658,7 +665,7 @@ public class CommunicationLinkXChinese{
                                     || pre_raw_content.contains("it ") && pre_raw_content.contains(" depend")
                                     ){
                                     //rank + 1
-                                    this.increaseRank(list.get(i), 1);
+                                    this.increaseRank(list.get(i), 1, "pre:other [2]");
                                     
                                 //m2w: prev_utt contains cnd key words, if there isn't any thing to match, check this then pass down
                             }else if ((pre_content.contains("yes ") 
@@ -672,7 +679,7 @@ public class CommunicationLinkXChinese{
                                     ) && !prev_utt.getTag().toLowerCase().contains("agree-accept")){
 
                                 //rank + 1
-                                this.increaseRank(list.get(i), 1);
+                                this.increaseRank(list.get(i), 1, "pre:cnd[1]");
                             }else{
                                 //do nothing, continue the loop
                             }//ends all the else ifs
@@ -698,7 +705,7 @@ public class CommunicationLinkXChinese{
                 ArrayList<String> prevUttSTringList = this.uttToStringList((Utterance)list.get(i).get(1));//index 1 is the Utterance Object.
                 //calculating rank to increase.
                 int rankToIncrease = this.repeatingWords_util(currUttStringList, prevUttSTringList);
-                this.increaseRank(list.get(i), rankToIncrease);
+                this.increaseRank(list.get(i), rankToIncrease, "repeating words [" + rankToIncrease + "]");
             }
             return list;
         }
@@ -717,7 +724,7 @@ public class CommunicationLinkXChinese{
                 Utterance tempPrevUtt = (Utterance)list.get(i).get(1); // 1th index is the Uttrance Object
                 String prev_content = tempPrevUtt.getContent();
                 if(prev_content.contains(FULLQM) || prev_content.contains(HALFQM)){//if previous utt contains half/full question mark,
-                    System.out.println(prev_content);
+//                    System.out.println(prev_content);
                     int distanceToCurrUtt = (int)list.get(i).get(0);
                     //threshold is set to 6
                     if(distanceToCurrUtt > QMTHRESH){  // if distance > 6
@@ -726,7 +733,7 @@ public class CommunicationLinkXChinese{
                         rankToIncrease = QMTHRESH + 1 - distanceToCurrUtt; // closer distance, higher rank.
                     }
                 }//closes prev utt contains question mark.
-                this.increaseRank(list.get(i), rankToIncrease);
+                this.increaseRank(list.get(i), rankToIncrease, "question mark [" + rankToIncrease + "]");
             }//closes for loop
             return list;
         }
@@ -845,10 +852,12 @@ public class CommunicationLinkXChinese{
          * @param subList
          * @param increasement x
          */
-        private void increaseRank(ArrayList subList, int increasement){
+        private void increaseRank(ArrayList subList, int increasement, String reason){
             int rank = (Integer)(subList.get(2));
             rank += increasement;
             subList.set(2, rank);
+            ArrayList<String> reason_list = (ArrayList<String>)subList.get(3);
+            reason_list.add(reason);
         }
         
         /**
@@ -919,7 +928,7 @@ public class CommunicationLinkXChinese{
          * @param rank 
          * @date  11/30/11 12:38 PM
          */
-         private void evaluate(int curr_index, int sys_turn, String which_case, int rank){
+         private void evaluate(int curr_index, int sys_turn, String which_case, int rank, ArrayList<String> reason_list){
             String curr_turn_no = utts.get(curr_index).getTurn();
             String link_to = utts.get(curr_index).getRespTo();
             if(link_to.indexOf(":")!=-1){
@@ -933,7 +942,7 @@ public class CommunicationLinkXChinese{
                 if(sys_turn == anno_turn){
                     hit++;
                     if(doHitReport){
-                        this.genReport(curr_turn_no, sys_turn, anno_turn, which_case, "HIT");
+                        this.genReport(curr_turn_no, sys_turn, anno_turn, which_case, "HIT" , reason_list);
                         if(doRankHitStatistics){
                             switch (rank) {
                                 case 4: {hits4++; break;}
@@ -956,7 +965,7 @@ public class CommunicationLinkXChinese{
                     }
                 }else{
                     if(doMissReport){
-                        this.genReport(curr_turn_no, sys_turn, anno_turn, which_case, "MISSED");
+                        this.genReport(curr_turn_no, sys_turn, anno_turn, which_case, "MISSED" , reason_list);
                     }
                 }
             }
@@ -969,7 +978,7 @@ public class CommunicationLinkXChinese{
          * @param anno_turn_no
          * @param code
          */
-        public void genReport(String curr_turn_no, int auto_turn_no, int anno_turn_no, String which_case, String hitOrNot){
+        public void genReport(String curr_turn_no, int auto_turn_no, int anno_turn_no, String which_case, String hitOrNot , ArrayList<String> reason_list){
             Utterance cUtt = utts.get(Integer.parseInt(curr_turn_no) - 1);
             Utterance sUtt = utts.get(auto_turn_no - 1);
             Utterance aUtt = utts.get(anno_turn_no - 1);
@@ -986,7 +995,10 @@ public class CommunicationLinkXChinese{
             }
             //m2w: added 11/22/11 11:49 AM, for complete doc analysis.
             if(doCompleteAnalysis){
-                System.out.print(cUtt.getTurn() + "\t" + cUtt.getSpeaker() + "\t" + cUtt.getContent() + "\t" + sUtt.getSpeaker() + ":" +sUtt.getTurn() + "\t" + cUtt.getRespTo()+ "\t" + which_case + "\t" + hitOrNot);
+                System.out.print(cUtt.getTurn() + "\t" + cUtt.getSpeaker() + "\t" + cUtt.getContent() + "\t" + sUtt.getSpeaker() + ":" +sUtt.getTurn() + "\t" + cUtt.getRespTo()+ "\t");
+                for(String a : reason_list){
+                    System.out.print(a + "\t");
+                }
                 System.out.println();
             }
             
@@ -1098,11 +1110,11 @@ public class CommunicationLinkXChinese{
             return utts;
         }
 
-        private void setResToTN(int index, int res_to_TN, Utterance curr_utt, String which_case, int rank){
+        private void setResToTN(int index, int res_to_TN, Utterance curr_utt, String which_case, int rank, ArrayList<String> reason_list){
 //            System.out.println("in set res-to");
             String sysRespTo = utts.get(res_to_TN -1).getSpeaker() + ":" + res_to_TN;
 //            System.out.println(sysRespTo);
-            evaluate(index, res_to_TN, which_case, rank);
+            evaluate(index, res_to_TN, which_case, rank, reason_list);
             curr_utt.setRespTo(sysRespTo);
 //            System.out.println("res_to after set: " + utts.get(index).getRespTo());
 //            System.out.println();
@@ -1135,7 +1147,7 @@ public class CommunicationLinkXChinese{
     private boolean doMissReport = true;// keep these true for stats jie11/30/11 2:45 PM
     private boolean doFinalReport = true; // whether print out the final report at the end of each file or not. 4/27/11 12:40 PM
     private boolean doHitorMissReport = false; // whether print out the evaluation(miss and hit) or not. 4/27/11 12:40 PM
-    private boolean doCompleteAnalysis = false; // m2w 11/22/11 11:48 AM , this is for the complete utts analysis. 
+    private boolean doCompleteAnalysis = true; // m2w 11/22/11 11:48 AM , this is for the complete utts analysis. 
     private boolean doRankHitStatistics = false; // m2w 11/30/11 1:00 PM  , this is for the rank calculation link to statistics.
     private boolean doLinkToStatistics = true;  // m2w 11/30/11 12:28 PM , this is for the link to which previous statistics.
     private boolean doNwordLinkToStatistics = false; // m2w 11/30/11 12:59 PM , this is for the 1 word length turns link to statistics.
