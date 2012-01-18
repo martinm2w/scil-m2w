@@ -45,7 +45,7 @@ public class AgreementEvaluation {
 //        this.buildUttLists("/home/ruobo/scil0200/data/testing_agreement");
         this.buildUttLists("/home/ruobo/develop/scil0200/data/testing_agreement");
         this.printBothUtts();
-//        this.calAgreementKAlpha();
+        this.calAgreementKAlpha();
 
 //        ArrayList results = this.calAgreements();
 //        System.out.println("processing: " + doc_names_.get(0) + " and "+ doc_names_.get(1));

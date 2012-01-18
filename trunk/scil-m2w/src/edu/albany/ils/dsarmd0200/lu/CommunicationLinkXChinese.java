@@ -48,7 +48,7 @@ public class CommunicationLinkXChinese{
                     lookBackHowManyTurns = 0;
                     if(turn_length < SHORTORLONG_THRESHOLD){
                         //setting look back threshould according to statistics.
-                        if(turn_length == 1){
+                        if(turn_length < 2){ //changed to < 1, not = 1 because some might be ... and lengthcal returns 0.
                             lookBackHowManyTurns = 4;
                         }else if(turn_length >= 2 && turn_length <= 5){
                             lookBackHowManyTurns = 5;
@@ -63,6 +63,7 @@ public class CommunicationLinkXChinese{
                         LONG_UTT_STATICS++;
                     }
             }else{
+//                System.out.println(u_content.getTurn() + ":" + u_content.getContent());
                 if(doCompleteAnalysis){
                     System.out.print(u_content.getTurn() + "\t" + u_content.getSpeaker() + "\t" + u_content.getContent());
                     System.out.println();
@@ -76,6 +77,7 @@ public class CommunicationLinkXChinese{
             System.out.println("Precision: " + (double)((double)hit)/((double)response_to_count));
             System.out.println("Number of short utts: " + SHORT_UTT_STATICS + ", short hit: "+ short_hit);
             System.out.println("Number of long utts: " + LONG_UTT_STATICS + ", long hit: "+ long_hit );
+            System.out.println("utt list size: " + utts.size());
     //        System.out.println("yes count: "+ yes_count +", ir count: "+ i_r_count + "qm: " +qm_count);
         }
         
@@ -136,9 +138,12 @@ public class CommunicationLinkXChinese{
         private void calRank(int index){
             ArrayList<ArrayList> list = buildRankList(index);
             Utterance curr_utt = utts.get(index);
+            
+//            System.out.println("@: " + curr_utt.getTurn() + ": " + curr_utt.getContent() + " size: " + list.size() + " lb: " + lookBackHowManyTurns);
             //if curr utt is the first. thus list is empty.
             if(!list.isEmpty()){
                 //change here if you want to change rank calculation methods.
+//                System.out.println( "#: " +  curr_utt.getTurn() + ":" + curr_utt.getContent());
                 list = this.calRank_FindName(curr_utt, list);
                 list = this.calRank_RepeatingWords(curr_utt, list);// 12/6/11 4:50 PM
                 list = this.calRank_QeustionMark(curr_utt, list);
@@ -738,7 +743,7 @@ public class CommunicationLinkXChinese{
             return list;
         }
 //    ===============================================util=============================================
-                /**
+        /**
          * m2w: this is a util method for the calRankUtilRepeatingWords(), just to make the code more readable 
          * 1. if u want to change the rank increasing algorithm, here is where u wanna look at.
          * @return 
@@ -1144,14 +1149,14 @@ public class CommunicationLinkXChinese{
     
     //------- report generation controlling parameters. --------------------------------    //  5/13/11 2:09 PM
     private boolean doHitReport = true; // keep these true for stats 11/30/11 2:45 PM
-    private boolean doMissReport = true;// keep these true for stats jie11/30/11 2:45 PM
+    private boolean doMissReport = true;// keep these truef for stats jie11/30/11 2:45 PM
     private boolean doFinalReport = true; // whether print out the final report at the end of each file or not. 4/27/11 12:40 PM
     private boolean doHitorMissReport = false; // whether print out the evaluation(miss and hit) or not. 4/27/11 12:40 PM
     private boolean doCompleteAnalysis = true; // m2w 11/22/11 11:48 AM , this is for the complete utts analysis. 
     private boolean doRankHitStatistics = false; // m2w 11/30/11 1:00 PM  , this is for the rank calculation link to statistics.
-    private boolean doLinkToStatistics = true;  // m2w 11/30/11 12:28 PM , this is for the link to which previous statistics.
+    private boolean doLinkToStatistics = false;  // m2w 11/30/11 12:28 PM , this is for the link to which previous statistics.
     private boolean doNwordLinkToStatistics = false; // m2w 11/30/11 12:59 PM , this is for the 1 word length turns link to statistics.
-    private int uttLengthNForStat = 10; // calculating n words utt statistics. 12/6/11 12:36 PM
+    private int uttLengthNForStat = 1; // calculating n words utt statistics. 12/6/11 12:36 PM
 
     //-------- statistics variables: ---------------------------------------------------
     private static int LONG_UTT_STATICS;// m2w: for statistics 4/10/11 12:53 PM
@@ -1193,9 +1198,7 @@ public class CommunicationLinkXChinese{
 
 //==============================================not-in-use methods==================================
 
-
-
-        /**
+    /**
          * m2w : code 37, check the short utt if has same word(length > 6 ) as the previous utt, if does, link to it.
          * @param index
          * @param found
@@ -3131,3 +3134,4 @@ public class CommunicationLinkXChinese{
 //            }
 //        }
     // ===========================================old methods=======================================
+
