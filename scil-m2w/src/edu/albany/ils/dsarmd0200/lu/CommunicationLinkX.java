@@ -79,7 +79,7 @@ public class CommunicationLinkX{
     private boolean doHitReport = true;
     private boolean doMissReport = true;
     private boolean doFinalReport = true; // whether print out the final report at the end of each file or not. 4/27/11 12:40 PM
-    private boolean doGenReport = true; // whether print out the evaluation(miss and hit) or not. 4/27/11 12:40 PM
+    private boolean doGenReport = false; // whether print out the evaluation(miss and hit) or not. 4/27/11 12:40 PM
 
     //added 7/27/11 12:47 PM
     private boolean isEnglish_ = false;
@@ -88,8 +88,7 @@ public class CommunicationLinkX{
     //added 10/30/11 8:20 PM, for english ver ranklist
     private static final int RANK_LIST_SIZE = 5; // size means how many preivous utts to include in to the list.
 
-    
-    
+       
         /**
          * m2w : constructor , get all utterances for one file, and remove the .1 and .0 turns in the file.
          * @param utts
@@ -201,42 +200,42 @@ public class CommunicationLinkX{
                 }
 
                 //m2w : calculate if there are similar words in curr and prev utts.//4/10/11 8:37 AM
-                if (!found){
-//                    found = calSimilarity(index, SHORT_SIM_LOOK_BACK, found);
-                    found = this.checkWordSimilarity(index, found, "Short: check word similarity in shortUtterance");//4/10/11 8:37 AM
-                }
+//                if (!found){
+////                    found = calSimilarity(index, SHORT_SIM_LOOK_BACK, found);
+//                    found = this.checkWordSimilarity(index, found, "Short: check word similarity in shortUtterance");//4/10/11 8:37 AM
+//                }
 
                 //m2w: code 11 put find name after calCnDsht. 3/28/11 2:58 PM
                 //m2w: check if there is same speaker which is appeared in curr utt. 4/12/11 8:48 AM
-                if(!found){
-                    found = this.findNamePart1(index, found, "Short: findNamePt1 in shortUtterance");
-                }
+//                if(!found){
+//                    found = this.findNamePart1(index, found, "Short: findNamePt1 in shortUtterance");
+//                }
 
                 //m2w: no name matches, start looking for ? question mark 4/12/11 8:53 AM
-                if(!found)
-                {
-                    for(int i=1; i<=SHORT_THRESHOLD_QUESTION; i++)
-                    {
-                        Utterance utterance = null;
-
-                        if(index >= i)
-                        {
-
-                            utterance = utts.get(index-i);
-                            if(!utterance.getSpeaker().toLowerCase().equals(curr_speaker))
-                            {
-                                String pre_content = utterance.getContent();
-                                pre_utt_list.add(Integer.parseInt(utterance.getTurn()));
-                                if(pre_content.indexOf('?')!=-1)
-                                {
-                                        found = true;
-                                        this.setRespTo(index, i, utt, "Short: Question Mark");
-                                        break;
-                                }
-                            }
-                        }
-                    }
-                }
+//                if(!found)
+//                {
+//                    for(int i=1; i<=SHORT_THRESHOLD_QUESTION; i++)
+//                    {
+//                        Utterance utterance = null;
+//
+//                        if(index >= i)
+//                        {
+//
+//                            utterance = utts.get(index-i);
+//                            if(!utterance.getSpeaker().toLowerCase().equals(curr_speaker))
+//                            {
+//                                String pre_content = utterance.getContent();
+//                                pre_utt_list.add(Integer.parseInt(utterance.getTurn()));
+//                                if(pre_content.indexOf('?')!=-1)
+//                                {
+//                                        found = true;
+//                                        this.setRespTo(index, i, utt, "Short: Question Mark");
+//                                        break;
+//                                }
+//                            }
+//                        }
+//                    }
+//                }
                 
                 if(!found && index > 0){
                     //excluded res-to and prev utt length < 2 in long utts default to prev utt. 4/20/11 2:12 PM
@@ -244,7 +243,6 @@ public class CommunicationLinkX{
                     this.setRespTo(index, to, utt, "Short: Default Link To Prev _ new");
                 }
         }
-
 
         /**
          * m2w : modified xin's method. This function deals with utterance length over 5
@@ -275,59 +273,57 @@ public class CommunicationLinkX{
 //                    found = true;
                     LONG_UTT_CND_STATICS++;
                 }
-                if(!found){
-                    found = this.calUttSimilarity(index, LONG_UTT_SIM_LOOK_BACK, found, "Long: utt sim in longUtterance");
-                }
-                //m2w : find name maybe after the calsim 4/9/11 10:41 PM
-                //m2w: check if there is same speaker which is appeared in curr utt. 4/12/11 9:03 AM
-                if(!found){
-                    found = this.findNamePart1(index, found, "Long: findNamePt1 in longUtterance");
-                }
+//                if(!found){
+//                    found = this.calUttSimilarity(index, LONG_UTT_SIM_LOOK_BACK, found, "Long: utt sim in longUtterance");
+//                }
+//                //m2w : find name maybe after the calsim 4/9/11 10:41 PM
+//                //m2w: check if there is same speaker which is appeared in curr utt. 4/12/11 9:03 AM
+//                if(!found){
+//                    found = this.findNamePart1(index, found, "Long: findNamePt1 in longUtterance");
+//                }
                 //m2w: put the check word similarity in the long utts. 4/9/11 10:29 PM
-                if (!found){
-                    found = this.checkWordSimilarity(index, found, "Long: check word similarity in longUtterance");
-                }
+//                if
                 //m2w : added calSim method 4/9/11 10:41 PM
 //                if(!found){
 //                    found = this.calUttSimBySynon(index, LONG_SIM_LOOK_BACK, LONG_SYN_SIM_THRESH, found, "Long: utt similarity by synon in longUtterance");
 //                }
 
                 // find question, code 22
-                if(!found)
-                {
-                        for(int i=1; i<=LONG_THRESHOLD_QUESTION; i++)
-                        {
-                                if(index >= i)
-                                {
-                                        Utterance utterance = utts.get(index-i);
-                                        if(!utterance.getSpeaker().toLowerCase().equals(curr_speaker))
-                                        {
-                                                // calculate similarity
-                                                // String pre_content = contentExtraction(utterance);
-                                                // double sim = Util.compareUtts(pre_content, cur_content);
-                                                int pre_turn_no = (Integer.parseInt(utts.get(index).getTurn()))-i;
-//                                                pre_utt_turn.add(pre_turn_no);
-                                                // sims.put(sim, pre_turn_no);
-
-                                                // if ? found, just use this utterance
-                                                String pre_raw_content = utterance.getContent();
-                                                if(pre_raw_content.indexOf('?')!=-1)
-                                                {
-                                                        found = true;
-//                                                        map.put(Integer.parseInt(utt.getTurn()), (utts.get(Integer.parseInt(utts.get(index).getTurn())-(i+1))).getSpeaker() + ":" + (Integer.parseInt(utts.get(index).getTurn())-i));
-//                                                        String SysRespTo = (utts.get(Integer.parseInt(utts.get(index).getTurn())-(i+1))).getSpeaker() + ":" + (Integer.parseInt(utts.get(index).getTurn())-i);
-//                                                        evaluate(index,Integer.parseInt(utts.get(index).getTurn())-i,"Long: Question Mark");
-//                                                        utt.setRespTo(SysRespTo);
-                                                        this.setRespTo(index, i, utt, "Long: Question Mark");
-                                                        break;
-                                                }
-                                        }
-                                }
-                        }
-
-//                        if(pre_utt_turn.size() == 0)
-//                                pre_utt_turn.add(Integer.parseInt(utts.get(index).getTurn())-(LONG_THRESHOLD + 1));
-                }
+//                if(!found)
+//                {
+//                        for(int i=1; i<=LONG_THRESHOLD_QUESTION; i++)
+//                        {
+//                                if(index >= i)
+//                                {
+//                                        Utterance utterance = utts.get(index-i);
+//                                        if(!utterance.getSpeaker().toLowerCase().equals(curr_speaker))
+//                                        {
+//                                                // calculate similarity
+//                                                // String pre_content = contentExtraction(utterance);
+//                                                // double sim = Util.compareUtts(pre_content, cur_content);
+//                                                int pre_turn_no = (Integer.parseInt(utts.get(index).getTurn()))-i;
+////                                                pre_utt_turn.add(pre_turn_no);
+//                                                // sims.put(sim, pre_turn_no);
+//
+//                                                // if ? found, just use this utterance
+//                                                String pre_raw_content = utterance.getContent();
+//                                                if(pre_raw_content.indexOf('?')!=-1)
+//                                                {
+//                                                        found = true;
+////                                                        map.put(Integer.parseInt(utt.getTurn()), (utts.get(Integer.parseInt(utts.get(index).getTurn())-(i+1))).getSpeaker() + ":" + (Integer.parseInt(utts.get(index).getTurn())-i));
+////                                                        String SysRespTo = (utts.get(Integer.parseInt(utts.get(index).getTurn())-(i+1))).getSpeaker() + ":" + (Integer.parseInt(utts.get(index).getTurn())-i);
+////                                                        evaluate(index,Integer.parseInt(utts.get(index).getTurn())-i,"Long: Question Mark");
+////                                                        utt.setRespTo(SysRespTo);
+//                                                        this.setRespTo(index, i, utt, "Long: Question Mark");
+//                                                        break;
+//                                                }
+//                                        }
+//                                }
+//                        }
+//
+////                        if(pre_utt_turn.size() == 0)
+////                                pre_utt_turn.add(Integer.parseInt(utts.get(index).getTurn())-(LONG_THRESHOLD + 1));
+//                }
 
                 // find identical nouns, code 24
 //                if(!found)
@@ -413,14 +409,14 @@ public class CommunicationLinkX{
                 res_to = getHighestRankTN(list, index);
 //                System.out.println("testing: in short utt rank, after get highest rank turn number");
 //                Utterance currUtt = (Utterance)list.get(0).get(1);
-                System.out.println( "res_to: " + res_to + ", rank : "+ list.get(0).get(2));
+//                System.out.println( "res_to: " + res_to + ", rank : "+ list.get(0).get(2));
 
                     //testing the list and the rank
                     for (int i = 0 ; i < list.size(); i++ ){
                             Utterance temputt = (Utterance)(list.get(i).get(1));
                             String turn_num = temputt.getTurn();
                             int rank = (Integer)list.get(i).get(2);
-                           System.out.println("turn: " + turn_num + ", rank is: " + rank);
+//                           System.out.println("turn: " + turn_num + ", rank is: " + rank);
                     }
 
                 int rank = (Integer)list.get(0).get(2);
@@ -457,8 +453,7 @@ public class CommunicationLinkX{
 //            System.out.println();
             return list;
         }
-        
-        
+                
         /**
          * m2w: calculate the ranks of each previous utts and return the list.
          * @param list
@@ -500,7 +495,7 @@ public class CommunicationLinkX{
                 }
             });
             if((Integer)(list.get(0).get(2)) < 3){
-                System.out.println("highest rank < 3, default to prev.");
+//                System.out.println("highest rank < 3, default to prev.");
                 return Integer.parseInt(utts.get(index - 1).getTurn());
             }
             Utterance highestUtt = (Utterance)list.get(0).get(1);
@@ -543,7 +538,6 @@ public class CommunicationLinkX{
             
             //if there is a name in curr utt.
             if(name_found){
-                System.out.println("same name found!");
                 for(int i = 0; i<list.size(); i++){//alted from 1 to 0 , m2w 10/30/11 10:01 PM
                 Utterance prev_utt = (Utterance)(list.get(i).get(1));
                 int iRank = (Integer)(list.get(i).get(0));
@@ -642,9 +636,6 @@ public class CommunicationLinkX{
                                             Double wordSim = (double)charHit / (double)Math.min(tempCurrWordList.size(), tempPrevWordList.size());
                                             if(wordSim >= WORD_SIM_THRESHOLD){
                                                 //is now set to 0.7 . 4/16/11 3:16 PM
-                                                System.out.println("word sim found!");
-                                                System.out.println("curr utt:" + cur_content);
-                                                System.out.println("prev utt: " + pre_content + ":" + prev_utt.getTurn());
                                                 swHit++;
                                             }
                                         }// ends if curr and prev word longer than 6 chars
@@ -1594,17 +1585,23 @@ public class CommunicationLinkX{
             String cur_raw_content = utts.get(index).getContent();
             if(found = this.calUttSimilarity(index, LONG_UTT_SIM_LOOK_BACK, found, "Long: cnd: utt sim")){
                 return found;
-            }else
-            //included good point and that's ok in long utts. findname . 4/20/11 1:37 PM
+            }
+//            else
+//            //included good point and that's ok in long utts. findname . 4/20/11 1:37 PM
             if (found = this.findNamePart1(index, found, "Long: cnd: findNamePt1 in calCndLong")){
                 return found;
-            }else if(found = this.checkWordSimilarity(index, found, "Long: cnd: check word similarity in calCndLong")){ //2. check same word, if found, return found, if not, do next
+            }
+            else 
+                if(found = this.checkWordSimilarity(index, found, "Long: cnd: check word similarity in calCndLong")){ //2. check same word, if found, return found, if not, do next
                 return found;
 
                 //adding the synonem checkhere
-            }else if(found = this.CnDLongCaseMatching(index, found)){//3. case checking, if found return, if not, do next
+            }
+            else 
+                if(found = this.CnDLongCaseMatching(index, found)){//3. case checking, if found return, if not, do next
                 return found;
-            }else{//4. skipping AFTER the case matching calculation
+            }
+            else{//4. skipping AFTER the case matching calculation
                 found = this.CnDLongSkipJudge(index, found, "Long: cnd: Skip Judge in calCnDLong");
                 return found;
             }//ends else
