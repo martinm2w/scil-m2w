@@ -55,11 +55,11 @@ public class CommunicationLinkXChinese{
                         }else if(turn_length >= 6 && turn_length <= 9){
                             lookBackHowManyTurns = 7;
                         }
-                        calRank(index);
+                        calScore(index);
                         SHORT_UTT_STATICS++;
                     }else{
                         lookBackHowManyTurns = 10; 
-                        calRank(index);
+                        calScore(index);
                         LONG_UTT_STATICS++;
                     }
             }else{
@@ -81,9 +81,9 @@ public class CommunicationLinkXChinese{
     //        System.out.println("yes count: "+ yes_count +", ir count: "+ i_r_count + "qm: " +qm_count);
         }
         
-        //m2w 11/30/11 2:33 PM rank stat
-        if (doRankHitStatistics){
-            System.out.println("doRankHitSatistics: ");
+        //m2w 11/30/11 2:33 PM Score stat
+        if (doScoreHitStatistics){
+            System.out.println("doScoreHitSatistics: ");
             System.out.println("4: " + hits4);
             System.out.println("5: " + hits5);
             System.out.println("6: " + hits6);
@@ -129,59 +129,59 @@ public class CommunicationLinkXChinese{
             System.out.println("sum\t" + sumLinkTo);
         }
     }
-//    ==========================================rank calculation methods==========================================
+//    ==========================================Score calculation methods==========================================
         /**
-         * m2w: calculate and set res-to by calculating 10/9 previous utt's rank(how much is it likely to be the correct res-to).
+         * m2w: calculate and set res-to by calculating 10/9 previous utt's Score(how much is it likely to be the correct res-to).
          * @param index
          * @last 08/21/11 9:06 AM
          */
-        private void calRank(int index){
-            ArrayList<ArrayList> list = buildRankList(index);
+        private void calScore(int index){
+            ArrayList<ArrayList> list = buildScoreList(index);
             Utterance curr_utt = utts.get(index);
             
 //            System.out.println("@: " + curr_utt.getTurn() + ": " + curr_utt.getContent() + " size: " + list.size() + " lb: " + lookBackHowManyTurns);
             //if curr utt is the first. thus list is empty.
             if(!list.isEmpty()){
-                //change here if you want to change rank calculation methods.
+                //change here if you want to change Score calculation methods.
 //                System.out.println( "#: " +  curr_utt.getTurn() + ":" + curr_utt.getContent());
-                list = this.calRank_FindName(curr_utt, list);
-                list = this.calRank_RepeatingWords(curr_utt, list);// 12/6/11 4:50 PM
-                list = this.calRank_QeustionMark(curr_utt, list);
-                list = this.calRank_WordSim(curr_utt, list);
-                list = this.calRank_CaseMatching(curr_utt, list);
+                list = this.calScore_FindName(curr_utt, list);
+                list = this.calScore_RepeatingWords(curr_utt, list);// 12/6/11 4:50 PM
+                list = this.calScore_QeustionMark(curr_utt, list);
+                list = this.calScore_WordSim(curr_utt, list);
+                list = this.calScore_CaseMatching(curr_utt, list);
                 
                 int res_to = 0;
-                res_to = getHighestRankTN(list, index);
-                int rank = (Integer)list.get(0).get(2);
+                res_to = getHighestScoreTN(list, index);
+                int Score = (Integer)list.get(0).get(2);
                 ArrayList<String> reason_list = (ArrayList<String>)list.get(0).get(3);
-                this.setResToTN(index, res_to, curr_utt, "Short Rgetank",rank, reason_list);
+                this.setResToTN(index, res_to, curr_utt, "Short Rgetank",Score, reason_list);
             }//closes if is empty.
         }//closes method.
         
         /**
-         * m2w: build the rank list for previous utts. ArrayList<ArrayList>
+         * m2w: build the Score list for previous utts. ArrayList<ArrayList>
          * list: previous utts' info extracted into lists.
          * sublist: 
          * index 0 : the "i" , index - i = which previous utt. (int)
          * index 1 : the i'th previous Utterance Object.       (Utterance)
-         * index 2 : the rank of this previous utt.            (int)
-         * index 3 : the reason for increasing ranks           (ArrayList<String>) 12/12/11 11:56 AM
+         * index 2 : the Score of this previous utt.            (int)
+         * index 3 : the reason for increasing Scores           (ArrayList<String>) 12/12/11 11:56 AM
          * @param index
-         * @return the rank list
+         * @return the Score list
          * @date 8/23/11 11:31 AM
          */
-        private ArrayList<ArrayList> buildRankList(int index){
+        private ArrayList<ArrayList> buildScoreList(int index){
             ArrayList<ArrayList> list = new ArrayList<ArrayList>();
             //build list.
             for(int i = 1; (index - i > 0) && (i < lookBackHowManyTurns); i++){
                 Utterance prev_utt = utts.get(index - i);
-                int init_rank = 0;
+                int init_Score = 0;
                 ArrayList sub_list = new ArrayList();
                 //added reason list for statistics and analysis.  12/12/11 11:55 AM
                 ArrayList<String> reason_list = new ArrayList<String>();
                 sub_list.add(i);
                 sub_list.add(prev_utt);
-                sub_list.add(init_rank);
+                sub_list.add(init_Score);
                 sub_list.add(reason_list); // 12/12/11 11:56 AM
                 if(!sub_list.isEmpty()) list.add(sub_list);
             }
@@ -194,8 +194,8 @@ public class CommunicationLinkXChinese{
          * @param list
          * @return 
          */
-        private ArrayList<ArrayList> calRank_FindName(Utterance curr_utt, ArrayList<ArrayList> list){
-            int rank = 0;
+        private ArrayList<ArrayList> calScore_FindName(Utterance curr_utt, ArrayList<ArrayList> list){
+            int Score = 0;
             String curr_speaker = curr_utt.getSpeaker().toLowerCase();
             String cur_content = contentExtraction(curr_utt);
             String cur_raw_content = curr_utt.getContent().toLowerCase();
@@ -225,24 +225,24 @@ public class CommunicationLinkXChinese{
             if(name_found){
                 for(int i = 1; i<list.size(); i++){
                 Utterance prev_utt = (Utterance)(list.get(i).get(1));
-//                int iRank = (Integer)(list.get(i).get(0));
+//                int iScore = (Integer)(list.get(i).get(0));
                 String preSpkName = prev_utt.getSpeaker().toLowerCase();
-                //if prev utt speaker's name matches the name we found in curr utt, rank + 5.
+                //if prev utt speaker's name matches the name we found in curr utt, Score + 5.
                     if(!preSpkName.equalsIgnoreCase(curr_speaker)){
                         
                         //added conventional-opening , hi some one case. 4/18/11 1:09 PM
                         if (curr_utt.getTag().toLowerCase().contains("opening") || cur_raw_content.contains("hi ")){
                             if((this.lengthCal(prev_utt) > 1) && preSpkName.equals(name) && this.lengthCal(prev_utt) > 1 && prev_utt.getTag().toLowerCase().contains("opening") ){
-                                //rank + 6
-                                this.increaseRank(list.get(i), 6, "FindName_opening[6]");
-//                                iRank += 6;
-//                                list.get(i).set(0, iRank);
+                                //Score + 6
+                                this.increaseScore(list.get(i), 6, "FindName_opening[6]");
+//                                iScore += 6;
+//                                list.get(i).set(0, iScore);
                             }
                         }else if(preSpkName.equals(name) && this.lengthCal(prev_utt) > 1){
-                            //rank + 5
-                            this.increaseRank(list.get(i), 6, "FindName[6]");
-//                            iRank += 6;
-//                            list.get(i).set(0, iRank);
+                            //Score + 5
+                            this.increaseScore(list.get(i), 6, "FindName[6]");
+//                            iScore += 6;
+//                            list.get(i).set(0, iScore);
                         }//ends if same name has found!
                     }//ends same name check
                 }//ends outter for loop
@@ -251,7 +251,7 @@ public class CommunicationLinkXChinese{
             return list;
         }
         
-        private ArrayList<ArrayList> calRank_WordSim(Utterance curr_utt, ArrayList<ArrayList> list){
+        private ArrayList<ArrayList> calScore_WordSim(Utterance curr_utt, ArrayList<ArrayList> list){
 
             String curr_speaker = curr_utt.getSpeaker().toLowerCase();
             String cur_content = contentExtraction(curr_utt);
@@ -324,8 +324,8 @@ public class CommunicationLinkXChinese{
 
                                 //excluded prev_utt com_act_type is response-to. 4/16/11 3:30 PM
                                 if(swHit > 0 && !prev_utt.getCommActType().toLowerCase().contains("response-to")){
-                                    //rank + 2
-                                    this.increaseRank(list.get(i), 2, "WordSim[2]");
+                                    //Score + 2
+                                    this.increaseScore(list.get(i), 2, "WordSim[2]");
                                 }//ends if hit > 0;
                             }//closes 4. if english not empty
                             
@@ -337,7 +337,7 @@ public class CommunicationLinkXChinese{
                                     String tempCurSubStr = tempCurrCNList.get(curIndex) + tempCurrCNList.get(curIndex - 1);
                                     //if prev utt contains curr sub string.
                                     if(pre_content.contains(tempCurSubStr)){
-                                        this.increaseRank(list.get(i), 2, "WordSim[2]");
+                                        this.increaseScore(list.get(i), 2, "WordSim[2]");
                                     }//close if conatins curr sub string
                                 }//closes CN for loop.
                             }//closes 5. CN
@@ -347,7 +347,7 @@ public class CommunicationLinkXChinese{
             return list;
         }//ends method
         
-        private ArrayList<ArrayList> calRank_CaseMatching(Utterance curr_utt, ArrayList<ArrayList> list){
+        private ArrayList<ArrayList> calScore_CaseMatching(Utterance curr_utt, ArrayList<ArrayList> list){
             Utterance utt = curr_utt;
             String curr_speaker = curr_utt.getSpeaker().toLowerCase();
             String cur_content = contentExtraction(curr_utt).toLowerCase();
@@ -374,8 +374,8 @@ public class CommunicationLinkXChinese{
                                 && pre_raw_content.contains("?") 
 //                                && prev_utt.getTag().toLowerCase().contains("information-request")
                                 ){
-                            //rank + 2
-                            this.increaseRank(list.get(i), 2, "curr start with yes, prev has ? [2]");
+                            //Score + 2
+                            this.increaseScore(list.get(i), 2, "curr start with yes, prev has ? [2]");
                         }
 
                         //m2w: if curr and prev both contains "haha", should be laughing at the same utt.
@@ -388,8 +388,8 @@ public class CommunicationLinkXChinese{
                                 //added prev_utt length > 1. 4/18/11 11:21 AM
                                 && this.lengthCal(prev_utt) > 1
                                 ){
-                            //rank + 2
-                            this.increaseRank(list.get(i), -2, "2 consecutive haha [-2]");
+                            //Score + 2
+                            this.increaseScore(list.get(i), -2, "2 consecutive haha [-2]");
                             firstLol = false; // do + 2 once.
                         }
 
@@ -399,8 +399,8 @@ public class CommunicationLinkXChinese{
 //                                && prev_utt.getTag().equals("Information-Request")
                                 && pre_raw_content.contains("?")
                                 ){
-                            //rank + 2
-                            this.increaseRank(list.get(i), 2, "pre: ?, cur: sure. [2]");
+                            //Score + 2
+                            this.increaseScore(list.get(i), 2, "pre: ?, cur: sure. [2]");
                         }
                         
                         //m2w: code 34, too, neither case 3/24/11 1:56 PM
@@ -417,8 +417,8 @@ public class CommunicationLinkXChinese{
                                 || pre_content.startsWith("我")
                                 ))
                                 ){
-                            //rank + 1
-                            this.increaseRank(list.get(i), 1, "cur: neither, pre: not[1]" );
+                            //Score + 1
+                            this.increaseScore(list.get(i), 1, "cur: neither, pre: not[1]" );
                             
                         }
                         
@@ -440,8 +440,8 @@ public class CommunicationLinkXChinese{
                                             || pre_content.matches(".*难道[\\u4E00-\\u9FA5]+吗.*")//
                                             || pre_content.matches(".*怎么[\\u4E00-\\u9FA5]+呢.*")
                                 ))){
-                            //rank + 3
-                            this.increaseRank(list.get(i), 3, "rhetorical question in pre[3]");
+                            //Score + 3
+                            this.increaseScore(list.get(i), 3, "rhetorical question in pre[3]");
                        }
 
 //                        //m2w : code 35, wow case, wow about something, look for "i", 3/24/11 11:17 AM
@@ -469,8 +469,8 @@ public class CommunicationLinkXChinese{
                                     || pre_content.contains("我反对")
                                     || prev_utt.getTag().toLowerCase().contains("disagree")
                                     )){
-                                //rank + 2
-                                this.increaseRank(list.get(i), 2, "agree on pre denying[2]");
+                                //Score + 2
+                                this.increaseScore(list.get(i), 2, "agree on pre denying[2]");
                             }
                         }
 
@@ -486,8 +486,8 @@ public class CommunicationLinkXChinese{
                                         || pre_content.contains("对不起") 
                                         || pre_content.contains("不好意思") 
                                         )){
-                                //rank + 3
-                            this.increaseRank(list.get(i), 3, "it'ok - im sorry[3]");
+                                //Score + 3
+                            this.increaseScore(list.get(i), 3, "it'ok - im sorry[3]");
                         }
 
 //                        //m2w: code 310, sorry check. if last utt has sorry too, link to last's link_to ,4/3/11 11:38 AM
@@ -501,7 +501,7 @@ public class CommunicationLinkXChinese{
 
                         //m2w: code 311, exactly case, check its last utt, then perform skip judge and link to prev utts 4/1/11 3:10 PM
                         //chinese: if curr and prev utt both contains exactly, then look for prev-utt's res-to see if that utt is in the list, 
-                        //if is in the list ,then add 2 to its rank.
+                        //if is in the list ,then add 2 to its Score.
                         if((cur_raw_content.toLowerCase().contains("exactly")) 
                                 || cur_raw_content.contains("没错") || cur_raw_content.contains("对") || cur_raw_content.contains("就是")
                                 ){
@@ -514,15 +514,15 @@ public class CommunicationLinkXChinese{
                                 for(int x=i; x<list.size(); x++){
                                     Utterance tempUtt = (Utterance)(list.get(x).get(1));
                                     if(tempUtt.getTurn().equals(pre_SysRespToTN)){
-                                        //rank + 2
-                                        this.increaseRank(list.get(x), 2, "2 exactly [2]");
+                                        //Score + 2
+                                        this.increaseScore(list.get(x), 2, "2 exactly [2]");
                                     }
-                                }//closes looking for prev utt's res-to and add 2 to that utt's rank.
+                                }//closes looking for prev utt's res-to and add 2 to that utt's Score.
                             }//closes prev utt contains exactly too.                        
                             else{
                                 if(firstExactly){
                                     //if didn't find, increase last utt 1 once.
-                                    this.increaseRank(list.get(i), 1, "1 exactly [1]");
+                                    this.increaseScore(list.get(i), 1, "1 exactly [1]");
                                     firstExactly = false;
                                 }
                             }
@@ -541,18 +541,18 @@ public class CommunicationLinkXChinese{
                                 for(int x=i; x<list.size(); x++){
                                     Utterance tempUtt = (Utterance)(list.get(x).get(1));
                                     if(tempUtt.getTurn().equals(pre_SysRespToTN)){
-                                        //rank + 2
-                                        this.increaseRank(list.get(x), 2 , "2 good point - to pre's link-to [2]");
+                                        //Score + 2
+                                        this.increaseScore(list.get(x), 2 , "2 good point - to pre's link-to [2]");
                                     }
-                                }//closes looking for prev utt's res-to and add 2 to that utt's rank.                            
+                                }//closes looking for prev utt's res-to and add 2 to that utt's Score.
                                 // if not , look for ? or why, then set.
                             }else if(pre_content.contains("?") || pre_content.contains("why")
                                         || pre_content.contains("为什么")|| pre_content.contains("怎么")
                                         ){
-                                    this.increaseRank(list.get(i), 2, "good point - pre has ? and why[2]");
+                                    this.increaseScore(list.get(i), 2, "good point - pre has ? and why[2]");
                             }else{
                                 if(firstGoodPoint){
-                                    this.increaseRank(list.get(i), 1, "good point - default [1]");
+                                    this.increaseScore(list.get(i), 1, "good point - default [1]");
                                     firstGoodPoint = false;
                                 }
                             }
@@ -576,7 +576,7 @@ public class CommunicationLinkXChinese{
 //                        ===== m2w : previous utt contains matching cases. 4/4/11 2:41 PM ======
                         //m2w : code 33 , certain types of conditions, if fits, set link_to, set to the utt; 4/1/11 1:52 PM
                         //m2w: split to several cases. since 4/4/11 2:48 PM.
-                        //m2w: chinese: donesn't check curr utt anymore, if prev utt contains these, rank +;
+                        //m2w: chinese: donesn't check curr utt anymore, if prev utt contains these, Score +;
 
 
                         if(lengthCal(prev_utt) >= 3){
@@ -597,8 +597,8 @@ public class CommunicationLinkXChinese{
                                     || (pre_content.matches(".*不是.*就是.*"))
                                     
                                     ){
-                                //rank + 2.
-                                this.increaseRank(list.get(i), 2, "pre:guessing [2]");
+                                //Score + 2.
+                                this.increaseScore(list.get(i), 2, "pre:guessing [2]");
                                 
 
                                 //m2w: degree case
@@ -621,8 +621,8 @@ public class CommunicationLinkXChinese{
                                     || pre_raw_content.contains("that's so ") || pre_raw_content.contains("thats so ")
                                     || pre_raw_content.contains("are so ") || pre_raw_content.contains("r so ")                                    
                                     ){
-                                //rank + 2
-                                this.increaseRank(list.get(i), 2, "pre: degree[2]");
+                                //Score + 2
+                                this.increaseScore(list.get(i), 2, "pre: degree[2]");
                                 
                                 //m2w: opinion case
                             }else if ((pre_content.contains("i think")          || pre_content.matches(".*我.*想.*")    
@@ -634,8 +634,8 @@ public class CommunicationLinkXChinese{
                                     || pre_content.matches(".*对.*?.*")
                                     || pre_raw_content.endsWith("right?")) && (!pre_content.contains("why i think"))
                                     ){
-                                    //rank + 2
-                                this.increaseRank(list.get(i), 2, "pre: opinion[2]");
+                                    //Score + 2
+                                this.increaseScore(list.get(i), 2, "pre: opinion[2]");
                                 
                                 //m2w: order & propossal case
                             }else if (pre_content.contains("how about")         || pre_content.contains("要不")  || pre_content.contains("不如")|| pre_content.contains("不然")
@@ -656,8 +656,8 @@ public class CommunicationLinkXChinese{
                                     || (pre_content.contains("could you") && pre_raw_content.contains("?"))     || pre_content.matches(".*可否.*?.*")
                                     || (pre_content.contains("can you") && pre_raw_content.contains("?"))
                                     ){
-                                    //rank + 2
-                                    this.increaseRank(list.get(i), 2, " pre: order[2]");
+                                    //Score + 2
+                                    this.increaseScore(list.get(i), 2, " pre: order[2]");
                                 
                                 //m2w: other case
                             }else if (pre_content.contains("sometimes")         || pre_content.contains("有时候")
@@ -669,8 +669,8 @@ public class CommunicationLinkXChinese{
                                                                                 || pre_content.contains("不一定")
                                     || pre_raw_content.contains("it ") && pre_raw_content.contains(" depend")
                                     ){
-                                    //rank + 1
-                                    this.increaseRank(list.get(i), 1, "pre:other [2]");
+                                    //Score + 1
+                                    this.increaseScore(list.get(i), 1, "pre:other [2]");
                                     
                                 //m2w: prev_utt contains cnd key words, if there isn't any thing to match, check this then pass down
                             }else if ((pre_content.contains("yes ") 
@@ -683,8 +683,8 @@ public class CommunicationLinkXChinese{
                                     //edcluded prev_utt 's dialog act is agree-accept. 4/16/11 3:00 PM
                                     ) && !prev_utt.getTag().toLowerCase().contains("agree-accept")){
 
-                                //rank + 1
-                                this.increaseRank(list.get(i), 1, "pre:cnd[1]");
+                                //Score + 1
+                                this.increaseScore(list.get(i), 1, "pre:cnd[1]");
                             }else{
                                 //do nothing, continue the loop
                             }//ends all the else ifs
@@ -702,30 +702,30 @@ public class CommunicationLinkXChinese{
          * @return 
          * @date 12/6/11 1:10 PM
          */
-        private ArrayList<ArrayList> calRank_RepeatingWords(Utterance curr_utt, ArrayList<ArrayList> list){
-//            int rankToIncrease = 0;
+        private ArrayList<ArrayList> calScore_RepeatingWords(Utterance curr_utt, ArrayList<ArrayList> list){
+//            int ScoreToIncrease = 0;
             ArrayList<String> currUttStringList = this.uttToStringList(curr_utt);
             //loop through list.
             for(int i = 0; i < list.size(); i++){
                 ArrayList<String> prevUttSTringList = this.uttToStringList((Utterance)list.get(i).get(1));//index 1 is the Utterance Object.
-                //calculating rank to increase.
-                int rankToIncrease = this.repeatingWords_util(currUttStringList, prevUttSTringList);
-                this.increaseRank(list.get(i), rankToIncrease, "repeating words [" + rankToIncrease + "]");
+                //calculating Score to increase.
+                int ScoreToIncrease = this.repeatingWords_util(currUttStringList, prevUttSTringList);
+                this.increaseScore(list.get(i), ScoreToIncrease, "repeating words [" + ScoreToIncrease + "]");
             }
             return list;
         }
 
         /**
-         * m2w: this method calculates rank by looking for questionmarks.
-         * 1. 
+         * m2w: this method calculates Score by looking for questionmarks.
+         * the closer prev_utt is to the curr utt && if it has a '?', then higher the score is.
          * @param curr_utt
          * @param list
          * @return 
          */
-        private ArrayList<ArrayList> calRank_QeustionMark(Utterance curr_utt, ArrayList<ArrayList> list){
+        private ArrayList<ArrayList> calScore_QeustionMark(Utterance curr_utt, ArrayList<ArrayList> list){
             //loop through list.
             for(int i = 0; i < list.size(); i++){
-                int rankToIncrease = 0;
+                int ScoreToIncrease = 0;
                 Utterance tempPrevUtt = (Utterance)list.get(i).get(1); // 1th index is the Uttrance Object
                 String prev_content = tempPrevUtt.getContent();
                 if(prev_content.contains(FULLQM) || prev_content.contains(HALFQM)){//if previous utt contains half/full question mark,
@@ -733,24 +733,24 @@ public class CommunicationLinkXChinese{
                     int distanceToCurrUtt = (Integer)list.get(i).get(0);
                     //threshold is set to 6
                     if(distanceToCurrUtt > QMTHRESH){  // if distance > 6
-                        rankToIncrease = 1; 
+                        ScoreToIncrease = 1;
                     }else{                      // if distance < 6
-                        rankToIncrease = QMTHRESH + 1 - distanceToCurrUtt; // closer distance, higher rank.
+                        ScoreToIncrease = QMTHRESH + 1 - distanceToCurrUtt; // closer distance, higher Score.
                     }
                 }//closes prev utt contains question mark.
-                this.increaseRank(list.get(i), rankToIncrease, "question mark [" + rankToIncrease + "]");
+                this.increaseScore(list.get(i), ScoreToIncrease, "question mark [" + ScoreToIncrease + "]");
             }//closes for loop
             return list;
         }
 //    ===============================================util=============================================
         /**
-         * m2w: this is a util method for the calRankUtilRepeatingWords(), just to make the code more readable 
-         * 1. if u want to change the rank increasing algorithm, here is where u wanna look at.
+         * m2w: this is a util method for the calScoreUtilRepeatingWords(), just to make the code more readable
+         * 1. if u want to change the Score increasing algorithm, here is where u wanna look at.
          * @return 
          * @date 12/6/11 3:26 PM.
          */
         private int repeatingWords_util(ArrayList<String> currStringList, ArrayList<String> prevStringList){
-            int rankToIncrease = 0;
+            int ScoreToIncrease = 0;
             curr:
             for(int i = 0; i < currStringList.size(); i++){
                 String currTempStr = currStringList.get(i);
@@ -760,13 +760,13 @@ public class CommunicationLinkXChinese{
                     //if english word and digits
                     if(currTempStr.matches("\\w") || currTempStr.matches("\\d")){
                         if(currTempStr.equalsIgnoreCase(prevTempStr)){
-                            rankToIncrease += 3;
+                            ScoreToIncrease += 3;
                         }
                     //if chinse word
                     }else if(currTempStr.matches("[\\u4E00-\\u9FA5]")){
                         //if char match ,start a loop
                         if(currTempStr.equalsIgnoreCase(prevTempStr)){
-                            rankToIncrease++;
+                            ScoreToIncrease++;
                             int currRemainLength = currStringList.size() - i;
                             int prevRemainLength = prevStringList.size() - j;
                             int length = java.lang.Math.min(currRemainLength, prevRemainLength);
@@ -775,7 +775,7 @@ public class CommunicationLinkXChinese{
                                 String currStrNext = currStringList.get(i+x);
                                 String prevStrNext = prevStringList.get(j+x);
                                 if(currStrNext.equalsIgnoreCase(prevStrNext)){
-                                    rankToIncrease = rankToIncrease + x + 1; //2 consecutive, +2, 3 consecutive +2 +3  = 5 , 4 consecutive +2+3+4 = +9
+                                    ScoreToIncrease = ScoreToIncrease + x + 1; //2 consecutive, +2, 3 consecutive +2 +3  = 5 , 4 consecutive +2+3+4 = +9
                                 }else{
                                     break loop;
                                 }
@@ -784,7 +784,7 @@ public class CommunicationLinkXChinese{
                     }//close else if chinse.
                 }//close prev loop
             }//close curr loop.
-            return rankToIncrease;
+            return ScoreToIncrease;
         }
         
         /**
@@ -853,14 +853,14 @@ public class CommunicationLinkXChinese{
         }
         
         /**
-         * m2w: chinese ver: increase the ith previous utt's rank by x.
+         * m2w: chinese ver: increase the ith previous utt's Score by x.
          * @param subList
          * @param increasement x
          */
-        private void increaseRank(ArrayList subList, int increasement, String reason){
-            int rank = (Integer)(subList.get(2));
-            rank += increasement;
-            subList.set(2, rank);
+        private void increaseScore(ArrayList subList, int increasement, String reason){
+            int Score = (Integer)(subList.get(2));
+            Score += increasement;
+            subList.set(2, Score);
             ArrayList<String> reason_list = (ArrayList<String>)subList.get(3);
             reason_list.add(reason);
         }
@@ -879,32 +879,32 @@ public class CommunicationLinkXChinese{
         }
 
         /**
-         * m2w: get the highest rank turn number form the list.
+         * m2w: get the highest Score turn number form the list.
          * 1. sort the list in descending order according to the list's index 2 entry's value.
-         * 2. get the highest ranked turn and its turn number.
+         * 2. get the highest Scoreed turn and its turn number.
          * @param list
          * @return 
          * @date 8/23/11 11:15 AM
          */
-        private int getHighestRankTN(ArrayList<ArrayList> list, int index){
-            int highestRankTN = 0;
+        private int getHighestScoreTN(ArrayList<ArrayList> list, int index){
+            int highestScoreTN = 0;
             Collections.sort(list, new Comparator(){
                 @Override
                 public int compare(Object ob1, Object ob2){
-                    int o1Rank = 0;
-                    int o2Rank = 0;
-                    o1Rank = (Integer)(((ArrayList)ob1).get(2));
-                    o2Rank = (Integer)(((ArrayList)ob2).get(2));
+                    int o1Score = 0;
+                    int o2Score = 0;
+                    o1Score = (Integer)(((ArrayList)ob1).get(2));
+                    o2Score = (Integer)(((ArrayList)ob2).get(2));
                     //descending order
-                    return o2Rank - o1Rank;
+                    return o2Score - o1Score;
                 }
             });
             if((Integer)(list.get(0).get(2)) < 2){
                 return Integer.parseInt(utts.get(index - 1).getTurn());
             }
             Utterance highestUtt = (Utterance)list.get(0).get(1);
-            highestRankTN = Integer.parseInt(highestUtt.getTurn());
-            return highestRankTN;
+            highestScoreTN = Integer.parseInt(highestUtt.getTurn());
+            return highestScoreTN;
         }
         
         /**
@@ -926,14 +926,14 @@ public class CommunicationLinkXChinese{
         }
         
         /**
-         * m2w: this is rank version methods used evaluate method.
+         * m2w: this is Score version methods used evaluate method.
          * @param curr_index
          * @param sys_turn
          * @param which_case
-         * @param rank 
+         * @param Score
          * @date  11/30/11 12:38 PM
          */
-         private void evaluate(int curr_index, int sys_turn, String which_case, int rank, ArrayList<String> reason_list){
+         private void evaluate(int curr_index, int sys_turn, String which_case, int Score, ArrayList<String> reason_list){
             String curr_turn_no = utts.get(curr_index).getTurn();
             String link_to = utts.get(curr_index).getRespTo();
             if(link_to.indexOf(":")!=-1){
@@ -948,8 +948,8 @@ public class CommunicationLinkXChinese{
                     hit++;
                     if(doHitReport){
                         this.genReport(curr_turn_no, sys_turn, anno_turn, which_case, "HIT" , reason_list);
-                        if(doRankHitStatistics){
-                            switch (rank) {
+                        if(doScoreHitStatistics){
+                            switch (Score) {
                                 case 4: {hits4++; break;}
                                 case 5: {hits5++; break;}
                                 case 6: {hits6++; break;}
@@ -958,7 +958,7 @@ public class CommunicationLinkXChinese{
                                 case 9: {hits9++; break;}
                                 case 10: {hits10++; break;}
                             }
-                        }//closes doRankHitStatistics
+                        }//closes doScoreHitStatistics
                     }
 
                     //added long and short statistics
@@ -1115,15 +1115,10 @@ public class CommunicationLinkXChinese{
             return utts;
         }
 
-        private void setResToTN(int index, int res_to_TN, Utterance curr_utt, String which_case, int rank, ArrayList<String> reason_list){
-//            System.out.println("in set res-to");
+        private void setResToTN(int index, int res_to_TN, Utterance curr_utt, String which_case, int Score, ArrayList<String> reason_list){
             String sysRespTo = utts.get(res_to_TN -1).getSpeaker() + ":" + res_to_TN;
-//            System.out.println(sysRespTo);
-            evaluate(index, res_to_TN, which_case, rank, reason_list);
+            evaluate(index, res_to_TN, which_case, Score, reason_list);
             curr_utt.setRespTo(sysRespTo);
-//            System.out.println("res_to after set: " + utts.get(index).getRespTo());
-//            System.out.println();
-            
         }
         
 //     ==================================Attributes===================================================
@@ -1145,7 +1140,7 @@ public class CommunicationLinkXChinese{
     private static final String RESPONSE_TO="response-to";
     private static final String FULLQM = "\uFF1F";                      // m2w: created for question mark calculation. 
     private static final String HALFQM = "\u003f";                      // m2w: half width
-    private static final int QMTHRESH = 4;                              // m2w: threshold for question mark calculation. if > 6th previous utt, if has ?, rank + 1. else, closer to curr utt, rank higher.
+    private static final int QMTHRESH = 4;                              // m2w: threshold for question mark calculation. if > 6th previous utt, if has ?, Score + 1. else, closer to curr utt, Score higher.
     
     //------- report generation controlling parameters. --------------------------------    //  5/13/11 2:09 PM
     private boolean doHitReport = true; // keep these true for stats 11/30/11 2:45 PM
@@ -1153,7 +1148,7 @@ public class CommunicationLinkXChinese{
     private boolean doFinalReport = true; // whether print out the final report at the end of each file or not. 4/27/11 12:40 PM
     private boolean doHitorMissReport = false; // whether print out the evaluation(miss and hit) or not. 4/27/11 12:40 PM
     private boolean doCompleteAnalysis = true; // m2w 11/22/11 11:48 AM , this is for the complete utts analysis. 
-    private boolean doRankHitStatistics = false; // m2w 11/30/11 1:00 PM  , this is for the rank calculation link to statistics.
+    private boolean doScoreHitStatistics = false; // m2w 11/30/11 1:00 PM  , this is for the Score calculation link to statistics.
     private boolean doLinkToStatistics = false;  // m2w 11/30/11 12:28 PM , this is for the link to which previous statistics.
     private boolean doNwordLinkToStatistics = false; // m2w 11/30/11 12:59 PM , this is for the 1 word length turns link to statistics.
     private int uttLengthNForStat = 1; // calculating n words utt statistics. 12/6/11 12:36 PM
@@ -1166,7 +1161,7 @@ public class CommunicationLinkXChinese{
     private int short_hit;
     private int long_hit;
     private int $prevIn4Count = 0;
-    private int hits4 = 0;  //doRankHitSatistics 11/30/11 12:50 PM
+    private int hits4 = 0;  //doScoreHitSatistics 11/30/11 12:50 PM
     private int hits5 = 0;
     private int hits6 = 0;
     private int hits7 = 0;
