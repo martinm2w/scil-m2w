@@ -8,6 +8,10 @@ import java.util.*;
 import java.io.*;
 
 public class StopWords {
+    public StopWords(String sw) {
+	readStopWords(new File(sw));
+    }
+    
     public StopWords() {
 	readStopWords(new File(stop_path));
     }
@@ -49,7 +53,8 @@ public class StopWords {
     }
     
 
-    public final String stop_path="/home/ruobo/develop/scil0200/conf/stop-words"; //which question words + verbs and more are removed, except pronoun and be
+    public final String stop_path="conf/stop-words"; 
+    //which question words + verbs and more are removed, except pronoun and be
     //    public final String stop_path="/projects/NL5/NL/NLCOMMON/bin/DATag-stop-words_backup";
     //public final String stop_path="/projects/NL5/NL/NLCOMMON/bin/DATag-stop-words"; //which question words are removed
     //    public final String stop_path="/projects/NL5/NL/NLCOMMON/bin/DATag-stop-words_new"; //which question words + verbs are removed
