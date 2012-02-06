@@ -465,6 +465,67 @@ public class Speaker {
 	    leadership_.setInvolvementR(rank);
 	}
     }
+    ///////////////////////Added by Peng 
+ 
+    public void setVri(double d){this.vri=d;}
+    public double getVri(){return this.vri;}
+    
+     public void setnewVri(double d){this.newvri=d;}
+    public double getnewVri(){return this.newvri;}
+    
+    public void setVim(double d){this.vim=d;}
+    public double getVim(){return this.vim;}
+    
+    public void setnewVim(double d){this.newvim=d;}
+    public double getnewVim(){return this.newvim;}
+    
+    public void setArgDiv(double d){this.arg_div=d;}
+    public double getArgDiv(){return this.arg_div;}
+    
+     public void setnewArgDiv(double d){this.newarg_div=d;}
+    public double getnewArgDiv(){return this.newarg_div;}
+    
+    public void setClm(double d){this.clm=d;}
+    public double getClm(){return this.clm;}
+    
+    public void setnewClm(double d){this.newclm=d;}
+    public double getnewClm(){return this.newclm;}
+    
+    public void setCri(double d){this.cri=d;}
+    public double getCri(){return this.cri;}
+    
+     public void setnewCri(double d){this.newcri=d;}
+    public double getnewCri(){return this.newcri;}
+    
+    public void setMti(double d){this.mti=d;}
+    public double getMti(){return this.mti;}
+    
+      public void setnewMti(double d){this.newmti=d;}
+    public double getnewMti(){return this.newmti;}
+    
+    public void setNetCentr(double d){this.net_centr=d;}
+    public double getNetCentr(){return this.net_centr;}
+    
+    public void setnewNetCentr(double d){this.newnet_centr=d;}
+    public double getnewNetCentr(){return this.newnet_centr;}
+    
+    public void setEmotiveWordList(ArrayList<String> ewl)
+    {
+        this.emotiveWordList = ewl;
+    }
+    public ArrayList<String> getEmotiveWordList()
+    {
+        return this.emotiveWordList;
+    }
+    
+    public void setEwi(double d){this.ewi=d;}
+    public double getEwi(){return this.ewi;}
+    
+     public void setnewEwi(double d){this.newewi=d;}
+    public double getnewEwi(){return this.newewi;}
+            
+    //////////////////////////////////////////////////////////////
+    
     public double getLeadershipConfidence() {
 	double confidence = 0;
 	if (tpc_rank == 1 &&
@@ -637,4 +698,26 @@ public class Speaker {
 
     private double DPM = 0;
     private double PRM = 0;
+    //for raw scores1/11/2011----without percentages
+    private double newvri;
+    private double newvim;
+    private double newarg_div;
+    private double newclm;
+    private double newcri;
+    private double newmti;
+    private double newnet_centr;
+    private double newewi;
+    /******************************************
+     * Add by Peng
+     */
+    private double vri; //vocabulary range index
+    private double vim; //vocabulary introduction measure
+    private double arg_div; //argument diversity, the average of vri and vim
+    private double clm; //communication links measure
+    private double cri; //citation rate index
+    private double mti; //meso topic introduction
+    private double net_centr; //network centrality
+    private ArrayList<String>emotiveWordList = new ArrayList<String>();
+    private double ewi;//emotive language use
+    /********************************************/
 }
