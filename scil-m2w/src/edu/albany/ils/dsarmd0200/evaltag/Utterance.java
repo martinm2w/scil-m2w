@@ -39,6 +39,9 @@ public class Utterance implements DialogAct {
     private String sys_topic = null;
     
     private Node source_ = null;
+    
+    private String emotion=null;
+    private String emotion_list=null;
 	
     //m2w: added instance variable of type Utterance containing the .1 and .0 turns.
     private ArrayList<Utterance> sub_turns = new ArrayList<Utterance>();
@@ -47,6 +50,7 @@ public class Utterance implements DialogAct {
     private String tagged_subSentence = null;
 //Lin added
     private String space_tagged_content=null;
+    private String groundtruth_comm_act_type = "";
 
     /************************get information***********************************/
     /**
@@ -147,6 +151,16 @@ public class Utterance implements DialogAct {
     }
 
     
+    
+    public String getEmotion(){return emotion;}
+    public String getEmotion_list(){return emotion_list;}
+    
+
+
+    public String getGroundTruthCommActType() {
+	return groundtruth_comm_act_type;
+    }
+
 
     /**
      * get the source node
@@ -270,6 +284,9 @@ public class Utterance implements DialogAct {
 	this.sys_resp_to = resp_to;
     }
 
+    public void setGroundTruthCommActType(String groundtruth_comm_act_type) {
+	this.groundtruth_comm_act_type = groundtruth_comm_act_type;
+    }
     /**
      * Set the content.
      * */
@@ -313,6 +330,15 @@ public class Utterance implements DialogAct {
     public void setSpaceTaggedContent(String content) {
 	this.space_tagged_content = new String(content.toString());
     }
+    
+    public void setEmotion(String emot)
+    {
+        this.emotion=emot;
+    }
+    public void setEmotionList(String emotlist)
+    {
+        this.emotion_list=emotlist;
+    }
     /**
      * set tag maps
      */
@@ -332,6 +358,8 @@ public class Utterance implements DialogAct {
 	    //output.append("communication act: " + comm_act_type + "\n");
 	    //output.append("polarity: " + polarity + "\n");
 	    output.append("response to: " + resp_to + "\n");
+            output.append("emotion: "+ emotion+"\n");
+             output.append("emotion_list: "+ emotion_list+"\n");
 	    //output.append("extracted tag: " + sys_tag + "\n");
 	    //output.append("extracted polarity: " + sys_polarity + "\n");
 	    //output.append("extracted response to: " + sys_resp_to + "\n");
