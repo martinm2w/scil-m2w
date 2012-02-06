@@ -33,6 +33,7 @@ public abstract class Settings {
     public static final String AAFIRST_WORDS = "aafirst_words";
     public static final String AACFIRST_WORDS = "aacfirst_words";
     public static final String STOP_WORDS = "stop_words";
+    public static final String EMOTIVE_WORDS = "emotive_words";
     public static final String PROCESS_TYPE = "process_type";
     public static final String REPORT = "report";
     public static final String TRAINING = "training";
