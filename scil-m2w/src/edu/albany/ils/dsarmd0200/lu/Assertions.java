@@ -16,6 +16,7 @@ import edu.albany.ils.dsarmd0200.cuetag.*;
 import edu.albany.ils.dsarmd0200.cuetag.weka.ds_featuresHash.SplitTestingUtterance;
 import edu.albany.ils.dsarmd0200.evaltag.*;
 import java.sql.SQLException;
+import java.text.DecimalFormat;
 import org.apache.xerces.parsers.*;
 import org.w3c.dom.*;
 import org.xml.sax.*;
@@ -23,6 +24,8 @@ import org.xml.sax.*;
 public class Assertions {
     public Assertions(String data_path) {
         Settings.initialize();
+        //print(Settings.getValue(Settings.EMOTIVE_WORDS));
+        
 	ParseTools.initialize();
 	PronounFormMatching.initialize();
 	GenderCheck.initialize();
@@ -85,15 +88,17 @@ public class Assertions {
                     ((Utterance)tr_utts_.get(j)).setSpaceTaggedContent(spcTagged);
 
                     //System.out.println("sTmp: "+utts_.get(j).getTaggedContent());
+                    //print(spcTagged);
                 }
         //end of Lin
 
         for (int i = 0; i < docs_utts_.size(); i++) {
 	    String fn = (String)doc_names_.get(i);
-	    System.err.println("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$\nprocessing: " + fn);
+	    System.out.println("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$\nprocessing: " + fn);
 	    //utts_ = (ArrayList)docs_utts_.get(i);
 	    all_utts_.clear();
             all_utts_.addAll(tr_utts_);
+            
 	    gch_ = new GroupCohesion();
 	    if (Settings.getValue(Settings.PROCESS_TYPE).equals("automated")) {
 		PhraseCheck phr_ch = (PhraseCheck)phr_checks_.get(i);
@@ -152,6 +157,7 @@ public class Assertions {
                     String spcTagged=tmpTagged.replaceAll("/"+"([A-Z]+)*"+" ", " ");
                     utt_.setTaggedContent(tagged);
                     utt_.setSpaceTaggedContent(spcTagged);
+                    //print(spcTagged);
                     //System.out.println("sTmp: "+utts_.get(j).getTaggedContent());
                //     bufferedWriterTagFile.write(tagged);
                //     bufferedWriterTagFile.newLine();
@@ -169,8 +175,13 @@ public class Assertions {
                 //end of Lin
 
                 all_utts_.addAll(utts_);
+                
 		tagCommType();
-		//System.exit(0);
+                
+               /////////////////   
+                               
+                //////
+                
 		tagDAct();
 		/*
 		for (int ii = 0; ii < utts_.size(); ii++) {
@@ -224,19 +235,22 @@ public class Assertions {
 
                 //mt.clear();
                 //tf.clear();
+               createEmotive(i);
 
 	    }else {
 		PhraseCheck phr_ch = (PhraseCheck)phr_checks_.get(i);
 		XMLParse xp = xmlps_.get(i);
 		utts_ = (ArrayList)docs_utts_.get(i);
 		all_utts_.addAll(utts_);
-                calCommLink(xp);
-                          
+                               
 		buildALocalTopicList(phr_ch, xp);
                 MesoTopic mt = new MesoTopic();
                 mt.calMesoTopicNew(lts_, utts_);//using new method. m2w 11/18/11 11:02 AM
 //                mt.calMesoTopic((String)doc_names_.get(i), utts_, xp, phr_ch, wn_, nlsA_);
 		mts_.add(mt);
+                
+               createAnEmotive(i);
+                
 	    }
 	    ArrayList spks = new ArrayList(parts_.values());
 	    for (int k = 0; k < spks.size(); k++) {
@@ -250,31 +264,66 @@ public class Assertions {
 	    prxmlp_ = new PtsReportXMLParser(Settings.getValue(Settings.REPORT) + fn.split("\\.")[0] + "_AssertionReport.xml");
 	    prxmlp_.initClaim();
 	    prxmlp_.setDataUnit(fn.split("\\.")[0], fn.split("\\.")[0]);
+            
+            ////////////////
+            //added by peng
+            ///////////////
+            
+            calEwi(i);
+            
+            
+          //  //Vocabulary Rate Index     
+            calVri(i);
+            
+            //Vocabulary Introduction Measure
+            calVim(i);
+          //  
+          //  //Argument Diverstiy
+            calArgDiv(i);
+            
+            //Communication Links Measure
+            calClm(i);
+            
+            //Citation Rate Index
+            calCri();
+            
+            //Meso Topic Introduction
+            calMti(i);
+            
+            //NetWork Centrality
+            calNetWorkCentrality();
+            
+            ///////////////////////
+            //end of peng's methods
+            ///////////////////////
+            
 //	    System.err.println("@Topic Control");
-//	    calTpCtl(i);
+	    calTpCtl(i);
 //	    System.err.println("@Involvement Control");
-//	    System.out.println("@Involvement");
-//	    calInv(i);
+	    System.out.println("@Involvement");
+	    calInv(i);
 //	    System.err.println("@Task Control");
-//	    System.out.println("@Task Control");
-//	    calTkCtl(i);
+	    System.out.println("@Task Control");
+	    calTkCtl(i);
 //	    System.err.println("@Expressive Disagreement");
-//	    System.out.println("@Expressive Disagreement");
-//	    calExDis(i);
+	    System.out.println("@Expressive Disagreement");
+	    calExDis(i);
 //	    System.err.println ("@Leadership");
-//	    System.out.println ("@Leadership");
-//	    calLeader();
+	    System.out.println ("@Leadership");
+	    calLeader();
 //	    System.err.println("@Agreement");
-//	    System.out.println("@Agreement");
-//	    calAgr();
+	    System.out.println("@Agreement");
+	    calAgr();
 //	    System.err.println("@Task Focus");
-//	    System.out.println("@Task Focus");
-//	    calTaskFocus(i);
-//	    System.out.println("@Sociability Measure...");
-//	    calSociability();
-//	    //System.out.println("\n\nProcessing L...");
+	    System.out.println("@Task Focus");
+	    calTaskFocus(i);
+	    System.out.println("@Sociability Measure...");
+	    calSociability();
+	    //System.out.println("\n\nProcessing L...");
 //	    System.err.println("\n\nProcessing Sociability Measure...");
-//	    calGroupCohesion(i);
+	    calGroupCohesion(i);
+            
+     
 	    //System.out.println("\n\nprocessing topic disagreement...");
 	    //calTpDis(i);
 	    //createReport();
@@ -334,7 +383,783 @@ public class Assertions {
 	    }
 
     }
+    
+    
+    ///////////////////////////////
+    ////////////////peng's methods
+    //////////////////////////////
 
+     /**
+     * Calculate percentage and keep 4 decimal places
+     * @param portion
+     * @param total
+     * @return 
+     */
+    public double calculatePercentage(double portion, double total)
+    {
+        if(total==0)
+        {
+            System.out.println("Error: trying to divide a number by 0");
+            //System.exit(0);
+            return 0;
+        }
+        double tmp;
+        tmp = portion/total;
+        //DecimalFormat fourDForm =new DecimalFormat("#.####");
+        //tmp = Double.valueOf(fourDForm.format(tmp));
+        
+        return tmp;
+    }
+    
+    
+    /*
+     * Create Emotive list for annotated files.
+     */
+    public void createAnEmotive(int k)
+    {
+        ArrayList spks = new ArrayList(parts_.values());
+        ArrayList<String> speakerlist = new ArrayList<String>();
+        ArrayList<ArrayList <String>> emotiveTable = new ArrayList<ArrayList <String>>();
+        ArrayList<Utterance> utterance = new ArrayList<Utterance>();
+        utterance = (ArrayList<Utterance>)docs_utts_.get(k);
+        ArrayList <String> allEmotiveWords = new ArrayList<String>(); 
+        String tmpname="";
+        for (int i = 0; i < spks.size(); i++) {
+            Speaker part_ = (Speaker)spks.get(i);
+            speakerlist.add(part_.getName());
+            emotiveTable.add(new ArrayList<String>());
+        }
+        
+        for (int j = 0; j < utterance.size(); j++){
+                                
+            tmpname = utterance.get(j).getSpeaker();
+            String emlist = utterance.get(j).getEmotion_list();
+            String em_arrlist[]=emlist.split(";");
+            int spkindex=speakerlist.indexOf(tmpname);
+            
+            for(int i=0; i<em_arrlist.length; i++)
+            {
+                if(em_arrlist[i].length()>1)
+                {
+                    String tmpstr=em_arrlist[i].substring(0,em_arrlist[i].indexOf("("));
+                    allEmotiveWords.add(tmpstr);     
+                    emotiveTable.get(spkindex).add(tmpstr);
+                }          
+            }
+
+        }
+        
+         int numofallEmotiveWords = allEmotiveWords.size();
+         
+        /*print the results.*/
+        for(int i=0; i<speakerlist.size(); i++)
+        {
+            ((Speaker)spks.get(i)).setEwi(calculatePercentage(emotiveTable.get(i).size(), numofallEmotiveWords));
+            ((Speaker)spks.get(i)).setEmotiveWordList(emotiveTable.get(i));
+        }
+        
+        
+    }
+    
+    /*
+     * create Emotive list for automated files.
+     */
+    public void createEmotive(int k)
+    {
+                
+        ArrayList spks = new ArrayList(parts_.values());
+        ArrayList<String> speakerlist = new ArrayList<String>();
+        ArrayList<ArrayList <String>> emotiveTable = new ArrayList<ArrayList <String>>();
+        ArrayList<Utterance> utterance = new ArrayList<Utterance>();
+        utterance = (ArrayList<Utterance>)docs_utts_.get(k);
+        EmotiveWords ew = new EmotiveWords(Settings.getValue(Settings.EMOTIVE_WORDS));
+         ArrayList <String> allEmotiveWords = new ArrayList<String>(); 
+        String tmpname="";
+        String tmpstr="";
+        int numofallEmotiveWords=0;
+                
+        for (int i = 0; i < spks.size(); i++) {
+            Speaker part_ = (Speaker)spks.get(i);
+            speakerlist.add(part_.getName());
+            emotiveTable.add(new ArrayList<String>());
+        }
+        
+        for (int j = 0; j < utterance.size(); j++){
+                                
+            String tmp_utt = utterance.get(j).getUtterance();
+            String noEmotes = ParseTools.removeEmoticons(tmp_utt);
+
+            String tmpTagged="";
+            if ((Settings.getValue(Settings.LANGUAGE)).equals("english"))
+            { tmpTagged=StanfordPOSTagger.tagString (noEmotes);
+            }
+            else if ((Settings.getValue(Settings.LANGUAGE)).equals("chinese"))
+            {
+                tmpTagged=StanfordPOSTagger.tagChineseString(noEmotes);
+            }
+            String tagged = tmpTagged.trim();
+            String spcTagged=tmpTagged.replaceAll("/"+"([A-Z]+)*"+" ", " ");
+            utterance.get(j).setTaggedContent(tagged);
+            utterance.get(j).setSpaceTaggedContent(spcTagged);
+        }
+        
+        
+        /*loop through the utterances, save emotive words for each speaker into the emotiveTable 
+         * and all emotive words into allEmotiveWords*/
+        for(int i=0; i< utterance.size(); i++)
+        {
+           
+            tmpname = utterance.get(i).getSpeaker();
+            
+            if ((Settings.getValue(Settings.LANGUAGE)).equals("english"))		
+            { 
+                tmpstr = utterance.get(i).getContent();
+            }	    
+            else if ((Settings.getValue(Settings.LANGUAGE)).equals("chinese"))        
+            {
+                tmpstr = utterance.get(i).getSpaceTagContent();
+            }
+            
+            int spkindex=speakerlist.indexOf(tmpname);
+            //print(utterance.get(i).getSpaceTagContent());
+            if(tmpstr.length()>1 && spkindex>=0)
+            {
+//                 System.out.println("TMPstr---"+tmpstr.toString());
+                 String [] tmpstrarr = tmpstr.split("\\s+");
+                
+                for(int j=0; j<tmpstrarr.length; j++)
+                {
+                 if(ew.isEmotiveWord(tmpstrarr[j]))
+                 {
+                     allEmotiveWords.add(tmpstrarr[j]);
+//                   System.out.println("emots==="+tmpstrarr[j]);
+//                   System.out.println("emots exists");
+
+                     emotiveTable.get(spkindex).add(tmpstrarr[j]);
+                 }
+                }
+            }  
+        }//end of utternace loop
+        
+        numofallEmotiveWords = allEmotiveWords.size();
+//              System.out.println("emotive wordnum:::"+numofallEmotiveWords);
+              for(int i=0;i<allEmotiveWords.size();i++){
+//             "emot words:::"+allEmotiveWords.get(i)+"===individ==="+emotiveTable.get(i));
+              } 
+        /*print the results.*/
+        for(int i=0; i<speakerlist.size(); i++)
+        {
+            if(numofallEmotiveWords>0){
+            ((Speaker)spks.get(i)).setEwi(calculatePercentage(emotiveTable.get(i).size(), numofallEmotiveWords));
+            ((Speaker)spks.get(i)).setEmotiveWordList(emotiveTable.get(i));}
+        }
+        
+        //calculating the raw score for each speaker- without percentages-1/12/2012
+        for(int i=0; i<speakerlist.size(); i++)
+        {
+//                        System.out.println("individ"+emotiveTable.get(i).size());
+
+           ((Speaker)spks.get(i)).setnewEwi(emotiveTable.get(i).size());
+          // print(speakerlist.get(i)+": "+ ((Speaker)spks.get(i)).getnewEwi());
+        }
+        
+    }
+    
+    public void calEwi(int k)
+    {
+         print("@@@@@@@@@@@@@@@@@Emotive Language Use@@@@@@@@@@@@@@@@@");
+         print("\n");
+         ArrayList spks = new ArrayList(parts_.values());
+         System.out.println("---Percentages-----");
+         for(int i=0; i<spks.size(); i++)
+         {
+             
+             Speaker part_ = (Speaker)spks.get(i);
+             print(part_.getName()+" :"+((Speaker)spks.get(i)).getEwi());
+             
+         }
+          print("\n");
+         System.out.println("-----Raw Scores-------");
+         for(int i=0; i<spks.size(); i++)
+         {
+            
+             Speaker part_ = (Speaker)spks.get(i);
+             print(part_.getName()+" :"+((Speaker)spks.get(i)).getnewEwi());
+             
+         }
+          print("\n");
+          print("@@@@@@@@@@@@@@@@@End of Emotive Language Use@@@@@@@@@@@@@@@@@");
+         
+    }
+
+           public void calVri(int k)
+    {        
+        print("@@@@@@@@@@@@@@@@@Vocabulary Range Index@@@@@@@@@@@@@@@@@");
+        		 print("\n");
+        ArrayList spks = new ArrayList(parts_.values());
+        ArrayList<String> speakerlist = new ArrayList<String>();
+        ArrayList<ArrayList <String>> vocabularytable = new ArrayList<ArrayList <String>>();
+        ArrayList<Utterance> utterance = new ArrayList<Utterance>();
+        utterance = (ArrayList<Utterance>)docs_utts_.get(k);
+        ArrayList <String> alldistinctwords = new ArrayList<String>(); 
+        double sumofvri=0;
+        Stemmer stemmer = new Stemmer();
+        String tmpstr="";
+        String tmpname="";
+        //print("spk size="+ spks.size() + " utterance size ="+utterance.size());        
+        /*Initialize speakerlist and linkcounts*/
+        for (int i = 0; i < spks.size(); i++) {
+            Speaker part_ = (Speaker)spks.get(i);
+            speakerlist.add(part_.getName());
+            vocabularytable.add(new ArrayList<String>());
+        }
+        
+        
+                                        
+        for (int j = 0; j < utterance.size(); j++){
+                                
+            String tmp_utt = utterance.get(j).getUtterance();
+            String noEmotes = ParseTools.removeEmoticons(tmp_utt);
+
+            String tmpTagged="";
+            if ((Settings.getValue(Settings.LANGUAGE)).equals("english"))
+            { tmpTagged=StanfordPOSTagger.tagString (noEmotes);
+            }
+            else if ((Settings.getValue(Settings.LANGUAGE)).equals("chinese"))
+            {
+                tmpTagged=StanfordPOSTagger.tagChineseString(noEmotes);
+            }
+            String tagged = tmpTagged.trim();
+            String spcTagged=tmpTagged.replaceAll("/"+"([A-Z]+)*"+" ", " ");
+            utterance.get(j).setTaggedContent(tagged);
+            utterance.get(j).setSpaceTaggedContent(spcTagged);
+        }
+        
+        
+        /*loop through the utterances, stemm the utterance, 
+         * and save distinct words for each speaker into the vocabularytable 
+         * and all distinct words into alldistinctwords*/
+        for(int i=0; i< utterance.size(); i++)
+        {
+           
+            tmpname = utterance.get(i).getSpeaker();
+            
+            if ((Settings.getValue(Settings.LANGUAGE)).equals("english"))		
+            { 
+                tmpstr = utterance.get(i).getContent();
+                tmpstr = stemmer.sentenceStemming(tmpstr);
+            }	    
+            else if ((Settings.getValue(Settings.LANGUAGE)).equals("chinese"))        
+            {
+                tmpstr = utterance.get(i).getSpaceTagContent();
+            }
+            
+            int spkindex=speakerlist.indexOf(tmpname);
+            //print(utterance.get(i).getSpaceTagContent());
+            if(tmpstr.length()>1 && spkindex>=0)
+            {
+                String [] tmpstrarr = tmpstr.split("\\s+");
+                
+                for(int j=0; j<tmpstrarr.length; j++)
+                {
+                    if(!vocabularytable.get(spkindex).contains(tmpstrarr[j]))
+                    {
+                        vocabularytable.get(spkindex).add(tmpstrarr[j]);
+                    }
+                    
+                    if(!alldistinctwords.contains(tmpstrarr[j]))
+                    {
+                        alldistinctwords.add(tmpstrarr[j]);
+                    }
+                }
+            }  
+        }//end of utternace loop
+        
+        int numofalldistinctwords = alldistinctwords.size();
+//      System.out.println("Total Distinct score==="+numofalldistinctwords );
+        /*print the results.*/
+        //raw scores
+        for(int i=0; i<speakerlist.size(); i++)
+        {
+            if(numofalldistinctwords>0)
+            ((Speaker)spks.get(i)).setVri(calculatePercentage(vocabularytable.get(i).size(), numofalldistinctwords));
+            //print(speakerlist.get(i)+": "+((Speaker)spks.get(i)).getVri());
+             sumofvri=sumofvri+((Speaker)spks.get(i)).getVri();
+        }
+         //calculating the raw score for each speaker- without percentages-1/12/2012
+        System.out.println("-----Raw Scores-------");
+        for(int i=0; i<speakerlist.size(); i++)
+        {
+           
+           ((Speaker)spks.get(i)).setnewVri(((Speaker)spks.get(i)).getVri());
+           print(speakerlist.get(i)+": "+ ((Speaker)spks.get(i)).getnewVri());
+        }
+        /*normalize the vri's by taking the percentage of speaker's vri to the sum of all vris*/
+         print("\n");
+        System.out.println("-----Percentages-------");
+//        System.out.println("SUM==="+sumofvri);
+        for(int i=0; i<speakerlist.size(); i++)
+        {
+            if(sumofvri>0){
+            ((Speaker)spks.get(i)).setVri(calculatePercentage(((Speaker)spks.get(i)).getVri(), sumofvri));
+            print(speakerlist.get(i)+": "+ ((Speaker)spks.get(i)).getVri());
+            }
+            else{
+            System.out.println("All vaues ARE 0");
+            }
+        }
+             print("\n");   
+        print("@@@@@@@@@@@@@@@@@End of Vocabulary Range Index@@@@@@@@@@@@@@@@@");
+        
+    }//end of calVri
+    
+       public void calVim(int k)
+    {        
+        print("@@@@@@@@@@@@@@@@@Vocabulary Introduction Measure@@@@@@@@@@@@@@@@@");
+        	 print("\n");	
+        ArrayList spks = new ArrayList(parts_.values());
+        ArrayList<String> speakerlist = new ArrayList<String>();
+        ArrayList<ArrayList <String>> vocabularytable = new ArrayList<ArrayList <String>>();
+        ArrayList<Utterance> utterance = new ArrayList<Utterance>();
+        utterance = (ArrayList<Utterance>)docs_utts_.get(k);
+        ArrayList <String> alldistinctwords = new ArrayList<String>(); 
+        Stemmer stemmer = new Stemmer();
+        StopWords sw=null;
+        String tmpstr="";
+        String tmpname="";
+        double sumofvim=0.0;
+        //print("spk size="+ spks.size() + " utterance size ="+utterance.size());
+        
+        
+         if ((Settings.getValue(Settings.LANGUAGE)).equals("english"))
+            {
+                sw = new StopWords(English_stopword); //used to remove English stopwords.
+            }
+            else if ((Settings.getValue(Settings.LANGUAGE)).equals("chinese"))
+            {
+                sw = new StopWords(Chinese_stopword); //used to remove Chinese stopwords.
+            }
+        /*Initialize speakerlist and linkcounts*/
+        for (int i = 0; i < spks.size(); i++) {
+            Speaker part_ = (Speaker)spks.get(i);
+            speakerlist.add(part_.getName());
+            vocabularytable.add(new ArrayList<String>());
+        }
+        
+        
+        
+        for (int j = 0; j < utterance.size(); j++){
+                                
+            String tmp_utt = utterance.get(j).getUtterance();
+            String noEmotes = ParseTools.removeEmoticons(tmp_utt);
+
+            String tmpTagged="";
+            if ((Settings.getValue(Settings.LANGUAGE)).equals("english"))
+            { tmpTagged=StanfordPOSTagger.tagString (noEmotes);
+            }
+            else if ((Settings.getValue(Settings.LANGUAGE)).equals("chinese"))
+            {
+                tmpTagged=StanfordPOSTagger.tagChineseString(noEmotes);
+            }
+            String tagged = tmpTagged.trim();
+            String spcTagged=tmpTagged.replaceAll("/"+"([A-Z]+)*"+" ", " ");
+            utterance.get(j).setTaggedContent(tagged);
+            utterance.get(j).setSpaceTaggedContent(spcTagged);
+        }
+        
+        /*loop through the utterances, stemm the utterance, 
+         * and save distinct words for each speaker into the vocabularytable 
+         * and all distinct words into alldistinctwords*/
+        for(int i=0; i< utterance.size(); i++)
+        {
+            tmpname = utterance.get(i).getSpeaker();
+            if ((Settings.getValue(Settings.LANGUAGE)).equals("english"))
+            {
+                tmpstr = utterance.get(i).getContent();
+            }
+            else if ((Settings.getValue(Settings.LANGUAGE)).equals("chinese"))
+            {
+                tmpstr = utterance.get(i).getSpaceTagContent();
+                //print(tmpstr);
+            }
+            
+            int spkindex=speakerlist.indexOf(tmpname);
+            
+            //print(tmpstr);
+            if(tmpstr.length()>1 && spkindex>=0)
+            {
+                String [] tmpstrarr = tmpstr.split("\\s+");
+                ArrayList <String> utterancewordlist = new ArrayList<String>();
+                for(int n=0; n<tmpstrarr.length; n++)
+                {
+                    utterancewordlist.add(tmpstrarr[n]);
+                }
+                sw.filterIt(utterancewordlist);
+                
+                if ((Settings.getValue(Settings.LANGUAGE)).equals("english"))
+                {
+                    for(int l=0; l<utterancewordlist.size(); l++)
+                    {
+                        utterancewordlist.set(l,stemmer.wordStemming(utterancewordlist.get(l)));
+                       //System.out.print(utterancewordlist.get(l)+" ");
+                    }
+                }
+                            
+                for(int j=0; j<utterancewordlist.size(); j++)
+                {
+                    if(!vocabularytable.get(spkindex).contains(utterancewordlist.get(j)))
+                    {
+                        vocabularytable.get(spkindex).add(utterancewordlist.get(j));
+                    }
+                    
+                    if(!alldistinctwords.contains(utterancewordlist.get(j)))
+                    {
+                        alldistinctwords.add(utterancewordlist.get(j));
+                    }
+                }
+            }
+            
+            
+        }//end of utternace loop
+        
+        int numofalldistinctwords = alldistinctwords.size();
+        /*set the vim to speakers and print them out.*/
+        for(int i=0; i<speakerlist.size(); i++)
+        {
+            if(numofalldistinctwords>0){
+//                System.out.println("total ind"+ vocabularytable.get(i).size());
+//                System.out.println("Total Distinct score==="+numofalldistinctwords);
+            ((Speaker)spks.get(i)).setVim(calculatePercentage(vocabularytable.get(i).size(), numofalldistinctwords));
+             sumofvim=sumofvim+((Speaker)spks.get(i)).getVim();
+             
+            }
+        }
+        //calculating the raw score for each speaker- without percentages-1/12/2012
+         System.out.println("-----Raw Scores-------");
+        for(int i=0; i<speakerlist.size(); i++)
+        {
+           
+           ((Speaker)spks.get(i)).setnewVim(((Speaker)spks.get(i)).getVim());
+          print(speakerlist.get(i)+": " +((Speaker)spks.get(i)).getnewVim());
+        }
+        /*normalize the vri's by taking the percentage of speaker's vri to the sum of all vris*/
+         print("\n");
+        System.out.println("-----Percentages-------");
+//        System.out.println("SUM==="+sumofvim);
+        for(int i=0; i<speakerlist.size(); i++)
+        {
+            if(sumofvim>0.0){
+            ((Speaker)spks.get(i)).setVim(calculatePercentage(((Speaker)spks.get(i)).getVim(), sumofvim));
+            print(speakerlist.get(i)+": "+ ((Speaker)spks.get(i)).getVim());
+            }
+            else{
+            System.out.println("All vaues ARE 0");
+            }
+        }
+         print("\n");
+        print("@@@@@@@@@@@@@@@@@End of Vocabulary Introduction Measure@@@@@@@@@@@@@@@@@");
+        
+    }//end of calVim
+       
+       
+       
+       
+
+       /**
+        * Calculate the score for Argument Diversity,
+        * it is the average of vri and vim of a speaker, thus, this method has
+        * to be called only after methods calVri and calVim
+        */
+       public void calArgDiv(int k)
+       {
+           
+        print("@@@@@@@@@@@@@@@@@Argument Diversity@@@@@@@@@@@@@@@@@");		
+         print("\n");
+        System.out.println("-----Percentages-------");
+        ArrayList spks = new ArrayList(parts_.values());
+        for (int i = 0; i < spks.size(); i++) {
+		    Speaker part_ = (Speaker)spks.get(i);
+                    LocalTopics lts = part_.getILTs();
+                    
+                    double arg_div;
+                    arg_div=(((Speaker)spks.get(i)).getVri()+((Speaker)spks.get(i)).getVim())/2.0;
+//                    DecimalFormat fourDForm =new DecimalFormat("#.####");
+//                    arg_div = Double.valueOf(fourDForm.format(arg_div));
+//                    
+                    ((Speaker)spks.get(i)).setArgDiv(arg_div);
+		    print(part_.getName()+ ":"+ ((Speaker)spks.get(i)).getArgDiv() );
+        }
+          print("\n");
+        print("-------Raw Scores---------");
+        for (int i = 0; i < spks.size(); i++) {
+		    Speaker part_ = (Speaker)spks.get(i);
+                    LocalTopics lts = part_.getILTs();
+                    
+                    double newarg_div;
+                    newarg_div=(((Speaker)spks.get(i)).getnewVri()+((Speaker)spks.get(i)).getnewVim())/2.0;
+//                    DecimalFormat fourDForm =new DecimalFormat("#.####");
+//                    arg_div = Double.valueOf(fourDForm.format(arg_div));
+//                    
+                    ((Speaker)spks.get(i)).setnewArgDiv(newarg_div);
+		    print(part_.getName()+ ":"+ ((Speaker)spks.get(i)).getnewArgDiv() );
+        } print("\n");
+        print("@@@@@@@@@@@@@@@@@End of Argument Diversity@@@@@@@@@@@@@@@@@\n\n\n");
+           
+       }
+    
+    /**
+     * Calculate the score for Communication Links Measure
+     * @param k the index of a document in docs_utts
+     */
+    
+       public void calClm(int k)
+    {
+        print("@@@@@@@@@@@@@@@@@Communication link measures@@@@@@@@@@@@@@@@@");
+        	 print("\n");	
+        ArrayList spks = new ArrayList(parts_.values());
+        ArrayList<String> speakerlist = new ArrayList<String>();
+        ArrayList<Integer> linkcounts = new ArrayList<Integer>();//counting the utterances that are addressed to or reponse to each speaker, it is parallel to speakerlist.
+        ArrayList<Utterance> utterance = new ArrayList<Utterance>();
+        utterance = (ArrayList<Utterance>)docs_utts_.get(k);
+        String lname="";//link to name
+        String CommActType="";
+        int nameindex;
+        double sumofclm=0.0;
+
+        /*Initialize speakerlist and linkcounts*/
+        for (int i = 0; i < spks.size(); i++) {
+            Speaker part_ = (Speaker)spks.get(i);
+            speakerlist.add(part_.getName());
+            linkcounts.add(new Integer(0));
+
+        }    
+        
+        /*loop through all utterances in the file and count the number of utterances that are addressed to or reponse to this speaker
+         *excludes utterances addressed to everyone*/
+        for(int n=0; n<utterance.size(); n++)            
+        {
+            //print(n+1 +" "+utterance.get(n).getContent());           
+            lname=utterance.get(n).getRespTo().split(":")[0];
+            CommActType=utterance.get(n).getCommActType().trim();
+            if(speakerlist.contains(lname))                       
+            {
+                if(CommActType.equals("addressed-to")||CommActType.equals("response-to"))
+                {
+                    nameindex=speakerlist.indexOf(lname);
+                    if(nameindex>=0)
+                        linkcounts.set(nameindex, linkcounts.get(nameindex)+1);
+                }
+            }                                            
+        }
+        
+        /*set the clm by counting the utterandces that are addressed to this speaker as a percentage 
+         * of all utterances in discourse, and save the sum of all clms to sumofclm.*/
+        for(int i=0; i<speakerlist.size(); i++)
+        {
+            if(utterance.size()>0)
+            ((Speaker)spks.get(i)).setClm(calculatePercentage(linkcounts.get(i).doubleValue(), utterance.size()));
+            sumofclm=sumofclm+((Speaker)spks.get(i)).getClm();
+        }
+        //calculating the raw score for each speaker- without percentages-1/12/2012
+         System.out.println("-----Raw Scores-------");
+        for(int i=0; i<speakerlist.size(); i++)
+        {
+           
+           ((Speaker)spks.get(i)).setnewClm(((Speaker)spks.get(i)).getClm());
+           print(speakerlist.get(i)+": "+ ((Speaker)spks.get(i)).getnewClm());
+        }
+        /*normalize the clms by take the percentage of speaker's clm to the sum of all clms*/
+         print("\n");
+        System.out.println("-----Percentages-------");
+//        System.out.println("SUM indiv scores==="+sumofclm);
+        for(int i=0; i<speakerlist.size(); i++)
+        {
+            if(sumofclm>0){
+            ((Speaker)spks.get(i)).setClm(calculatePercentage(((Speaker)spks.get(i)).getClm(), sumofclm));
+            print(speakerlist.get(i)+": "+ ((Speaker)spks.get(i)).getClm());
+            }
+            else{
+            System.out.println("All vaues ARE 0");
+            }
+        }
+         print("\n");
+        print(" @@@@@@@@@@@@@@@@@End of Communication Links Measure@@@@@@@@@@@@@@@@@\n");
+        return;
+    }//end of calClm
+    
+    
+    /**
+     * Calculate the score for Citation Rate Index, 
+     * counting the number of times that the local topics introduced by this speaker are cited by others.
+     */
+    public void calCri()
+    {
+        print("@@@@@@@@@@@@@@@@@Citation Rate Index@@@@@@@@@@@@@@@@@");
+         print("\n");
+        int numofalltopics=0;		
+        ArrayList spks = new ArrayList(parts_.values());
+        double sumofcri=0.0;
+        for (int i = 0; i < spks.size(); i++) {
+		    Speaker part_ = (Speaker)spks.get(i);
+                    LocalTopics lts = part_.getILTs();
+                    numofalltopics = numofalltopics + lts.size();
+                    if(lts.size()>0)
+                    ((Speaker)spks.get(i)).setCri(calculatePercentage(lts.sizeOfCO(),lts.size()));
+                    sumofcri=sumofcri+((Speaker)spks.get(i)).getCri();
+        }
+        
+         //calculating the raw score for each speaker- without percentages-1/12/2012
+         System.out.println("-----Raw Scores-------");
+        for(int i=0; i<spks.size(); i++)
+        {
+           
+            ((Speaker)spks.get(i)).setnewCri(((Speaker)spks.get(i)).getCri());
+            print(((Speaker)spks.get(i)).getName()+": "+ ((Speaker)spks.get(i)).getnewCri());
+        }
+        
+        /*normalize the cri by take the percentage of speaker's cri to the sum of all cri*/
+         print("\n");
+        print("-----Percentages-------");
+//         System.out.println("SUM indiv scores==="+sumofcri);
+        for(int i=0; i<spks.size(); i++)
+        {
+            
+            if(sumofcri>0.0){
+         ((Speaker)spks.get(i)).setCri(calculatePercentage(((Speaker)spks.get(i)).getCri(),sumofcri));
+         print(((Speaker)spks.get(i)).getName()+": "+((Speaker)spks.get(i)).getCri() );
+            }
+        }
+        print("\n");
+        print("@@@@@@@@@@@@@@@@@End of Citation Rate Index@@@@@@@@@@@@@@@@@\n\n\n");
+        
+    }
+    
+    /**
+     * Calculate the score for Meso Topic Introduction, a percentage of meso-topics introduced by a speaker to all meso-topics identified in discourse.
+     * @param k the index of a document in docs_utts
+     */
+    public void calMti(int k)
+    {
+        print("@@@@@@@@@@@@@@@@@Meso Topic Introduction@@@@@@@@@@@@@@@@@");
+         print("\n");
+        int count=0;
+        MesoTopic tmp = (MesoTopic)mts_.get(k);
+        ArrayList<ArrayList<String>> mt = new ArrayList<ArrayList<String>>();
+        mt = tmp.getMeso_topics_();
+        ArrayList <String> mesotopics = new ArrayList<String>();//all meso-topics in discourse
+        ArrayList <ArrayList <String>> localtopicstable = new ArrayList<ArrayList<String>>();
+        ArrayList spks = new ArrayList(parts_.values());
+        ArrayList<String> speakerlist = new ArrayList<String>();
+        ArrayList<Integer> mesocounts = new ArrayList<Integer>();//counting the number of meso-topics introduced by each speaker
+        
+        /*Initialize the speaklist, mescounts and localtopicstable, those three are parallel to each other*/
+        for (int i = 0; i < spks.size(); i++) {		    
+            Speaker part_ = (Speaker)spks.get(i);
+            speakerlist.add(part_.getName());
+            mesocounts.add(new Integer(0));
+            localtopicstable.add(new ArrayList<String>());
+            		    
+            LocalTopics lts = part_.getILTs();		    
+            for (int j = 0; j < lts.size(); j++) {
+                localtopicstable.get(i).add(((LocalTopic)lts.get(j)).getContent().getWord());
+            }
+
+        }
+        
+
+        //print("speakerlist size="+speakerlist.size() +" localtopicstable size="+localtopicstable.size() + " mesocounts size="+ mesocounts.size());
+        /*Initialize mesotopics, which contains all meso-topics in discourse.*/
+        for(int i=0; i<mt.size(); i++)
+        {
+            mesotopics.add(mt.get(i).get(0));
+            //print(mesotopics.get(i));
+        }
+        
+        /*loop through all mesotopics and count the number of meso-topics introduced by each speaker*/
+        for(int i=0; i<mesotopics.size(); i++)
+        {
+            for(int j=0; j<localtopicstable.size(); j++)
+            {
+                if(localtopicstable.get(j).contains(mesotopics.get(i)))
+                {
+                    mesocounts.set(j,mesocounts.get(j)+1);
+                }
+            }
+        }
+        
+        
+        /*set mti to speakers and print them out.*/
+        print("-----Percentages-------");
+        for(int i=0; i<speakerlist.size(); i++)
+        {
+      if(mt.size()>0)
+//            System.out.println("SUM indiv scores==="+mt);
+            ((Speaker)spks.get(i)).setMti(calculatePercentage(mesocounts.get(i).doubleValue(), mt.size()));
+            print(speakerlist.get(i)+": "+ ((Speaker)spks.get(i)).getMti());
+        }
+        //calculating the raw score for each speaker- without percentages-1/12/2012
+        print("\n");
+        System.out.println("-----Raw Scores-------");
+        for(int i=0; i<speakerlist.size(); i++)
+        {
+            
+           ((Speaker)spks.get(i)).setnewMti(mesocounts.get(i).doubleValue());
+           print(speakerlist.get(i)+": "+ ((Speaker)spks.get(i)).getnewMti());
+        }
+         print("\n");
+        print("@@@@@@@@@@@@@@@@@End of Meso Topic Introduction@@@@@@@@@@@@@@@@@");
+    }//end of calMti
+    
+    
+           
+        
+    /**
+     * Calculate the score for network centrality,
+     * it is the average of clm, cri and mti of a speaker, thus, this method has
+     * to be called only after methods calVri and calVim
+     */
+    public void calNetWorkCentrality()    
+    {
+       
+        print("@@@@@@@@@@@@@@@@@NetWork Centrality@@@@@@@@@@@@@@@@@");		
+         print("\n");
+        ArrayList spks = new ArrayList(parts_.values());
+         print("-----Percentages-------");
+        for (int i = 0; i < spks.size(); i++) {
+             
+		    Speaker part_ = (Speaker)spks.get(i);
+                    //LocalTopics lts = part_.getILTs();
+                    
+                    double netcentr;
+                    netcentr=(((Speaker)spks.get(i)).getClm()+((Speaker)spks.get(i)).getCri() + ((Speaker)spks.get(i)).getMti())/3.0;
+                   // DecimalFormat fourDForm =new DecimalFormat("#.####");
+                    //netcentr = Double.valueOf(fourDForm.format(netcentr));
+                    
+                    ((Speaker)spks.get(i)).setNetCentr(netcentr);
+		    print(part_.getName()+ ":"+ ((Speaker)spks.get(i)).getNetCentr() );
+        }
+        print("\n");
+            print("-----Raw scores-------");
+        for (int i = 0; i < spks.size(); i++) {
+          
+		    Speaker part_ = (Speaker)spks.get(i);
+                    //LocalTopics lts = part_.getILTs();
+                    
+                    double newnetcentr;
+                    newnetcentr=(((Speaker)spks.get(i)).getnewClm()+((Speaker)spks.get(i)).getnewCri() + ((Speaker)spks.get(i)).getnewMti())/3.0;
+                   // DecimalFormat fourDForm =new DecimalFormat("#.####");
+                    //netcentr = Double.valueOf(fourDForm.format(netcentr));
+                    
+                    ((Speaker)spks.get(i)).setnewNetCentr(newnetcentr);
+		    print(part_.getName()+ ":"+ ((Speaker)spks.get(i)).getnewNetCentr() );
+        } print("\n");
+        print("@@@@@@@@@@@@@@@@@End of NetWork Centrality@@@@@@@@@@@@@@@@@\n\n\n");
+    
+    }
+    //////////////////////////////////
+    ////////////end of peng's methods
+    /////////////////////////////////        
+   
     public void preprocess() {
 	for (int i = 0; i < docs_utts_.size(); i++) {
 	    PhraseCheck phr_ch = (PhraseCheck)phr_checks_.get(i);
@@ -370,7 +1195,7 @@ public class Assertions {
 	daT.tagIt3();
 	for (int i = 0; i < utts_.size(); i++) {
 	    Utterance utt_ = (Utterance)utts_.get(i);
-	    //System.out.println("utt_ information level tag: " + utt_.getMTag());
+//	    System.out.println("utt_ information level tag: " + utt_.getMTag());
 	    break;
 	}
 	//dialogue action level
@@ -400,7 +1225,7 @@ public class Assertions {
 	daT.tagIt();
 	for (int i = 0; i < utts_.size(); i++) {
 	    Utterance utt_ = (Utterance)utts_.get(i);
-	    //System.out.println("utt_ DA tag: " + utt_.getTag());
+//	    System.out.println("utt_ DA tag: " + utt_.getTag());
 	    break;
 	}
     }
@@ -417,7 +1242,7 @@ public class Assertions {
 	XMLParse xp = xmlps_.get(j);
 	buildLocalTopicList(phr_ch, xp);
 	*/
-	//System.out.println("after polarities calculated...");
+//	System.out.println("after polarities calculated...");
 	exd_.calCEDI(prxmlp_, spks_, parts_);
 	//}
     }
@@ -1585,17 +2410,15 @@ public class Assertions {
 	    utts_ = (ArrayList<Utterance>)docs_utts_.get(i);
 	    //	    utts_ = cl.getUtts();
 	    */
-        //added if chinese calCommLink version. m2w 11/22/11 11:38 AM.
-        if(isChinese_){
-            CommunicationLinkXChinese clx = new CommunicationLinkXChinese(utts_, wn_, isEnglish_, isChinese_);
-            clx.collectCLFtsX();
-            utts_ = clx.getUtts();
-        }else{
-            CommunicationLinkX clx = new CommunicationLinkX(utts_, wn_, isEnglish_, isChinese_);
-            clx.collectCLFtsX();
-            utts_ = clx.getUtts();
-        }
-	    
+	CommunicationLinkX clx = new CommunicationLinkX(utts_, isEnglish_, isChinese_);
+	    //cl.setUtts(utts_);
+	    //cl.calCLFts();
+	    clx.collectCLFtsX();
+	    utts_ = clx.getUtts();
+	    //    	WriteXML wlx = new WriteXML(clx.getMap(),utts_);
+	    //    	wlx.outputXML();
+
+	    //}
 	ArrayList tr_utts = new ArrayList();
 	CommunicationLink cl = new CommunicationLink(all_utts_, tr_utts, wn_, utts_, parts_);
 	cl.setUtts(utts_);
@@ -1789,6 +2612,7 @@ public class Assertions {
 	    }
 	    */
 	    String spk = utt.getSpeaker();
+            if(spk.equals("ilsperson") ||spk.equals("ilspersonnel")) continue;//skip to next loop if the speaker is ilsperson
 	    spks.add(spk.toLowerCase());
 	    comm_acts.add(utt.getCommActType());
 	    resps_to.add(utt.getRespTo());
@@ -1802,6 +2626,7 @@ public class Assertions {
 		parts_.put(spk.toLowerCase(), part);
 	    }
 	    part.addUtterance(utt);
+        
 	}
 	Collections.sort(spks_);
 	//comment it out for TkC
@@ -1903,6 +2728,7 @@ public class Assertions {
 	for (int i = 0; i < utts_.size(); i++) {
 	    Utterance utt = utts_.get(i);
 	    String spk = utt.getSpeaker();
+            if(spk.equals("ilsperson")||spk.equals("ilspersonnel")) continue; // skip to next loop if the speaker is ilsperson
 	    if (!spks_.contains(spk.toLowerCase())) spks_.add(spk.toLowerCase());
 	    //if (spk.startsWith("ils")) continue;//only for test!!! remember to remove
 	    Speaker part = parts_.get(spk.toLowerCase());
@@ -1958,6 +2784,8 @@ public class Assertions {
 		    nouns.add(nt);
 		}
 	    }
+            
+        //}
 	}
 	Collections.sort(spks_);
 	//only for invlovement
@@ -2179,6 +3007,9 @@ public class Assertions {
     private boolean isEnglish_ = false;
     private boolean isChinese_ = false;
     private boolean isUrdu_ = false;
+    
+    private String English_stopword="conf/stop-words";
+    private String Chinese_stopword="conf/Chinese-stop-words";
 //    private ChineseWordnet CNWN = null;
 
 
@@ -2294,5 +3125,9 @@ public class Assertions {
                         }
                 }
         }
+    }
+        public void print(String s)
+    {
+        System.out.println(s);
     }
 }
