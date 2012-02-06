@@ -16,6 +16,22 @@ public class TagRulesPredefined {
     public TagRulesPredefined(){        
     }
 
+    public void allGramsAndDRMSet(String AllGrams, String DRMSet){
+        
+    }
+
+    public void setTag(String tag){
+     
+    }
+    
+    public void setApproved(boolean bApproved){
+        ;
+    }
+    public boolean getApproved(){
+        return false;
+    }
+
+
     public String rules_filtered(String str){
         init();
         String str2 = "<start> " + str.toLowerCase().trim() + " <finish>";

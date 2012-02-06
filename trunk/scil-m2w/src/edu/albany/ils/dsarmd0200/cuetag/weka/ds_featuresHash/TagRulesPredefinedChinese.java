@@ -8,7 +8,12 @@ package edu.albany.ils.dsarmd0200.cuetag.weka.ds_featuresHash;
 import edu.albany.ils.dsarmd0200.lu.Settings;
 import java.io.*;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Set;
 
 /**
  *
@@ -16,11 +21,34 @@ import java.util.HashMap;
  */
 public class TagRulesPredefinedChinese extends TagRulesPredefined {
 
-    String chineseNgram = Settings.getValue("ChineseNgram");
+    String chineseNgram = Settings.getValue("chineseNgram");
+    String AllGrams;
+    String DRMSet;
+    public String DRUtt="";
+    public String tag="";
+    private boolean bApproved=false;
+    private ArrayList<String> arrDR=new ArrayList();
 
     public TagRulesPredefinedChinese(){        
     }
 
+    public void allGramsAndDRMSet(String AllGrams, String DRMSet){
+          this.AllGrams=AllGrams;
+          this.DRMSet=DRMSet;
+    }
+
+    public void setTag(String tag){
+        this.tag=tag;
+    }
+
+    public void setApproved(boolean bApproved){
+        this.bApproved=bApproved;
+    }
+    public boolean getApproved(){
+        return this.bApproved;
+    }
+
+    
     @Override
     public String rules_filtered(String str){
         init();
@@ -37,7 +65,8 @@ public class TagRulesPredefinedChinese extends TagRulesPredefined {
         HashMap<String, Double> CR_Features =
                 tagFeaturesPredefinedWithScore.get(DsarmdDATag.CR);
 
-        for(String s : AA_Features.keySet()){ // agree-accept
+
+        /*for(String s : AA_Features.keySet()){ // agree-accept
             if(str2.contains(s)){
                 str = str.replace(s, DsarmdDATag.AA);
             }
@@ -61,8 +90,48 @@ public class TagRulesPredefinedChinese extends TagRulesPredefined {
             if(str2.contains(s)){
                 str = str.replace(s, DsarmdDATag.CR);
             }
+        }*/
+        
+        
+        /*str=str.toLowerCase().trim();
+        String drmOriginal="";
+        if (!AllGrams.equals("")){
+              String[] gramArray = AllGrams.split("\\|");
+              for (int k=0; k<gramArray.length; k++)
+              {
+                  if (str.equalsIgnoreCase(gramArray[k]))
+                  {
+                       return str;
+                  }
+              }
         }
 
+        for(String s : DR_Features.keySet()){ // disagree-reject
+            if(str2.contains(s)){
+                str = str.replace(s, DsarmdDATag.DR);
+            }
+        }*/
+
+        Iterator itr=arrDR.iterator();
+
+        while(itr.hasNext()){
+            String s=(String)itr.next();
+            
+            if(str2.contains(s)){// && tag.equalsIgnoreCase("response-to")){
+                if (s.contains("<start> ")){
+                    if (s.length()>=10)
+                       setApproved(true);
+
+                    s= s.replace("<start> ", "");
+                   
+                }
+
+                str = str.replace(s, DsarmdDATag.DR);
+                System.out.print("");
+            }
+        }
+
+        
         return str;
 
     }
@@ -94,6 +163,8 @@ public class TagRulesPredefinedChinese extends TagRulesPredefined {
                     HashMap<String, Double> h = new HashMap<String, Double>();
                     for(String gram : ngrams){
                         h.put(gram, score);
+                        if (tag.equalsIgnoreCase(DsarmdDATag.DR))
+                             arrDR.add(gram);
                     }
                     tagFeaturesPredefinedWithScore.put(tag, h);
                 }
@@ -101,6 +172,8 @@ public class TagRulesPredefinedChinese extends TagRulesPredefined {
                     HashMap<String, Double> h = tagFeaturesPredefinedWithScore.get(tag);
                     for(String gram : ngrams){
                         h.put(gram, score);
+                        if (tag.equalsIgnoreCase(DsarmdDATag.DR))
+                             arrDR.add(gram);
                     }
                 }
             }
