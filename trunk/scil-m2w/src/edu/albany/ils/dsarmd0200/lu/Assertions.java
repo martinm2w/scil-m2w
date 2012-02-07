@@ -236,6 +236,7 @@ public class Assertions {
                 //mt.clear();
                 //tf.clear();
 //               createEmotive(i);
+                
 
 	    }else {
 		PhraseCheck phr_ch = (PhraseCheck)phr_checks_.get(i);
@@ -250,7 +251,7 @@ public class Assertions {
 		mts_.add(mt);
                 
 //               createAnEmotive(i);
-                
+                calPop();
 	    }
 	    ArrayList spks = new ArrayList(parts_.values());
 	    for (int k = 0; k < spks.size(); k++) {
@@ -2446,6 +2447,11 @@ public class Assertions {
 	//	    wx.outputXML();
     }
 
+    public void calPop(){
+        PursuitOfPower pop = new PursuitOfPower(utts_);
+        pop.calPursuitOfPower();
+    }
+    
     public void loadAndParse() {
 	try {
 	    //System.out.println("load files...");
@@ -2958,6 +2964,8 @@ public class Assertions {
 		    System.err.println ("files in web service directory " + files.length);
 	    }
     }
+    
+    
 
 //    private void initChineseWordnet(){
 //        CNWN = new ChineseWordnet("mysql", "localhost", "3306", "atur");
