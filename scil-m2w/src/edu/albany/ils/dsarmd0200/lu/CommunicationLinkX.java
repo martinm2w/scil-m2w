@@ -33,6 +33,8 @@ public class CommunicationLinkX
     private Utterance name_utt;
     public TreeMap<Integer,String> map = new TreeMap<Integer,String>();
     public ArrayList<Integer> cl_arr = new ArrayList<Integer>();
+    public static final String DISAGREE_REJECT="Disagree-Reject";// added 2/6/12 11:43 AM. 
+    public static final String RESPONSE_ANSWER="Response-Answer";
     
     public CommunicationLinkX(ArrayList<Utterance> utts,
 			      boolean isEnglish,
@@ -67,7 +69,8 @@ public class CommunicationLinkX
     	for(int index=0; index<utts.size(); index++)
     	{
     		Utterance u_content = utts.get(index);
-    		if(u_content.getCommActType().equals(RESPONSE_TO))
+                String DATag = u_content.getTag();
+    		if(u_content.getCommActType().equals(RESPONSE_TO) || DATag.contains(DISAGREE_REJECT) || DATag.contains(RESPONSE_ANSWER))
     		{
     			response_to_count++;
     			String content = contentExtraction(u_content, isEnglish_, isChinese_);

@@ -26,6 +26,8 @@ public class DsarmdDP extends DialogParser {
     public static final String POS = "pos";
     public static final String POS_ORI = "pos_origin";
     public static final String Comm_Act_Type = "comm_act_type";
+    public static final String Emotion = "emotion";
+    public static final String Emotion_List ="emotion_list";
 
     /**
      * Parse the Node to get a DialogAct.
@@ -52,6 +54,7 @@ public class DsarmdDP extends DialogParser {
 	if (sub_node != null) {
 	    tag = sub_node.getNodeValue();
 	    da.setCommActType(sub_node.getNodeValue());
+            da.setGroundTruthCommActType(sub_node.getNodeValue());
 	}
 	sub_node = map.getNamedItem(Polarity);
 	if (sub_node != null) {
@@ -76,7 +79,8 @@ public class DsarmdDP extends DialogParser {
 	sub_node = map.getNamedItem(Speaker);
 	if (sub_node != null) {
 	    tag = sub_node.getNodeValue();
-	    da.setSpeaker(sub_node.getNodeValue());
+            //replaceAll("[^\\p{L}]","") will remove any character that is not a letter in unicode.
+            da.setSpeaker(sub_node.getNodeValue().replaceAll("[^\\p{L}]",""));
 	}
 	
 	sub_node = map.getNamedItem(Link_to);
@@ -89,6 +93,18 @@ public class DsarmdDP extends DialogParser {
 	if (sub_node != null) {
 	    tag = sub_node.getNodeValue();
 	    da.setTurn(sub_node.getNodeValue());
+	}
+        
+        sub_node = map.getNamedItem(Emotion);
+	if (sub_node != null) {
+	    tag = sub_node.getNodeValue();
+	    da.setEmotion(sub_node.getNodeValue());
+	}
+        
+        sub_node = map.getNamedItem(Emotion_List);
+	if (sub_node != null) {
+	    tag = sub_node.getNodeValue();
+	    da.setEmotionList(sub_node.getNodeValue());
 	}
 	
 	/*
