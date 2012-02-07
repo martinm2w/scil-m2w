@@ -235,7 +235,7 @@ public class Assertions {
 
                 //mt.clear();
                 //tf.clear();
-               createEmotive(i);
+//               createEmotive(i);
 
 	    }else {
 		PhraseCheck phr_ch = (PhraseCheck)phr_checks_.get(i);
@@ -249,7 +249,7 @@ public class Assertions {
 //                mt.calMesoTopic((String)doc_names_.get(i), utts_, xp, phr_ch, wn_, nlsA_);
 		mts_.add(mt);
                 
-               createAnEmotive(i);
+//               createAnEmotive(i);
                 
 	    }
 	    ArrayList spks = new ArrayList(parts_.values());
@@ -434,6 +434,12 @@ public class Assertions {
                                 
             tmpname = utterance.get(j).getSpeaker();
             String emlist = utterance.get(j).getEmotion_list();
+//            System.out.println("utt is empty: " + utterance.isEmpty());
+//            System.out.println("utt: " + utterance.get(j).getTurn());
+//            System.out.println("utt: " + utterance.get(j).getContent());
+//            System.out.println("utt: " + utterance.get(j).getEmotion());
+//            System.out.println("utt: " + utterance.get(j).getEmotion_list());
+//            System.out.println("emlist is empty: " + emlist.isEmpty());
             String em_arrlist[]=emlist.split(";");
             int spkindex=speakerlist.indexOf(tmpname);
             

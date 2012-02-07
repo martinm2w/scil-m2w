@@ -41,7 +41,9 @@ public class CommunicationLinkXChinese{
     	for(int index=0; index<utts.size(); index++){
             Utterance u_content = utts.get(index);
 //            System.out.println("turn_no: " + u_content.getTurn() + " index: " + index);
-            if(u_content.getCommActType().equals(RESPONSE_TO)){
+            String DATag = u_content.getTag();
+            if(u_content.getCommActType().equals(RESPONSE_TO) || DATag.contains(DISAGREE_REJECT) || DATag.contains(RESPONSE_ANSWER)){
+//            if(u_content.getCommActType().equals(RESPONSE_TO)){
                     response_to_count++;
                     String content = contentExtraction(u_content).toLowerCase();
                     int turn_length = ParseTools.wordCountChinese(content);
@@ -1189,6 +1191,10 @@ public class CommunicationLinkXChinese{
     private int _Nlinkto8 = 0;
     private int _Nlinkto9 = 0;
     private int _Nlinkto10 = 0;
+    
+    public static final String DISAGREE_REJECT="Disagree-Reject";// added 2/6/12 11:43 AM. 
+    public static final String RESPONSE_ANSWER="Response-Answer";
+    
 }
 
 //==============================================not-in-use methods==================================
