@@ -24,6 +24,7 @@ public class Speaker {
     /*******************************get information**************************/
     public String getName() { return name_; }
     public ArrayList<Utterance> getUtterances() {return utts_;}
+    public ArrayList<Utterance> getLnkUtterances() {return lnk_utts_;}
     public LocalTopics getILTs() {return ilts_;}
     public int sizeOfILTs() {
 	//modified 03/15 by TL
@@ -74,7 +75,9 @@ public class Speaker {
 	    count += clt.sizeofCO(name_);
 	}
 	//System.out.println("clts_: " + clts_);
-	return count;
+        System.out.println("size of CO: " + count + "---" + clts_.sizeOfCO());
+	//return count;
+	return clts_.sizeOfCO(); //modified by TL 02/07/2012
     }
     public int sizeOfSSLTs() {
 	int count = 0;
@@ -168,6 +171,7 @@ public class Speaker {
     }
     public void setAllUtts(ArrayList utts) { all_utts_ = utts; } //1/26/2011
     public void addUtterance(Utterance utt) {utts_.add(utt);}
+    public void addLnkUtterance(Utterance utt) {lnk_utts_.add(utt);}
     public void addNoun(NounToken nt) { if (!nls_.contains(nt)) nls_.add(nt); }
     public void calTpCtl(LocalTopics lcs_,
 			 ArrayList all_utts) {
@@ -320,6 +324,14 @@ public class Speaker {
 	di_.calDI();
 	leadership_.setTaskControl(di_.getDI());
     }
+    //calculate Information request, Directive, Process Menagement together
+    public void calIrDIPm(ArrayList utts,
+		      double total_ac_oc) {
+	//all_utts_ = utts; 1/26/2011
+	di_.initialize(total_ac_oc, all_utts_);
+	di_.calIrDIPm();
+	leadership_.setTaskControl(di_.getDI());
+    }
     
     public void calDTSI(ArrayList utts,
 			double total_ac_oc) {
@@ -356,6 +368,7 @@ public class Speaker {
     }
     
     public void setDisagreement(double disagreement) { disagreement_ = disagreement; leadership_.setDisagreement(disagreement);}
+    public void setLnktoDisagreement(double lnkto_disagreement) { lnkto_disagreement_ = lnkto_disagreement; leadership_.setDisagreement(lnkto_disagreement);}
     
     public void setTkCScore(int tkc) { tkc_ = tkc; }
     
@@ -670,6 +683,7 @@ public class Speaker {
     /*******************************   Attributes  **************************/
     private String name_ = null;
     private ArrayList<Utterance> utts_ = new ArrayList<Utterance>(); //list of Utterances by this speaker
+    private ArrayList<Utterance> lnk_utts_ = new ArrayList<Utterance>(); //list of Utterances linked to this speaker
     private ArrayList<Utterance> all_utts_ = new ArrayList<Utterance>(); //list of Utterances of the whole chat
     private LocalTopics ilts_ = new LocalTopics(); //list of introduced LocalTopics
     private LocalTopics clts_ = new LocalTopics();//list of cite LocalTopics
@@ -680,6 +694,7 @@ public class Speaker {
     private ProcessManagementIndex pmi_ = new ProcessManagementIndex(this); //directive index
     private ProcessManagementSuccessIndex pmsi_ = new ProcessManagementSuccessIndex(this); //directive index
     private double disagreement_ = 0;
+    private double lnkto_disagreement_ = 0;
     private int tkc_ = 0;
     private Involvement inv_ = new Involvement(this);
     private ArrayList nls_ = new ArrayList(); //all mentioned nouns by this speaker

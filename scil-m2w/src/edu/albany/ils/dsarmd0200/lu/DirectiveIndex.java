@@ -27,7 +27,8 @@ public class DirectiveIndex {
 	total_ac_oc_ = total_ac_oc;
 	utts_ = utts;
     }
-    public void calDI() {
+    public void calIrDIPm() {
+        /*Include everything related to task control*/
 	ac_oc_ = 0;
 	for (int i = 0; i < utts_.size(); i++) {
 	    Utterance utt_ = (Utterance)utts_.get(i);
@@ -56,6 +57,25 @@ public class DirectiveIndex {
 		    } else {
 			ac_oc_ += 1; 
 		    }
+		}
+	    }
+	}
+	if (total_ac_oc_ != 0) 
+	    di_ = ((double)ac_oc_)/total_ac_oc_;
+	else di_ = -1;
+	//System.out.println("The di of " + spk_.getName() + " is: " + di_);
+    }
+    
+    public void calDI() {
+	ac_oc_ = 0;
+	for (int i = 0; i < utts_.size(); i++) {
+	    Utterance utt_ = (Utterance)utts_.get(i);
+	    if (utt_.getSpeaker().equals(spk_.getName())) {
+		if (utt_.getTag().equalsIgnoreCase("action-directive") ||
+		    utt_.getTag().equalsIgnoreCase("offer-commit") ||
+		    (utt_.getTag().indexOf("Action-Directive") != -1) ||
+		    (utt_.getTag().indexOf("Offer-Commit") != -1)) {
+			ac_oc_ += 1; 
 		}
 	    }
 	}
