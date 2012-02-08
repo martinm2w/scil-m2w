@@ -89,24 +89,38 @@ public class PursuitOfPower {
      * m2w: TFM 's Disagree-Reject Target Index (DRT)
      */
     private void calTFM_DRT(){
-        int totalDisAndConf = 0;
-        HashMap<String, Double> localMap = new HashMap();
-        localMap.putAll(PopMap);
+        int totalDis = 0;
+        int totalConf = 0;
+        HashMap<String, Double> localMapDis = new HashMap();
+        HashMap<String, Double> localMapConf = new HashMap();
+        HashMap<String, Double> localMapPercent = new HashMap();
+        localMapDis.putAll(PopMap); // storing the count of DISAGREE_REJECT turns of 
+        localMapConf.putAll(PopMap);
+        localMapPercent.putAll(PopMap);
         
         //parse utt list, adding count to local map
         for(Utterance u : Utts){
             String tempDaTag = u.getTag();
             String tempSpk = u.getSpeaker();
-            Double tempCount = (Double) localMap.get(tempSpk);
-            if(tempDaTag.contains(DISAGREE_REJECT) || tempDaTag.contains(CONFIRMATION_REQUEST)){
-                totalDisAndConf++;
-                localMap.put(tempSpk, tempCount+1);
+            String tempCATag = u.getCommActType();
+//            Double tempCountDis = (Double) localMapDis.get(tempSpk);
+//            if(tempDaTag.contains(DISAGREE_REJECT) ){
+//                totalDis++;
+//                localMapDis.put(tempSpk, tempCountDis+1);
+//            }
+            if(tempDaTag.contains(CONFIRMATION_REQUEST) && tempCATag.contains(RESPONSE_TO)){
+                totalConf++;
+                String lkto_spk = u.getRespToSpk();
+                Double tempCountConf = (Double) localMapConf.get(tempSpk);
+                localMapConf.put(lkto_spk, tempCountConf+1);
             }
         }
         
-        for(String spk : localMap.keySet()){
+        for(String spk : localMapPercent.keySet()){
            
-            Double spkCount = localMap.get(spk);
+            Double spkDisCount = localMapDis.get(spk);
+            Double spkConfCount = localMapConf.get(spk);
+            
             Double percentage = (spkCount)/ (double) totalDisAndConf;
             localMap.put(spk, percentage);
             System.out.println("local perc" + localMap.get(spk));
@@ -142,4 +156,5 @@ public class PursuitOfPower {
     //constants:
     private final String DISAGREE_REJECT = "disagree-reject";
     private final String CONFIRMATION_REQUEST = "confirmation-request";
+    private final String RESPONSE_TO = "response-to";
 }
