@@ -734,5 +734,12 @@ public class Speaker {
     private double net_centr; //network centrality
     private ArrayList<String>emotiveWordList = new ArrayList<String>();
     private double ewi;//emotive language use
+
+    /**
+     * @return the lnkto_disagreement_
+     */
+    public double getLnkto_disagreement_() {
+        return lnkto_disagreement_;
+    }
     /********************************************/
 }
