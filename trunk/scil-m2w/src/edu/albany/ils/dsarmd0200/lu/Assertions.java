@@ -251,7 +251,7 @@ public class Assertions {
 		mts_.add(mt);
                 
 //               createAnEmotive(i);
-                calPop();
+//                calPop();
 	    }
 	    ArrayList spks = new ArrayList(parts_.values());
 	    for (int k = 0; k < spks.size(); k++) {
@@ -309,8 +309,10 @@ public class Assertions {
 //	    System.err.println("@Expressive Disagreement");
 	    System.out.println("@Expressive Disagreement");
 	    calExDis(i);
+            System.out.println("parts_ is empty? : " + parts_.isEmpty());
 //	    System.err.println ("@Leadership");
 	    System.out.println ("@Leadership");
+            leader_ = null; // added by m2w 2/14/12 10:49 AM
 	    calLeader();
 //	    System.err.println("@Agreement");
 	    System.out.println("@Agreement");
@@ -323,7 +325,7 @@ public class Assertions {
 	    //System.out.println("\n\nProcessing L...");
 //	    System.err.println("\n\nProcessing Sociability Measure...");
 	    calGroupCohesion(i);
-            
+            calPop();// m2w 2/15/12 9:07 AM
      
 	    //System.out.println("\n\nprocessing topic disagreement...");
 	    //calTpDis(i);
@@ -1302,6 +1304,7 @@ public class Assertions {
 	    System.out.println("@Leader");
 	    System.out.println (leader.getName());
 	    System.out.println("@Confidence:\n" + leader.getLeadershipConfidence());
+            this.setLeader_(leader);// added by m2w 2/14/12 10:44 AM
 	}
 	/*
 	  System.out.println("leadership(Weight): " );
@@ -2448,7 +2451,7 @@ public class Assertions {
     }
 
     public void calPop(){
-        PursuitOfPower pop = new PursuitOfPower(utts_);
+        PursuitOfPower pop = new PursuitOfPower(utts_, parts_, leader_);
         pop.calPursuitOfPower();
     }
     
@@ -3025,6 +3028,21 @@ public class Assertions {
     private String English_stopword="conf/stop-words";
     private String Chinese_stopword="conf/Chinese-stop-words";
 //    private ChineseWordnet CNWN = null;
+    private Speaker leader_ = null;
+
+    /**
+     * @return the leader_
+     */
+    public Speaker getLeader_() {
+        return leader_;
+    }
+
+    /**
+     * @param leader_ the leader_ to set
+     */
+    public void setLeader_(Speaker leader_) {
+        this.leader_ = leader_;
+    }
 
 
     private class QueryListener extends Thread
