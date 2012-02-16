@@ -36,10 +36,29 @@ public class PursuitOfPower {
     
     public void calPursuitOfPower(){
         this.calPOP();
+        ArrayList<ArrayList> PopList = new ArrayList();//converting hashmap to arraylist for sorting.
+        for(String spk : PopMap.keySet()){
+            ArrayList subList = new ArrayList();
+            subList.add(spk);
+            subList.add(PopMap.get(spk));
+            PopList.add(subList);
+        }
+        Comparator c = new Comparator(){
+            @Override
+            public int compare(Object obj1, Object obj2){
+                ArrayList sublist1 = (ArrayList)obj1;
+                ArrayList sublist2 = (ArrayList)obj2;
+                Double pop1 = (Double)sublist1.get(1);
+                Double pop2 = (Double)sublist2.get(1);
+                return pop2.compareTo(pop1);
+            }
+            
+        };
+        Collections.sort(PopList, c);
         //print out results.
         System.out.println("========= Pursuit Of Power=========");
-        for(String spk : PopMap.keySet()){
-            System.out.println(spk + ": " + PopMap.get(spk));
+        for(ArrayList a : PopList){
+            System.out.println( (String)(a.get(0)) + " : " + (Double)(a.get(1)) );
         }
     }
 //    ============================================ top level cal methods =================================================
@@ -119,6 +138,9 @@ public class PursuitOfPower {
             Double tpctrl = parts.get(spk).getTC().getPower();// topic control 
             Double tkctrl = parts.get(spk).getDI();             //task control
             Double dis = parts.get(spk).getDisagreement();
+            if(dis < 0){
+                dis = 0.0;
+            }
             localMapTPctrl.put(spk, tpctrl);
             localMapTKctrl.put(spk, tkctrl);
             localMapDis.put(spk, dis);
@@ -295,7 +317,7 @@ public class PursuitOfPower {
      * @param localMap 
      */
     private void addingPercentageToPopMap(HashMap<String,Double> localMap){
-        System.out.println("times: " + timesAddedToPopMap);
+//        System.out.println("times: " + timesAddedToPopMap);
         if(!localMap.isEmpty()){
             if(timesAddedToPopMap==0){//if first time adding , do not average.
                     for(String spk : localMap.keySet()){
