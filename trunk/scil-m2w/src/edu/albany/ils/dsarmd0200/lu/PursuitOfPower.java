@@ -210,7 +210,7 @@ public class PursuitOfPower {
                 totalDis++;
                 String lkto_spk = u.getRespToSpk();
                 //if it links to the leader and current speaker is not the leader
-                if(lkto_spk.equalsIgnoreCase(leaderName) && !tempSpk.equalsIgnoreCase(leaderName)){
+                if((lkto_spk != null) && (tempSpk != null) && lkto_spk.equalsIgnoreCase(leaderName) && !tempSpk.equalsIgnoreCase(leaderName)){
                     Double tempCount = localMapCount.get(tempSpk);
                     localMapCount.put(tempSpk, tempCount + 1); // count + 1
                 }
@@ -412,6 +412,6 @@ public class PursuitOfPower {
     private final String RESPONSE_TO = "response-to";
     
     //print out control:
-    private boolean doAnalysisPrintOut = true;
+    private boolean doAnalysisPrintOut = false;
     private boolean doFinalPrintOut = true;
 }
