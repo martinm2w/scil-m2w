@@ -46,7 +46,7 @@ public class TopicControl {
     }
 
     public void calCS() {
-	cs_ = (double)spk_.sizeOfCLTs()/(lts_.sizeOfCO());
+	cs_ = (double)spk_.sizeOfCLTs()/(lts_.sizeOfCO()); //modified by TL 02/08/2012
     }
     
     public void calTL(ArrayList<Utterance> all_utts) {
@@ -76,7 +76,7 @@ public class TopicControl {
     public void calCLTI() {
 	//System.out.println("sizeOfSSLTs: " + spk_.sizeOfSSLTs());
 	//System.out.println("sizeOfILTs: " + spk_.sizeOfILTs());
-	c_lti_ = (double)spk_.sizeOfCLTs()/(spk_.sizeOfILTs());
+	c_lti_ = (double)spk_.sizeofCO()/(spk_.sizeOfILTs());
     }
 
     public void calTpCtl(LocalTopics lts_,
@@ -123,7 +123,7 @@ public class TopicControl {
     public String toString() {
 	StringBuffer out = new StringBuffer();
 	out.append("From: " + spk_.getName());
-	out.append("\nparameters: \nLTI: " + lti_ + "\nSMTI: " + smt_ + "\nCite Score: " + cs_ + "\nTLI: " + tl_ + "\n C-LTI: " + c_lti_);
+	out.append("\nparameters: \nLTI: " + lti_ + "\nSMTI: " + smt_ + "\nCite Score: " + cs_ + "\nTLI: " + tl_ + "\n C-LTI: " + c_lti_ + "\nlts size: " + lts_.size());
 	return out.toString();
     }
 
