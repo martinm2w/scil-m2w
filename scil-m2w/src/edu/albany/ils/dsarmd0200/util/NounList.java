@@ -3,6 +3,8 @@ package edu.albany.ils.dsarmd0200.util;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.StringTokenizer;
+import java.util.Calendar;
+import java.text.DateFormat;
 import java.io.*;
 import edu.albany.ils.dsarmd0200.evaltag.*;
 import java.sql.SQLException;
@@ -49,7 +51,10 @@ public class NounList {
         //m2w: chinese. 5/17/11 12:23 PM
         private boolean isChinese_ = false;
         private boolean isEnglish_ = false;
-        private ChineseWordnet cnwn = new ChineseWordnet("mysql", "localhost", "3306", "atur");
+    private ChineseWordnet cnwn = new ChineseWordnet("mysql", "localhost", "3306", "atur");
+    private Calendar cal_ = Calendar.getInstance();
+    private DateFormat df_ = DateFormat.getDateTimeInstance(DateFormat.FULL,
+							    DateFormat.MEDIUM);
         
 	//NOTE: createlist is the automated list.  It tags and creates noun phrases
 	//makeAnnotatedList is the annotated list.  It parses annotated tags and creates
@@ -501,6 +506,7 @@ public class NounList {
 			for (int i = 0; i < utterances.size(); i++){
 			    Utterance utt_ = utts_.get(i);
 			    String utterance = utterances.get(i);
+			    //System.out.println("processing the utt: " + utterance);
 			    String speaker = speakers.get(i);
 			    if (!speakTokens.containsKey(speaker))
 				speakTokens.put(speaker, speakTokens.size());
@@ -534,6 +540,8 @@ public class NounList {
 			    // into arraylist tokens Eg. A/Atag B/Btag
 			    ArrayList <String> tokens = getTokens(tagsplit); int count = 0;
 			    //System.out.println("***" + (i+1) + "***");
+			    cal_ = Calendar.getInstance();
+			    //System.out.println("before whole resolve starting: " + df_.format(cal_.getTime()));
 			    for (int j = 0; j < tokens.size(); j++){
 				String token = tokens.get(j);
 				//get the word
@@ -554,12 +562,16 @@ public class NounList {
 						// 3rd param: speaker
 						// 4th param: turn no
 						// 5th param: wordnet object
-						NounToken nt =
+					    NounToken nt =
 								new NounToken(word, tag, speaker, turnno, ID, wrdnt);
 //								new NounToken(word, tag, speaker, i + 1, ID, wrdnt);
 						if ((!ParseTools.isBadNoun(word)) && ParseTools.isWord(word) && !isSpeaker(word)){ //modified by TL 09/01 !isSpeaker
 							// resolve noun token
-							resolve(nt);
+						    //cal_ = Calendar.getInstance();
+						    //System.out.println("before resolve: " + df_.format(cal_.getTime()));
+						    resolve(nt);
+						    //cal_ = Calendar.getInstance();
+						    //System.out.println("after resolve: " + df_.format(cal_.getTime()));
 							if (nt.firstMention()){
 								String ft = Integer.toString(i+1) + ".";
 								ft += Integer.toString((++count));
@@ -576,6 +588,8 @@ public class NounList {
 					}
 				}
 			}
+			cal_ = Calendar.getInstance();
+			//System.out.println("after whole resolve ending: " + df_.format(cal_.getTime()));
 			created = true;
 		}else System.err.println("Please use another instance to create a list.");
 		}
@@ -637,7 +651,6 @@ public class NounList {
 //						if ((!ParseTools.isBadNoun(word)) && ParseTools.isWord(word)){
 						if (!ParseTools.isBadNoun(word)) { //modified by 06/20/2011 TL
 							// resolve noun token
-
 						    //resolveCHN(nt);
 						    resolve(nt); //modified by TL 08/11
 							if (nt.firstMention()){
@@ -830,6 +843,8 @@ public class NounList {
 			*/
 			int num = numberOfNouns();
 			// find all other repetition words, update boolean rep 
+			cal_ = Calendar.getInstance();
+			//System.out.println("before wdn tagging: " + df_.format(cal_.getTime()));
 			for (int i = 0; cont && i < num; i++)
 			{
 				String word2 = nouns.get(i).getWord();
@@ -837,9 +852,9 @@ public class NounList {
 				boolean syn = false;
 				if (!rep)
 				{
-					//find all other words are synonyms of the original word
-					syn = wrdnt.isASynonym(word1, word2, tag);
-					//syn = synonyms.contains(word1);
+				    //find all other words are synonyms of the original word
+				    syn = wrdnt.isASynonym(word1, word2, tag);
+				    //syn = synonyms.contains(word1);
 				}
 				if (syn || rep)
 				{
@@ -864,6 +879,8 @@ public class NounList {
 				}
 			}
 			// do pronoun resolution
+			cal_ = Calendar.getInstance();
+			//System.out.println("after wdn tagging: " + df_.format(cal_.getTime()));
 		} 
 		else 
 		{
