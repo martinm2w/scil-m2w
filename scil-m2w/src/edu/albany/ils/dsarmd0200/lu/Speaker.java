@@ -24,6 +24,14 @@ public class Speaker {
     /*******************************get information**************************/
     public String getName() { return name_; }
     public ArrayList<Utterance> getUtterances() {return utts_;}
+    public String getUtts() {
+        StringBuffer cont = new StringBuffer();
+        cont.append(name_ + " speaked in the discussion:\n");
+        for (Utterance utt:utts_) {
+            cont.append(utt.getContent() + "\n");
+        }
+        return cont.toString().trim();
+    }
     public ArrayList<Utterance> getLnkUtterances() {return lnk_utts_;}
     public LocalTopics getILTs() {return ilts_;}
     public int sizeOfILTs() {
@@ -50,21 +58,22 @@ public class Speaker {
     public int sizeOfCLTs() {
 	int count = 0;
 	for (int i = 0; i < ilts_.size(); i++) {
-	    LocalTopic clt = (LocalTopic)ilts_.get(i);
+	    LocalTopic ilt = (LocalTopic)ilts_.get(i);
 	    //modified by Ting 01/07/2011
 	    /*
 	    if (clt.getCited(name_).size() > 5) 
 		count += 1;
 	    */
 	    //Added at 03/15 by TL
-	    if (clt.sizeofCO() < 15) {
-		NounToken nt = clt.getContent();
+	    if (ilt.sizeofCO() < 15) {
+		NounToken nt = ilt.getContent();
 		if (Util.filterIt(name_, nt)) {
 		    continue;
 		}
 	    }
-	    count += clt.getCited(name_).size();
+	    count += ilt.getCited(name_).size();
 	}
+        System.out.println("ilts_ size: " + ilts_.size());
 	return count;
     }
     public int sizeofCO() { //size of citing others
@@ -146,6 +155,7 @@ public class Speaker {
     }
     public double getATX() { return agr_.getATX(); } //get Agreement
     public boolean isLocalTopic(String word, int count) { return ilts_.isLocalTopic(word, count); }
+    public double getAgreed() { return agreed_; }
     public double getDisagreement() { return disagreement_; }
 
     /*******************************set information**************************/
@@ -478,6 +488,8 @@ public class Speaker {
 	    leadership_.setInvolvementR(rank);
 	}
     }
+    public void incAgreed() { agreed_ += 1; }
+
     ///////////////////////Added by Peng 
  
     public void setVri(double d){this.vri=d;}
@@ -673,6 +685,7 @@ public class Speaker {
     */
     public void setSpeakers (HashMap parts) {
 	parts_ = parts;
+        agr_.setSpeakers(parts);
     }
     
     public void setDPM (double dpm) { if (DPM < dpm) DPM = dpm; }
@@ -710,6 +723,7 @@ public class Speaker {
     private int tkc_rank = -1;
     private int exd_rank = -1;
     private int inv_rank = -1;
+    private double agreed_ = 0;
 
     private double DPM = 0;
     private double PRM = 0;
