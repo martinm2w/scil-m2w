@@ -1,18 +1,17 @@
 package edu.albany.ils.dsarmd0200.lu;
 
 /**
- * @Author: Ting Liu
- * @Date: 01/28/2010
- * This class is used to judge the positive and negative
- * support for one local topic
+ * @Author: Ting Liu @Date: 01/28/2010 This class is used to judge the positive
+ * and negative support for one local topic
  */
-
 import java.io.*;
 import java.util.*;
+import java.text.DateFormat;
 import edu.albany.ils.dsarmd0200.util.*;
 import edu.albany.ils.dsarmd0200.util.xml.*;
 //import edu.albany.ils.dsarmd0200.ml.*;
 import edu.albany.ils.dsarmd0200.cuetag.*;
+import edu.albany.ils.dsarmd0200.cuetag.weka.ds_featuresHash.DsarmdDATag;
 import edu.albany.ils.dsarmd0200.cuetag.weka.ds_featuresHash.SplitTestingUtterance;
 import edu.albany.ils.dsarmd0200.evaltag.*;
 import java.sql.SQLException;
@@ -22,75 +21,113 @@ import org.w3c.dom.*;
 import org.xml.sax.*;
 
 public class Assertions {
+
     public Assertions(String data_path) {
         Settings.initialize();
-        //print(Settings.getValue(Settings.EMOTIVE_WORDS));
-        
-	ParseTools.initialize();
-	PronounFormMatching.initialize();
-	GenderCheck.initialize();
-	//System.out.println("pw: " + Settings.getValue(Settings.WEB_SERVICE));
-	ParseTools.setWN(wn_);
-	docs_path_ = data_path;
+        ParseTools.initialize();
+        PronounFormMatching.initialize();
+        GenderCheck.initialize();
+        //System.out.println("pw: " + Settings.getValue(Settings.WEB_SERVICE));
+        ParseTools.setWN(wn_);
+        docs_path_ = data_path;
 //	System.out.println("Preparing...");
 
 
-        loadAndParseTraining ();
-		loadAndParse();
+        loadAndParseTraining();
+        loadAndParse();
         this.setLanguageAndInitPosTaggers();
+        getChinesePhrases();
 
-	/*
-	if (Settings.getValue(Settings.PROCESS_TYPE).equals("automated")) {
-	    preprocess();
-        }
-	*/
+        /*
+         * if (Settings.getValue(Settings.PROCESS_TYPE).equals("automated")) {
+         * preprocess(); }
+         */
     }
 
-    /*******************************get information**************************/
-
-    /*******************************set information**************************/
-
-
+    /**
+     * *****************************get information*************************
+     */
+    /**
+     * *****************************set information*************************
+     */
     public static void main(String[] args) {
-	Assertions assertions = new Assertions(args[0]);
-	//assertions.calTpDis();
-	//assertions.calTpCtl();
-	//assertions.calInv();
-	//assertions.calTkCtl();
-	//assertions.calExDis();
-	//assertions.calCommLink();
-	//assertions.createReport();
-	//assertions.printReport();
-	//assertions.calQuintile();
-	assertions.makeAssertions();
+        Assertions assertions = new Assertions(args[0]);
+        //assertions.calTpDis();
+        //assertions.calTpCtl();
+        //assertions.calInv();
+        //assertions.calTkCtl();
+        //assertions.calExDis();
+        //assertions.calCommLink();
+        //assertions.createReport();
+        //assertions.printReport();
+        //assertions.calQuintile();
+        assertions.makeAssertions();
     }
 
     public void makeAssertions() {
         //Lin Added 08/05/2011
+        int total_ad = 0;
+        int st_no_noun_ad = 0;
+        int st_no_noun = 0;
+        for (int j = 0; j < tr_utts_.size(); j++) {
+            Utterance tr_utt_ = (Utterance) tr_utts_.get(j);
+            String utterance = ((Utterance) tr_utts_.get(j)).getUtterance();
+            String noEmotes = ParseTools.removeEmoticons(utterance);
+            //noEmotes = noEmotes.replace("，", "");
+            //noEmotes = noEmotes.replaceAll("[？]+", "questionmark");
+            //System.out.println("noEmotes: " + noEmotes);
 
-                for (int j = 0; j < tr_utts_.size(); j++){
-		    String utterance = ((Utterance)tr_utts_.get(j)).getUtterance();
-                    String noEmotes = ParseTools.removeEmoticons(utterance);
-                    //noEmotes = noEmotes.replace("，", "");
-                    //noEmotes = noEmotes.replaceAll("[？]+", "questionmark");
-
-                    String tmpTagged="";
-                    if ((Settings.getValue(Settings.LANGUAGE)).equals("english"))
-			{ tmpTagged=StanfordPOSTagger.tagString (noEmotes);
-			}
-		    else if ((Settings.getValue(Settings.LANGUAGE)).equals("chinese"))
-                    {
-                       tmpTagged=StanfordPOSTagger.tagChineseString(noEmotes);
-                    }
-                    String tagged = tmpTagged.trim();
-                    String spcTagged=tmpTagged.replaceAll("/"+"([A-Z]+)*"+" ", " ");
-                    ((Utterance)tr_utts_.get(j)).setTaggedContent(tagged);
-                    ((Utterance)tr_utts_.get(j)).setSpaceTaggedContent(spcTagged);
-
-                    //System.out.println("sTmp: "+utts_.get(j).getTaggedContent());
-                    //print(spcTagged);
+            String tmpTagged = "";
+            if ((Settings.getValue(Settings.LANGUAGE)).equals("english")) {
+                tmpTagged = StanfordPOSTagger.tagString(noEmotes);
+            } else if ((Settings.getValue(Settings.LANGUAGE)).equals("chinese")) {
+                tmpTagged = StanfordPOSTagger.tagChineseString(noEmotes);
+            }
+            //System.out.println("tmpTagged: " + tmpTagged);
+            if (tmpTagged == null) {
+                tmpTagged = "";
+            }
+            String tagged = tmpTagged.trim();
+            String spcTagged = tmpTagged.replaceAll("/" + "([A-Z]+)*" + " ", " ");
+            ArrayList<String> words = new ArrayList(Arrays.asList(tagged.split("[ ]+")));
+            boolean has_noun_before_v = false;
+            for (int i = 0; i < words.size(); i++) {
+                String word = words.get(i);
+                String[] items = word.split("/");
+                if (items.length > 1 && items[1].startsWith("V")) {
+                    break;
                 }
+                if (items.length > 1 && (items[1].startsWith("N") || items[1].startsWith("P"))) {
+                    has_noun_before_v = true;
+                    break;
+                }
+            }
+            if (tr_utt_.getCommActType().equalsIgnoreCase("addressed-to")) {
+                if (tagged.split(" ").length > 3 &&
+                        tagged.split(" ").length < 6) {
+                    if (tr_utt_.getTag().equalsIgnoreCase(DsarmdDATag.AD)) {
+                        total_ad++;
+                        if (!has_noun_before_v) {
+                            st_no_noun_ad++;
+                        }
+                    }
+
+                    if (!has_noun_before_v) {
+                        st_no_noun++;
+                        //System.out.println("no noun before verb: " + tagged);
+                    }
+                }
+            }
+            ((Utterance) tr_utts_.get(j)).setTaggedContent(tagged);
+            ((Utterance) tr_utts_.get(j)).setSpaceTaggedContent(spcTagged);
+
+            //System.out.println("sTmp: "+utts_.get(j).getTaggedContent());
+        }
+        //System.out.println("total ad: " + total_ad);
+        //System.out.println("total ad with no noun before verb: " + st_no_noun_ad + "----" + ((double) st_no_noun_ad) / total_ad);
+        //System.out.println("total no noun before verb: " + st_no_noun + "----" + ((double) st_no_noun_ad) / st_no_noun);
         //end of Lin
+
 
         for (int i = 0; i < docs_utts_.size(); i++) {
 	    String fn = (String)doc_names_.get(i);
@@ -98,202 +135,234 @@ public class Assertions {
 	    //utts_ = (ArrayList)docs_utts_.get(i);
 	    all_utts_.clear();
             all_utts_.addAll(tr_utts_);
-            
-	    gch_ = new GroupCohesion();
-	    if (Settings.getValue(Settings.PROCESS_TYPE).equals("automated")) {
-		PhraseCheck phr_ch = (PhraseCheck)phr_checks_.get(i);
-		XMLParse xp = xmlps_.get(i);
-		utts_ = (ArrayList)docs_utts_.get(i);
+            gch_ = new GroupCohesion();
+            if (Settings.getValue(Settings.PROCESS_TYPE).equals("automated")) {
+                PhraseCheck phr_ch = (PhraseCheck) phr_checks_.get(i);
+                XMLParse xp = xmlps_.get(i);
+                utts_ = (ArrayList) docs_utts_.get(i);
 
                 //Lin Added 08/05/2011
-               //try{
-               // String strTagFile=docs_path_+((String)doc_names_.get(i))+".txt";
-               // BufferedWriter bufferedWriterTagFile = null;
-               // bufferedWriterTagFile = new BufferedWriter(new FileWriter(strTagFile));
+                //try{
+                // String strTagFile=docs_path_+((String)doc_names_.get(i))+".txt";
+                // BufferedWriter bufferedWriterTagFile = null;
+                // bufferedWriterTagFile = new BufferedWriter(new FileWriter(strTagFile));
+                cal_ = Calendar.getInstance();
+                //System.out.println("before pos tagging: " + df_.format(cal_.getTime()));
 
-                for (int j = 0; j < utts_.size(); j++){
-		    Utterance utt_ = utts_.get(j);
-		    String utterance = utt_.getUtterance().toString();
+                for (int j = 0; j < utts_.size(); j++) {
+                    Utterance utt_ = utts_.get(j);
+                    String utterance = utt_.getUtterance().toString();
                     String noEmotes = ParseTools.removeEmoticons(utterance);
                     //noEmotes = noEmotes.replaceAll("，", "");
                     //noEmotes = noEmotes.replaceAll("？", "questionmark");
                     //String tmpTagged=StanfordPOSTagger.tagChineseString(noEmotes);
-		    //System.out.println("parsing: " + utterance);
-		    String tmpTagged="";
-		    if ((Settings.getValue(Settings.LANGUAGE)).equals("english")){
-			//tmpTagged=StanfordPOSTagger.tagString(noEmotes);
-			SentenceSplitter sp = new SentenceSplitter ();
-			ArrayList splitUtterance = null;
-			if (noEmotes.length() > 200) {
-			    splitUtterance = sp.split (noEmotes);
-			}
-			if (splitUtterance == null || splitUtterance.size () == 1)
-			    {
-				tmpTagged=StanfordPOSTagger.tagString(noEmotes);
-			    }
-			else 
-			    {
-				String temps = "";
-				for (int k = 0; k < splitUtterance.size (); k++)
-				    {
-					String toTag = (String) splitUtterance.get (k);
-					//System.out.println ("toTag: " + toTag);
-					String temp = StanfordPOSTagger.tagString ((String) splitUtterance.get (k));
-					//System.out.println("tagged: " + temp);
-					temps = temps + " " + temp;
-					
-				    }
-				tmpTagged = temps.trim();
-			    }
-			
-		    }
-		    else if ((Settings.getValue(Settings.LANGUAGE)).equals("chinese"))
-			{    
-			    tmpTagged=StanfordPOSTagger.tagChineseString(noEmotes);
-			}
+                    //System.out.println("parsing: " + utterance);
+                    String tmpTagged = "";
+                    if ((Settings.getValue(Settings.LANGUAGE)).equals("english")) {
+                        //tmpTagged=StanfordPOSTagger.tagString(noEmotes);
+                        SentenceSplitter sp = new SentenceSplitter();
+                        ArrayList splitUtterance = null;
+                        if (noEmotes.length() > 200) {
+                            splitUtterance = sp.split(noEmotes);
+                        }
+                        if (splitUtterance == null || splitUtterance.size() == 1) {
+                            tmpTagged = StanfordPOSTagger.tagString(noEmotes);
+                        } else {
+                            String temps = "";
+                            for (int k = 0; k < splitUtterance.size(); k++) {
+                                String toTag = (String) splitUtterance.get(k);
+                                //System.out.println ("toTag: " + toTag);
+                                String temp = StanfordPOSTagger.tagString((String) splitUtterance.get(k));
+                                //System.out.println("tagged: " + temp);
+                                temps = temps + " " + temp;
+
+                            }
+                            tmpTagged = temps.trim();
+                        }
+
+                    } else if ((Settings.getValue(Settings.LANGUAGE)).equals("chinese")) {
+                        tmpTagged = StanfordPOSTagger.tagChineseString(noEmotes);
+                    }
+                    if (tmpTagged == null) {
+                        System.out.println("tagged is null: " + noEmotes);
+                        utt_.setTaggedContent("");
+                        utt_.setSpaceTaggedContent("");
+                        continue;
+                    }
                     String tagged = tmpTagged.trim();
-		    //System.out.println("tagged: " + tagged);
-		    //if (tagged == null) {System.out.println("tagged is null: " + noEmotes); continue;}
-                    String spcTagged=tmpTagged.replaceAll("/"+"([A-Z]+)*"+" ", " ");
+                    //System.out.println("tagged: " + tagged);
+                    //if (tagged == null) {System.out.println("tagged is null: " + noEmotes); continue;}
+                    String spcTagged = tmpTagged.replaceAll("/" + "([A-Z]+)*" + " ", " ");
                     utt_.setTaggedContent(tagged);
                     utt_.setSpaceTaggedContent(spcTagged);
                     //print(spcTagged);
                     //System.out.println("sTmp: "+utts_.get(j).getTaggedContent());
-               //     bufferedWriterTagFile.write(tagged);
-               //     bufferedWriterTagFile.newLine();
+                    //     bufferedWriterTagFile.write(tagged);
+                    //     bufferedWriterTagFile.newLine();
                 }
 
 
-               //     bufferedWriterTagFile.flush();
-               //     bufferedWriterTagFile.close();
-               //     continue;
-               //}catch (Exception ioe )
-	       //{
-	       //	ioe.printStackTrace ();
-	       //}
+                //     bufferedWriterTagFile.flush();
+                //     bufferedWriterTagFile.close();
+                //     continue;
+                //}catch (Exception ioe )
+                //{
+                //	ioe.printStackTrace ();
+                //}
 
                 //end of Lin
+                cal_ = Calendar.getInstance();
+                //System.out.println("after pos: " + df_.format(cal_.getTime()));
 
                 all_utts_.addAll(utts_);
-                
-		tagCommType();
-                
-               /////////////////   
-                               
-                //////
-                
-		tagDAct();
-		/*
-		for (int ii = 0; ii < utts_.size(); ii++) {
-		    System.out.println ("utt tagged: " + utts_.get(ii).getTaggedContent());
-		}
-		*/
-		calCommLink(xp);
-		buildLocalTopicList(phr_ch, xp);
-
+                ddt_ = new DocDialogueType(utts_);
+                //System.out.println("ddt_ type: " + ddt_.getType());
+                if (!ddt_.getType().equals(DocDialogueType.WK)) {
+                    tagCommType(); //commented by TL 12/13
+                }
+                //System.exit(0);
+                tagDAct();
+                cal_ = Calendar.getInstance();
+                //System.out.println("after DA tagging: " + df_.format(cal_.getTime()));
+                /*
+                 * for (int ii = 0; ii < utts_.size(); ii++) {
+                 * System.out.println ("utt tagged: " +
+                 * utts_.get(ii).getTaggedContent()); }
+                 */
+                if (!ddt_.getType().equals(DocDialogueType.WK)) {
+                    calCommLink(xp); //commented by TL 12/13
+                }
+                cal_ = Calendar.getInstance();
+                //System.out.println("after comm link: " + df_.format(cal_.getTime()));
+                buildLocalTopicList(phr_ch, xp);
+                cal_ = Calendar.getInstance();
+                //System.out.println("after build lc: " + df_.format(cal_.getTime()));
+                if (fn.startsWith("Feb27_GroupA")) {
+                    Speaker part = parts_.get("tony");
+                    System.out.println(part.getUtts());
+                } else if (fn.startsWith("Feb28_GroupA")) {
+                    Speaker part = parts_.get("laura");
+                    System.out.println(part.getUtts());
+                } else if (fn.startsWith("Mar07_GroupA")) {
+                    Speaker part = parts_.get("danielle");
+                    System.out.println(part.getUtts());
+                } else if (fn.startsWith("Mar10_GroupA")) {
+                    Speaker part = parts_.get("jorge");
+                    System.out.println(part.getUtts());
+                } else if (fn.startsWith("Mar10_GroupB")) {
+                    Speaker part = parts_.get("lisa");
+                    System.out.println(part.getUtts());
+                } else if (fn.startsWith("Mar11_GroupB")) {
+                    Speaker part = parts_.get("lisa");
+                    System.out.println(part.getUtts());
+                } else if (fn.startsWith("Mar14_GroupA")) {
+                    Speaker part = parts_.get("sarah");
+                    System.out.println(part.getUtts());
+                } else if (fn.startsWith("Mar14_GroupB")) {
+                    Speaker part = parts_.get("jenniferb");
+                    System.out.println(part.getUtts());
+                } 
                 //meso_topic and task_focus
                 //System.out.println("------------Generate Meso-topics of " + (String)doc_names_.get(i));
                 MesoTopic mt = new MesoTopic();
 //                mt.calMesoTopic((String)doc_names_.get(i), utts_, xp, phr_ch, wn_, nls_);
                 mt.calMesoTopicNew(lts_, utts_);//changed to new method , using lts object. m2w 11/18/11 11:01 AM
-		mts_.add(mt);
+                mts_.add(mt);
+                cal_ = Calendar.getInstance();
+                //System.out.println("after ms topic: " + df_.format(cal_.getTime()));
                 //ArrayList<ArrayList<String>> mts = mt.getMeso_topics_();
                 //testing the mesotopic list
 		/*
-                for (int ai = 0; ai < mts.size(); ai ++){
-                    System.out.print("Topic Speaker : " + utts_.get(Integer.parseInt(mts.get(ai).get(1)) - 1).getSpeaker());
-                    System.out.println(Arrays.asList(mts.get(ai).toArray()));
-                }
-		*/
-		ArrayList spks = new ArrayList(parts_.values());
-		/*
-		for (int k = 0; k < spks.size(); k++) {
-		    Speaker part_ = (Speaker)spks.get(k);
-		    System.out.println("&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&speaker: " + part_.getName() + "local topics: \n");
-		    LocalTopics lts = part_.getILTs();
-		    for (int j = 0; j < lts.size(); j++) {
-			System.out.print("===" + ((LocalTopic)lts.get(j)).getContent().getWord() + "===");
-		    }
-		}
-		System.out.println("====================================================================================");
-		for (int k = 0; k < spks.size(); k++) {
-		    Speaker part_ = (Speaker)spks.get(k);
-		    System.out.println("&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&speaker: " + part_.getName() + " --- contributed utterances: \n");
-		    ArrayList utts = part_.getUtterances();
-		    for (int j = 0; j < utts.size(); j++) {
-			Utterance utt_ = (Utterance)utts.get(j);
-			System.out.println(utt_.getTurn() + " || " + utt_.getSpeaker() + " || " + utt_.getTag() + " || " + utt_.getRespTo() + ": " + utt_.getContent());
-		    }
-		}
-		System.out.println("====================================================================================");
-		for (int k = 0; k < utts_.size(); k++) {
-		    Utterance utt_ = (Utterance)utts_.get(k);
-		    System.out.println(utt_.getTurn() + " || " + utt_.getSpeaker() + " || " + utt_.getTag() + " || " + utt_.getCommActType()
-				       + " || " + utt_.getRespTo() + ": " + utt_.getContent());
-		}
-		*/
+                 * for (int ai = 0; ai < mts.size(); ai ++){
+                 * System.out.print("Topic Speaker : " +
+                 * utts_.get(Integer.parseInt(mts.get(ai).get(1)) -
+                 * 1).getSpeaker());
+                 * System.out.println(Arrays.asList(mts.get(ai).toArray())); }
+                 */
+                ArrayList spks = new ArrayList(parts_.values());
+                /*
+                 * for (int k = 0; k < spks.size(); k++) { Speaker part_ =
+                 * (Speaker)spks.get(k);
+                 * System.out.println("&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&speaker:
+                 * " + part_.getName() + "local topics: \n"); LocalTopics lts =
+                 * part_.getILTs(); for (int j = 0; j < lts.size(); j++) {
+                 * System.out.print("===" +
+                 * ((LocalTopic)lts.get(j)).getContent().getWord() + "==="); } }
+                 * System.out.println("====================================================================================");
+                 * for (int k = 0; k < spks.size(); k++) { Speaker part_ =
+                 * (Speaker)spks.get(k);
+                 * System.out.println("&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&speaker:
+                 * " + part_.getName() + " --- contributed utterances: \n");
+                 * ArrayList utts = part_.getUtterances(); for (int j = 0; j <
+                 * utts.size(); j++) { Utterance utt_ = (Utterance)utts.get(j);
+                 * System.out.println(utt_.getTurn() + " || " +
+                 * utt_.getSpeaker() + " || " + utt_.getTag() + " || " +
+                 * utt_.getRespTo() + ": " + utt_.getContent()); } }
+                 * System.out.println("====================================================================================");
+                 * for (int k = 0; k < utts_.size(); k++) { Utterance utt_ =
+                 * (Utterance)utts_.get(k); System.out.println(utt_.getTurn() +
+                 * " || " + utt_.getSpeaker() + " || " + utt_.getTag() + " || "
+                 * + utt_.getCommActType() + " || " + utt_.getRespTo() + ": " +
+                 * utt_.getContent()); }
+                 */
 
                 //mt.clear();
                 //tf.clear();
-//               createEmotive(i);
-                
+               createEmotive(i);
 
-	    }else {
-		PhraseCheck phr_ch = (PhraseCheck)phr_checks_.get(i);
-		XMLParse xp = xmlps_.get(i);
-		utts_ = (ArrayList)docs_utts_.get(i);
-		all_utts_.addAll(utts_);
-                               
-		buildALocalTopicList(phr_ch, xp);
+            } else {
+                PhraseCheck phr_ch = (PhraseCheck) phr_checks_.get(i);
+                XMLParse xp = xmlps_.get(i);
+                utts_ = (ArrayList) docs_utts_.get(i);
+                all_utts_.addAll(utts_);
+
+                buildALocalTopicList(phr_ch, xp);
                 MesoTopic mt = new MesoTopic();
                 mt.calMesoTopicNew(lts_, utts_);//using new method. m2w 11/18/11 11:02 AM
 //                mt.calMesoTopic((String)doc_names_.get(i), utts_, xp, phr_ch, wn_, nlsA_);
-		mts_.add(mt);
-                
-//               createAnEmotive(i);
-//                calPop();
-	    }
-	    ArrayList spks = new ArrayList(parts_.values());
-	    for (int k = 0; k < spks.size(); k++) {
-		Speaker spk = (Speaker)spks.get(k);
-		spk.setSpeakers(parts_);
-	    }
-	    ddt_ = new DocDialogueType(utts_);
-	    //System.out.println("ddt_ type: " + ddt_.getType());
-	    gch_.setSpeakers(parts_);
-	    gch_.setMesoTopics(mts_);
-	    prxmlp_ = new PtsReportXMLParser(Settings.getValue(Settings.REPORT) + fn.split("\\.")[0] + "_AssertionReport.xml");
-	    prxmlp_.initClaim();
-	    prxmlp_.setDataUnit(fn.split("\\.")[0], fn.split("\\.")[0]);
-            
+                mts_.add(mt);
+		createAnEmotive(i);
+            }
+            ArrayList spks = new ArrayList(parts_.values());
+            for (int k = 0; k < spks.size(); k++) {
+                Speaker spk = (Speaker) spks.get(k);
+                //System.out.println("+++++++++++++++++++++speaker " + spk.getName() + " cited topics: " + spk.sizeofCO());
+                spk.setSpeakers(parts_);
+            }
+            //System.out.println("ddt_ type: " + ddt_.getType());
+            gch_.setSpeakers(parts_);
+            gch_.setMesoTopics(mts_);
+            prxmlp_ = new PtsReportXMLParser(Settings.getValue(Settings.REPORT) + fn.split("\\.")[0] + "_AssertionReport.xml");
+            prxmlp_.initClaim();
+            prxmlp_.setDataUnit(fn.split("\\.")[0], fn.split("\\.")[0]);
+
             ////////////////
             //added by peng
-            ///////////////
-            
+            ///////////////            
             calEwi(i);
             
             
           //  //Vocabulary Rate Index     
             calVri(i);
-            
+
             //Vocabulary Introduction Measure
             calVim(i);
           //  
           //  //Argument Diverstiy
             calArgDiv(i);
-            
+
             //Communication Links Measure
             calClm(i);
-            
+
             //Citation Rate Index
             calCri();
-            
+
             //Meso Topic Introduction
             calMti(i);
-            
+
             //NetWork Centrality
             calNetWorkCentrality();
-            
+
             ///////////////////////
             //end of peng's methods
             ///////////////////////
@@ -309,14 +378,13 @@ public class Assertions {
 //	    System.err.println("@Expressive Disagreement");
 	    System.out.println("@Expressive Disagreement");
 	    calExDis(i);
-            System.out.println("parts_ is empty? : " + parts_.isEmpty());
 //	    System.err.println ("@Leadership");
 	    System.out.println ("@Leadership");
             leader_ = null; // added by m2w 2/14/12 10:49 AM
 	    calLeader();
 //	    System.err.println("@Agreement");
-	    System.out.println("@Agreement");
-	    calAgr();
+	    //System.out.println("@Agreement");
+	    //calAgr();
 //	    System.err.println("@Task Focus");
 	    System.out.println("@Task Focus");
 	    calTaskFocus(i);
@@ -336,67 +404,63 @@ public class Assertions {
 //                        ChineseWordnet.closeConn();
 //                }
 //            }catch(SQLException e){e.printStackTrace();}
-	}
+        }
 
 
-	if ((Settings.getValue (Settings.WEB_SERVICE)).equals ("yes"))
-	    {
-		String DIR = "/home/samirashaikh/sshaikh/develop/NLTEST/scil0200/data/webservice/";
-		File dir_file = new File (DIR);
-		String files [] = dir_file.list ();
-		String filename = "";
-		if (files.length == 1)
-		    filename = files [0];
+        if ((Settings.getValue(Settings.WEB_SERVICE)).equals("yes")) {
+            String DIR = "/home/samirashaikh/sshaikh/develop/NLTEST/scil0200/data/webservice/";
+            File dir_file = new File(DIR);
+            String files[] = dir_file.list();
+            String filename = "";
+            if (files.length == 1) {
+                filename = files[0];
+            }
 
-		String BACKUP = "/home/samirashaikh/sshaikh/develop/NLTEST/scil0200/data/backup/";
-		//String QUERY_FILE = "webservice.txt";
+            String BACKUP = "/home/samirashaikh/sshaikh/develop/NLTEST/scil0200/data/backup/";
+            //String QUERY_FILE = "webservice.txt";
 
 
-		String cmd = "mv " + DIR + filename +  " " + BACKUP;
-		Process moveQueryFile = null;
-		try
-		    {
-			moveQueryFile = Runtime.getRuntime ().exec (cmd);
-			InputStreamReader myIStreamReader = new InputStreamReader (moveQueryFile.getInputStream ());
-			BufferedReader bufferedReader = new BufferedReader (myIStreamReader);
+            String cmd = "mv " + DIR + filename + " " + BACKUP;
+            Process moveQueryFile = null;
+            try {
+                moveQueryFile = Runtime.getRuntime().exec(cmd);
+                InputStreamReader myIStreamReader = new InputStreamReader(moveQueryFile.getInputStream());
+                BufferedReader bufferedReader = new BufferedReader(myIStreamReader);
 
-			String line;
-			while ((line = bufferedReader.readLine ()) != null)
-			    {
-				System.err.println (line);
-			    }
-			InputStreamReader myErrorStreamReader = new InputStreamReader (moveQueryFile.getErrorStream ());
-			BufferedReader bufferedErrorReader = new BufferedReader (myErrorStreamReader);
-			String eLine;
-			while ((eLine = bufferedErrorReader.readLine ()) != null)
-			    {
-				System.err.println (eLine);
-			    }
+                String line;
+                while ((line = bufferedReader.readLine()) != null) {
+                    System.err.println(line);
+                }
+                InputStreamReader myErrorStreamReader = new InputStreamReader(moveQueryFile.getErrorStream());
+                BufferedReader bufferedErrorReader = new BufferedReader(myErrorStreamReader);
+                String eLine;
+                while ((eLine = bufferedErrorReader.readLine()) != null) {
+                    System.err.println(eLine);
+                }
 
-			if (moveQueryFile.waitFor () != 0)
-			    System.err.println ("ERROR" + moveQueryFile.exitValue ());
-			else System.err.println ("moved query file");
+                if (moveQueryFile.waitFor() != 0) {
+                    System.err.println("ERROR" + moveQueryFile.exitValue());
+                } else {
+                    System.err.println("moved query file");
+                }
 
-			myIStreamReader.close ();
-		    }
-		catch (Exception ioe )
-		    {
-			ioe.printStackTrace ();
-		    }
-	    }
+                myIStreamReader.close();
+            } catch (Exception ioe) {
+                ioe.printStackTrace();
+            }
+        }
 
     }
-    
-    
+
     ///////////////////////////////
     ////////////////peng's methods
     //////////////////////////////
-
-     /**
+    /**
      * Calculate percentage and keep 4 decimal places
+     *
      * @param portion
      * @param total
-     * @return 
+     * @return
      */
     public double calculatePercentage(double portion, double total)
     {
@@ -437,12 +501,6 @@ public class Assertions {
                                 
             tmpname = utterance.get(j).getSpeaker();
             String emlist = utterance.get(j).getEmotion_list();
-//            System.out.println("utt is empty: " + utterance.isEmpty());
-//            System.out.println("utt: " + utterance.get(j).getTurn());
-//            System.out.println("utt: " + utterance.get(j).getContent());
-//            System.out.println("utt: " + utterance.get(j).getEmotion());
-//            System.out.println("utt: " + utterance.get(j).getEmotion_list());
-//            System.out.println("emlist is empty: " + emlist.isEmpty());
             String em_arrlist[]=emlist.split(";");
             int spkindex=speakerlist.indexOf(tmpname);
             
@@ -492,13 +550,14 @@ public class Assertions {
             speakerlist.add(part_.getName());
             emotiveTable.add(new ArrayList<String>());
         }
-        
+        /*
         for (int j = 0; j < utterance.size(); j++){
                                 
             String tmp_utt = utterance.get(j).getUtterance();
             String noEmotes = ParseTools.removeEmoticons(tmp_utt);
 
             String tmpTagged="";
+            if (noEmotes == null) continue;
             if ((Settings.getValue(Settings.LANGUAGE)).equals("english"))
             { tmpTagged=StanfordPOSTagger.tagString (noEmotes);
             }
@@ -506,12 +565,13 @@ public class Assertions {
             {
                 tmpTagged=StanfordPOSTagger.tagChineseString(noEmotes);
             }
+            if (tmpTagged == null) continue;
             String tagged = tmpTagged.trim();
             String spcTagged=tmpTagged.replaceAll("/"+"([A-Z]+)*"+" ", " ");
             utterance.get(j).setTaggedContent(tagged);
             utterance.get(j).setSpaceTaggedContent(spcTagged);
         }
-        
+        */
         
         /*loop through the utterances, save emotive words for each speaker into the emotiveTable 
          * and all emotive words into allEmotiveWords*/
@@ -607,7 +667,7 @@ public class Assertions {
         		 print("\n");
         ArrayList spks = new ArrayList(parts_.values());
         ArrayList<String> speakerlist = new ArrayList<String>();
-        ArrayList<ArrayList <String>> vocabularytable = new ArrayList<ArrayList <String>>();
+        ArrayList<ArrayList<String>> vocabularytable = new ArrayList<ArrayList<String>>();
         ArrayList<Utterance> utterance = new ArrayList<Utterance>();
         utterance = (ArrayList<Utterance>)docs_utts_.get(k);
         ArrayList <String> alldistinctwords = new ArrayList<String>(); 
@@ -618,13 +678,13 @@ public class Assertions {
         //print("spk size="+ spks.size() + " utterance size ="+utterance.size());        
         /*Initialize speakerlist and linkcounts*/
         for (int i = 0; i < spks.size(); i++) {
-            Speaker part_ = (Speaker)spks.get(i);
+            Speaker part_ = (Speaker) spks.get(i);
             speakerlist.add(part_.getName());
             vocabularytable.add(new ArrayList<String>());
         }
         
         
-                                        
+        /*                                
         for (int j = 0; j < utterance.size(); j++){
                                 
             String tmp_utt = utterance.get(j).getUtterance();
@@ -638,12 +698,15 @@ public class Assertions {
             {
                 tmpTagged=StanfordPOSTagger.tagChineseString(noEmotes);
             }
-            String tagged = tmpTagged.trim();
+            String tagged = "";
+            if (tmpTagged != null) { 
+                tagged = tmpTagged.trim();
+            } else tmpTagged = "";
             String spcTagged=tmpTagged.replaceAll("/"+"([A-Z]+)*"+" ", " ");
             utterance.get(j).setTaggedContent(tagged);
             utterance.get(j).setSpaceTaggedContent(spcTagged);
         }
-        
+        */
         
         /*loop through the utterances, stemm the utterance, 
          * and save distinct words for each speaker into the vocabularytable 
@@ -675,15 +738,14 @@ public class Assertions {
                     {
                         vocabularytable.get(spkindex).add(tmpstrarr[j]);
                     }
-                    
-                    if(!alldistinctwords.contains(tmpstrarr[j]))
-                    {
+
+                    if (!alldistinctwords.contains(tmpstrarr[j])) {
                         alldistinctwords.add(tmpstrarr[j]);
                     }
                 }
             }  
         }//end of utternace loop
-        
+
         int numofalldistinctwords = alldistinctwords.size();
 //      System.out.println("Total Distinct score==="+numofalldistinctwords );
         /*print the results.*/
@@ -719,7 +781,7 @@ public class Assertions {
         }
              print("\n");   
         print("@@@@@@@@@@@@@@@@@End of Vocabulary Range Index@@@@@@@@@@@@@@@@@");
-        
+
     }//end of calVri
     
        public void calVim(int k)
@@ -728,10 +790,10 @@ public class Assertions {
         	 print("\n");	
         ArrayList spks = new ArrayList(parts_.values());
         ArrayList<String> speakerlist = new ArrayList<String>();
-        ArrayList<ArrayList <String>> vocabularytable = new ArrayList<ArrayList <String>>();
+        ArrayList<ArrayList<String>> vocabularytable = new ArrayList<ArrayList<String>>();
         ArrayList<Utterance> utterance = new ArrayList<Utterance>();
-        utterance = (ArrayList<Utterance>)docs_utts_.get(k);
-        ArrayList <String> alldistinctwords = new ArrayList<String>(); 
+        utterance = (ArrayList<Utterance>) docs_utts_.get(k);
+        ArrayList<String> alldistinctwords = new ArrayList<String>();
         Stemmer stemmer = new Stemmer();
         StopWords sw=null;
         String tmpstr="";
@@ -750,13 +812,13 @@ public class Assertions {
             }
         /*Initialize speakerlist and linkcounts*/
         for (int i = 0; i < spks.size(); i++) {
-            Speaker part_ = (Speaker)spks.get(i);
+            Speaker part_ = (Speaker) spks.get(i);
             speakerlist.add(part_.getName());
             vocabularytable.add(new ArrayList<String>());
         }
         
         
-        
+        /*
         for (int j = 0; j < utterance.size(); j++){
                                 
             String tmp_utt = utterance.get(j).getUtterance();
@@ -775,7 +837,7 @@ public class Assertions {
             utterance.get(j).setTaggedContent(tagged);
             utterance.get(j).setSpaceTaggedContent(spcTagged);
         }
-        
+        */
         /*loop through the utterances, stemm the utterance, 
          * and save distinct words for each speaker into the vocabularytable 
          * and all distinct words into alldistinctwords*/
@@ -820,17 +882,16 @@ public class Assertions {
                     {
                         vocabularytable.get(spkindex).add(utterancewordlist.get(j));
                     }
-                    
-                    if(!alldistinctwords.contains(utterancewordlist.get(j)))
-                    {
+
+                    if (!alldistinctwords.contains(utterancewordlist.get(j))) {
                         alldistinctwords.add(utterancewordlist.get(j));
                     }
                 }
             }
-            
-            
+
+
         }//end of utternace loop
-        
+
         int numofalldistinctwords = alldistinctwords.size();
         /*set the vim to speakers and print them out.*/
         for(int i=0; i<speakerlist.size(); i++)
@@ -867,7 +928,7 @@ public class Assertions {
         }
          print("\n");
         print("@@@@@@@@@@@@@@@@@End of Vocabulary Introduction Measure@@@@@@@@@@@@@@@@@");
-        
+
     }//end of calVim
        
        
@@ -918,26 +979,27 @@ public class Assertions {
     
     /**
      * Calculate the score for Communication Links Measure
+     *
      * @param k the index of a document in docs_utts
      */
-    
-       public void calClm(int k)
-    {
+    public void calClm(int k) {
         print("@@@@@@@@@@@@@@@@@Communication link measures@@@@@@@@@@@@@@@@@");
         	 print("\n");	
         ArrayList spks = new ArrayList(parts_.values());
         ArrayList<String> speakerlist = new ArrayList<String>();
         ArrayList<Integer> linkcounts = new ArrayList<Integer>();//counting the utterances that are addressed to or reponse to each speaker, it is parallel to speakerlist.
         ArrayList<Utterance> utterance = new ArrayList<Utterance>();
-        utterance = (ArrayList<Utterance>)docs_utts_.get(k);
-        String lname="";//link to name
-        String CommActType="";
+        utterance = (ArrayList<Utterance>) docs_utts_.get(k);
+        String lname = "";//link to name
+        String CommActType = "";
         int nameindex;
-        double sumofclm=0.0;
+        double sumofclm = 0.0;
 
-        /*Initialize speakerlist and linkcounts*/
+        /*
+         * Initialize speakerlist and linkcounts
+         */
         for (int i = 0; i < spks.size(); i++) {
-            Speaker part_ = (Speaker)spks.get(i);
+            Speaker part_ = (Speaker) spks.get(i);
             speakerlist.add(part_.getName());
             linkcounts.add(new Integer(0));
 
@@ -995,19 +1057,17 @@ public class Assertions {
         print(" @@@@@@@@@@@@@@@@@End of Communication Links Measure@@@@@@@@@@@@@@@@@\n");
         return;
     }//end of calClm
-    
-    
+
     /**
-     * Calculate the score for Citation Rate Index, 
-     * counting the number of times that the local topics introduced by this speaker are cited by others.
+     * Calculate the score for Citation Rate Index, counting the number of times
+     * that the local topics introduced by this speaker are cited by others.
      */
-    public void calCri()
-    {
+    public void calCri() {
         print("@@@@@@@@@@@@@@@@@Citation Rate Index@@@@@@@@@@@@@@@@@");
          print("\n");
         int numofalltopics=0;		
         ArrayList spks = new ArrayList(parts_.values());
-        double sumofcri=0.0;
+        double sumofcri = 0.0;
         for (int i = 0; i < spks.size(); i++) {
 		    Speaker part_ = (Speaker)spks.get(i);
                     LocalTopics lts = part_.getILTs();
@@ -1040,58 +1100,64 @@ public class Assertions {
         }
         print("\n");
         print("@@@@@@@@@@@@@@@@@End of Citation Rate Index@@@@@@@@@@@@@@@@@\n\n\n");
-        
+
     }
-    
+
     /**
-     * Calculate the score for Meso Topic Introduction, a percentage of meso-topics introduced by a speaker to all meso-topics identified in discourse.
+     * Calculate the score for Meso Topic Introduction, a percentage of
+     * meso-topics introduced by a speaker to all meso-topics identified in
+     * discourse.
+     *
      * @param k the index of a document in docs_utts
      */
-    public void calMti(int k)
-    {
+    public void calMti(int k) {
         print("@@@@@@@@@@@@@@@@@Meso Topic Introduction@@@@@@@@@@@@@@@@@");
          print("\n");
         int count=0;
         MesoTopic tmp = (MesoTopic)mts_.get(k);
         ArrayList<ArrayList<String>> mt = new ArrayList<ArrayList<String>>();
         mt = tmp.getMeso_topics_();
-        ArrayList <String> mesotopics = new ArrayList<String>();//all meso-topics in discourse
-        ArrayList <ArrayList <String>> localtopicstable = new ArrayList<ArrayList<String>>();
+        ArrayList<String> mesotopics = new ArrayList<String>();//all meso-topics in discourse
+        ArrayList<ArrayList<String>> localtopicstable = new ArrayList<ArrayList<String>>();
         ArrayList spks = new ArrayList(parts_.values());
         ArrayList<String> speakerlist = new ArrayList<String>();
         ArrayList<Integer> mesocounts = new ArrayList<Integer>();//counting the number of meso-topics introduced by each speaker
-        
-        /*Initialize the speaklist, mescounts and localtopicstable, those three are parallel to each other*/
-        for (int i = 0; i < spks.size(); i++) {		    
-            Speaker part_ = (Speaker)spks.get(i);
+
+        /*
+         * Initialize the speaklist, mescounts and localtopicstable, those three
+         * are parallel to each other
+         */
+        for (int i = 0; i < spks.size(); i++) {
+            Speaker part_ = (Speaker) spks.get(i);
             speakerlist.add(part_.getName());
             mesocounts.add(new Integer(0));
             localtopicstable.add(new ArrayList<String>());
-            		    
-            LocalTopics lts = part_.getILTs();		    
+
+            LocalTopics lts = part_.getILTs();
             for (int j = 0; j < lts.size(); j++) {
-                localtopicstable.get(i).add(((LocalTopic)lts.get(j)).getContent().getWord());
+                localtopicstable.get(i).add(((LocalTopic) lts.get(j)).getContent().getWord());
             }
 
         }
-        
+
 
         //print("speakerlist size="+speakerlist.size() +" localtopicstable size="+localtopicstable.size() + " mesocounts size="+ mesocounts.size());
-        /*Initialize mesotopics, which contains all meso-topics in discourse.*/
-        for(int i=0; i<mt.size(); i++)
-        {
+        /*
+         * Initialize mesotopics, which contains all meso-topics in discourse.
+         */
+        for (int i = 0; i < mt.size(); i++) {
             mesotopics.add(mt.get(i).get(0));
             //print(mesotopics.get(i));
         }
-        
-        /*loop through all mesotopics and count the number of meso-topics introduced by each speaker*/
-        for(int i=0; i<mesotopics.size(); i++)
-        {
-            for(int j=0; j<localtopicstable.size(); j++)
-            {
-                if(localtopicstable.get(j).contains(mesotopics.get(i)))
-                {
-                    mesocounts.set(j,mesocounts.get(j)+1);
+
+        /*
+         * loop through all mesotopics and count the number of meso-topics
+         * introduced by each speaker
+         */
+        for (int i = 0; i < mesotopics.size(); i++) {
+            for (int j = 0; j < localtopicstable.size(); j++) {
+                if (localtopicstable.get(j).contains(mesotopics.get(i))) {
+                    mesocounts.set(j, mesocounts.get(j) + 1);
                 }
             }
         }
@@ -1118,14 +1184,11 @@ public class Assertions {
          print("\n");
         print("@@@@@@@@@@@@@@@@@End of Meso Topic Introduction@@@@@@@@@@@@@@@@@");
     }//end of calMti
-    
-    
-           
-        
+
     /**
-     * Calculate the score for network centrality,
-     * it is the average of clm, cri and mti of a speaker, thus, this method has
-     * to be called only after methods calVri and calVim
+     * Calculate the score for network centrality, it is the average of clm, cri
+     * and mti of a speaker, thus, this method has to be called only after
+     * methods calVri and calVim
      */
     public void calNetWorkCentrality()    
     {
@@ -1163,37 +1226,37 @@ public class Assertions {
 		    print(part_.getName()+ ":"+ ((Speaker)spks.get(i)).getnewNetCentr() );
         } print("\n");
         print("@@@@@@@@@@@@@@@@@End of NetWork Centrality@@@@@@@@@@@@@@@@@\n\n\n");
-    
+
     }
     //////////////////////////////////
     ////////////end of peng's methods
     /////////////////////////////////        
-   
+
     public void preprocess() {
-	for (int i = 0; i < docs_utts_.size(); i++) {
-	    PhraseCheck phr_ch = (PhraseCheck)phr_checks_.get(i);
-	    XMLParse xp = xmlps_.get(i);
-	    utts_ = (ArrayList)docs_utts_.get(i);
-	    //System.out.println("processing document " + i);
-	    all_utts_.clear();
-	    all_utts_.addAll(tr_utts_);
-	    all_utts_.addAll(utts_);
-	    tagCommType();
-	    //System.exit(0);
-	    //System.out.println("go into tagDAct...");
-	    tagDAct();
-	    calCommLink(xp);
-	    //System.out.println("------------Generate Meso-topics of " + (String)doc_names_.get(i));
-	    //MesoTopic mt = new MesoTopic();
-	    //mt.callMesoTopic((String)doc_names_.get(i), utts_, xp, phr_ch, wn_);
-	}
-	//System.out.println("utts_: \n" + utts_);
+        for (int i = 0; i < docs_utts_.size(); i++) {
+            PhraseCheck phr_ch = (PhraseCheck) phr_checks_.get(i);
+            XMLParse xp = xmlps_.get(i);
+            utts_ = (ArrayList) docs_utts_.get(i);
+            //System.out.println("processing document " + i);
+            all_utts_.clear();
+            all_utts_.addAll(tr_utts_);
+            all_utts_.addAll(utts_);
+            tagCommType();
+            //System.exit(0);
+            //System.out.println("go into tagDAct...");
+            tagDAct();
+            calCommLink(xp);
+            //System.out.println("------------Generate Meso-topics of " + (String)doc_names_.get(i));
+            //MesoTopic mt = new MesoTopic();
+            //mt.callMesoTopic((String)doc_names_.get(i), utts_, xp, phr_ch, wn_);
+        }
+        //System.out.println("utts_: \n" + utts_);
 
     }
 
     public void tagCommType() {
-	CommunicationType commT = new CommunicationType(all_utts_, tr_utts_, utts_, parts_, wn_);
-	commT.tagIt();
+        CommunicationType commT = new CommunicationType(all_utts_, tr_utts_, utts_, parts_, wn_);
+        commT.tagIt();
     }
 
     public void tagDAct() {
@@ -1215,7 +1278,7 @@ public class Assertions {
 	//daT = new DialogueActType(all_utts_, tr_utts_, utts_); comment out at 05/19 by TL
 
         // modified by Laura, May 5th, 2011
-        if(Boolean.valueOf(Settings.getValue("splitUtterance"))){
+        if (Boolean.valueOf(Settings.getValue("splitUtterance"))) {
             //System.out.println("Laura debug: before splitting, size = " + utts_.size());
             SplitTestingUtterance stu = new SplitTestingUtterance(utts_);
             stu.startSplitting();
@@ -1225,9 +1288,8 @@ public class Assertions {
             //System.out.println("splitted turns and quantities: " + turnNoSplitNo);
 
             daT = new DialogueActType(all_utts_, tr_utts_, utts_, splittedUtts, turnNoSplitNo);
-        }
-        else{
-	daT = new DialogueActType(all_utts_, tr_utts_, utts_);
+        } else {
+            daT = new DialogueActType(all_utts_, tr_utts_, utts_);
         }
 
 
@@ -1240,1303 +1302,1344 @@ public class Assertions {
     }
 
     public void calExDis(int j) {
-	is_inv_ = false;
-	is_tskc_ = false;
-	//for (int j = 0; j < docs_utts_.size(); j++) {
-	//System.out.println("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$\nprocessing: " + (String)doc_names_.get(j));
-	//utts_ = (ArrayList)docs_utts_.get(j);
-	exd_ = new ExpressiveDisagreement(utts_);
-	/*
-	PhraseCheck phr_ch = (PhraseCheck)phr_checks_.get(j);
-	XMLParse xp = xmlps_.get(j);
-	buildLocalTopicList(phr_ch, xp);
-	*/
-//	System.out.println("after polarities calculated...");
-	exd_.calCEDI(prxmlp_, spks_, parts_);
-	//}
+        is_inv_ = false;
+        is_tskc_ = false;
+        //for (int j = 0; j < docs_utts_.size(); j++) {
+        //System.out.println("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$\nprocessing: " + (String)doc_names_.get(j));
+        //utts_ = (ArrayList)docs_utts_.get(j);
+        exd_ = new ExpressiveDisagreement(utts_);
+        /*
+         * PhraseCheck phr_ch = (PhraseCheck)phr_checks_.get(j); XMLParse xp =
+         * xmlps_.get(j); buildLocalTopicList(phr_ch, xp);
+         */
+        //System.out.println("after polarities calculated...");
+        exd_.calCEDI(prxmlp_, spks_, parts_);
+        //}
     }
 
     public void calTaskFocus(int i) {
-	//task_focus
-        if(!mts_.isEmpty()){
-	MesoTopic mt = (MesoTopic)mts_.get(i);
+        //task_focus
+        if (!mts_.isEmpty()) {
+            MesoTopic mt = (MesoTopic) mts_.get(i);
 //        mt.printMesoTopics();
-	TaskFocus tf = new TaskFocus();
-	gch_.setTaskFocus(tf);
-	tf.calTaskFocus(mt, utts_);
-	gch_.setTaskFocus(tf);
+            TaskFocus tf = new TaskFocus();
+            gch_.setTaskFocus(tf);
+            tf.calTaskFocus(mt, utts_);
+            gch_.setTaskFocus(tf);
 //        System.out.println("@MSM: " + String.valueOf(tf.getMSM()));
 //	System.out.println("@MGM: " + String.valueOf(tf.getMGM()));
 //	System.out.println("Task Focus: " + String.valueOf(tf.getTaskFocus()));
 //	System.out.println("-----------------------------------------------");
 //	System.out.println();
-        }else{
-           System.out.println("mts_ is Empty"); 
+        } else {
+            System.out.println("mts_ is Empty");
         }
-	
+
     }
 
     public void calSociability() {
-	sb_ = new Sociability(utts_, parts_);
-	sb_.calculate();
-	gch_.setSociability(sb_);
+        sb_ = new Sociability(utts_, parts_);
+        sb_.calculate();
+        gch_.setSociability(sb_);
     }
 
     public void calLeader() {
-	//System.out.println("leadership(vote): " );
-	Iterator keys = parts_.keySet().iterator();
-	Speaker leader = null;
-	double ld_score = -100;
-	while (keys.hasNext()) {
-	    String key = (String)keys.next();
-	    if (key.startsWith("ils")) continue;
-	    //System.out.println("key: " + key);
-	    Speaker part_ = parts_.get(key);
-	    part_.calLeadershipR();
-	    if (part_.getLeadershipR() > ld_score &&
-		part_.rankFirst()) {
-		leader = part_;
-		ld_score = part_.getLeadershipR();
-	    }
-	    System.out.println(part_.getName() + ":" + part_.getLeadershipRInfo());
-	}
-	if (leader != null) {
-	    System.out.println("@Leader");
-	    System.out.println (leader.getName());
-	    System.out.println("@Confidence:\n" + leader.getLeadershipConfidence());
+        //System.out.println("leadership(vote): " );
+        Iterator keys = parts_.keySet().iterator();
+        Speaker leader = null;
+        double ld_score = -100;
+        while (keys.hasNext()) {
+            String key = (String) keys.next();
+            if (key.startsWith("ils")) {
+                continue;
+            }
+            //System.out.println("key: " + key);
+            Speaker part_ = parts_.get(key);
+            part_.calLeadershipR();
+            if (part_.getLeadershipR() > ld_score
+                    && part_.rankFirst()) {
+                leader = part_;
+                ld_score = part_.getLeadershipR();
+            }
+            System.out.println(part_.getName() + ":" + part_.getLeadershipRInfo());
+        }
+        if (leader != null) {
+            System.out.println("@Leader");
+            System.out.println(leader.getName());
+            System.out.println("@Confidence:\n" + leader.getLeadershipConfidence());
             this.setLeader_(leader);// added by m2w 2/14/12 10:44 AM
-	}
-	/*
-	  System.out.println("leadership(Weight): " );
-	  keys = parts_.keySet().iterator();
-	  leader = null;
-	  ld_score = -100;
-	  while (keys.hasNext()) {
-		String key = (String)keys.next();
-		if (key.startsWith("ils")) continue;
-		System.out.println("key: " + key);
-		Speaker part_ = parts_.get(key);
-		part_.calLeadership();
-		if (part_.getLeadership() > ld_score &&
-		    part_.rankFirst()) {
-		    leader = part_;
-		    ld_score = part_.getLeadershipR();
-		}
-		System.out.println("======================" + part_.getName() + ": \n" + part_.getLeadershipInfo());
-	    }
-	    if (leader != null) {
-		System.out.println("==============leader is: " + leader.getName());
-	    }
-	*/
+        }
+        /*
+         * System.out.println("leadership(Weight): " ); keys =
+         * parts_.keySet().iterator(); leader = null; ld_score = -100; while
+         * (keys.hasNext()) { String key = (String)keys.next(); if
+         * (key.startsWith("ils")) continue; System.out.println("key: " + key);
+         * Speaker part_ = parts_.get(key); part_.calLeadership(); if
+         * (part_.getLeadership() > ld_score && part_.rankFirst()) { leader =
+         * part_; ld_score = part_.getLeadershipR(); }
+         * System.out.println("======================" + part_.getName() + ":
+         * \n" + part_.getLeadershipInfo()); } if (leader != null) {
+         * System.out.println("==============leader is: " + leader.getName()); }
+         */
     }
+
     public void calGroupCohesion(int fn) {
-	gch_.calculate(fn);
+        gch_.calculate(fn);
     }
 
     public void calAgr() {
-	is_inv_ = false;
-	is_tskc_ = false;
-	ArrayList keys = new ArrayList(parts_.keySet());
+        is_inv_ = false;
+        is_tskc_ = false;
+        ArrayList keys = new ArrayList(parts_.keySet());
+        for (int i = 0; i < keys.size(); i++) {
+            String key = (String) keys.get(i);
+            Speaker spk = parts_.get(key);
+            if (spk.getName().startsWith("ils")) {
+                continue;
+            }
+            spk.calATX();
+            // modified by Laura, April 13, 2011
+            //System.out.println(/*"The actural score of ATX of " + */spk.getName() + /*" is: "*/ " : " + spk.getATX());
+        }
+        //added by TL 06/01
+	double total_agreed = 0;
 	for (int i = 0; i < keys.size(); i++) {
 	    String key = (String)keys.get(i);
 	    Speaker spk = parts_.get(key);
 	    if (spk.getName().startsWith("ils")) continue;
-	    spk.calATX();
-            // modified by Laura, April 13, 2011
-	    //System.out.println(/*"The actural score of ATX of " + */spk.getName() + /*" is: "*/ " : " + spk.getATX());
+	    total_agreed += spk.getAgreed();
+            System.out.println(/*"The actural score of ATX of " + */spk.getName() + /*" is: "*/ " : " + spk.getATX());
 	}
-	//added by TL 06/01
-//	double total_agreed = 0;
-//	for (int i = 0; i < keys.size(); i++) {
-//	    String key = (String)keys.get(i);
-//	    Speaker spk = parts_.get(key);
-//	    if (spk.getName().startsWith("ils")) continue;
-//	    total_agreed += spk.getAgreed();
-//	    //System.out.println(/*"The actural score of ATX of " + */spk.getName() + /*" is: "*/ " : " + spk.getATX());
-//	}
-//	for (int i = 0; i < keys.size(); i++) {
-//	    String key = (String)keys.get(i);
-//	    Speaker spk = parts_.get(key);
-//	    if (spk.getName().startsWith("ils")) continue;
-//	    double agreed_per = spk.getAgreed() / total_agreed;
-//	    System.out.println(/*"The actural score of ATX of " + */spk.getName() + /*" is: "*/ " : " + agreed_per);
-//	}
+	for (int i = 0; i < keys.size(); i++) {
+	    String key = (String)keys.get(i);
+	    Speaker spk = parts_.get(key);
+	    if (spk.getName().startsWith("ils")) continue;
+	    double agreed_per = spk.getAgreed() / total_agreed;
+	    System.out.println(/*"The actural score of ATX of " + */spk.getName() + /*" is: "*/ " : " + agreed_per);
+	}
 
     }
 
     public void calTpDis(int j) {
-	is_inv_ = false;
-	is_tskc_ = false;
-	//ArrayList tr_utts_ = new ArrayList();
-	//parts_.clear();
-	//for (int j = 0; j < docs_utts_.size(); j++) {
-	//System.out.println("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$\nprocessing: " + (String)doc_names_.get(j));
-	//String doc_name = (String)doc_names_.get(j);
-	//if (doc_name.indexOf("Utterance") == -1) continue;
-	//utts_ = (ArrayList)docs_utts_.get(j);
-	//tr_utts_.clear();
-	//for (int i = 0; i < docs_utts_.size(); i++) {
-	//if (i != j) {
-	//tr_utts_.addAll((ArrayList)docs_utts_.get(i));
-	//}
-	//}
-	    //tpd_.calDisagr(utts_);
-	tpd_ = new TopicDisagreement(all_utts_, tr_utts_, utts_, wn_);
-	tpd_.buildTrainMap();
-	tpd_.tagPolarity();
-	/*
-	PhraseCheck phr_ch = (PhraseCheck)phr_checks_.get(j);
-	XMLParse xp = xmlps_.get(j);
-	buildLocalTopicList(phr_ch, xp);
-	*/
-	//System.out.println("after polarities calculated...");
-	tpd_.calDisagreement(parts_);
-	//}
+        is_inv_ = false;
+        is_tskc_ = false;
+        //ArrayList tr_utts_ = new ArrayList();
+        //parts_.clear();
+        //for (int j = 0; j < docs_utts_.size(); j++) {
+        //System.out.println("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$\nprocessing: " + (String)doc_names_.get(j));
+        //String doc_name = (String)doc_names_.get(j);
+        //if (doc_name.indexOf("Utterance") == -1) continue;
+        //utts_ = (ArrayList)docs_utts_.get(j);
+        //tr_utts_.clear();
+        //for (int i = 0; i < docs_utts_.size(); i++) {
+        //if (i != j) {
+        //tr_utts_.addAll((ArrayList)docs_utts_.get(i));
+        //}
+        //}
+        //tpd_.calDisagr(utts_);
+        tpd_ = new TopicDisagreement(all_utts_, tr_utts_, utts_, wn_);
+        tpd_.buildTrainMap();
+        tpd_.tagPolarity();
+        /*
+         * PhraseCheck phr_ch = (PhraseCheck)phr_checks_.get(j); XMLParse xp =
+         * xmlps_.get(j); buildLocalTopicList(phr_ch, xp);
+         */
+        //System.out.println("after polarities calculated...");
+        tpd_.calDisagreement(parts_);
+        //}
     }
 
     public void calTpCtl(int k) {
-	is_inv_ = false;
-	is_tskc_ = false;
-	//for (int k = 0; k < docs_utts_.size(); k++) {
-	System.out.println("@Topic Control");
-	PhraseCheck phr_ch = (PhraseCheck)phr_checks_.get(k);
-	XMLParse xp = xmlps_.get(k);
-	//utts_ = (ArrayList)docs_utts_.get(k);
-	//parts_.clear();
-	//spks_.clear();
-	if (Settings.getValue(Settings.PROCESS_TYPE).equals("annotated")) {
-	    //parts_.clear();
-	    //spks_.clear();
-	    //buildALocalTopicList(phr_ch, xp);
-	} else if (Settings.getValue(Settings.PROCESS_TYPE).equals("automated")) {
-	    //buildLocalTopicList(phr_ch, xp);
-	    //return; //only for top10 localtopics
-	}
-	//prxmlp_.setDuParticipants(spks_);
-	ArrayList keys = new ArrayList(parts_.keySet());
-	for (int i = 0; i < keys.size(); i++) {
-	    String key = (String)keys.get(i);
-	    Speaker spk = parts_.get(key);
-	    spk.calTpCtl(lts_, utts_);
-	    //System.out.println("==========================================");
-	    //System.out.println(spk.getTC());
-	}
+        is_inv_ = false;
+        is_tskc_ = false;
+        //for (int k = 0; k < docs_utts_.size(); k++) {
+        System.out.println("@Topic Control");
+        PhraseCheck phr_ch = (PhraseCheck) phr_checks_.get(k);
+        XMLParse xp = xmlps_.get(k);
+        //utts_ = (ArrayList)docs_utts_.get(k);
+        //parts_.clear();
+        //spks_.clear();
+        if (Settings.getValue(Settings.PROCESS_TYPE).equals("annotated")) {
+            //parts_.clear();
+            //spks_.clear();
+            //buildALocalTopicList(phr_ch, xp);
+        } else if (Settings.getValue(Settings.PROCESS_TYPE).equals("automated")) {
+            //buildLocalTopicList(phr_ch, xp);
+            //return; //only for top10 localtopics
+        }
+        //prxmlp_.setDuParticipants(spks_);
+        ArrayList keys = new ArrayList(parts_.keySet());
+        for (int i = 0; i < keys.size(); i++) {
+            String key = (String) keys.get(i);
+            Speaker spk = parts_.get(key);
+            spk.calTpCtl(lts_, utts_);
+            System.out.println("==========================================");
+            System.out.println(spk.getTC());
+        }
 
-	keys = new ArrayList(parts_.keySet());
-	for (int i = 1; i < keys.size(); i++) {
-	    String key1 = (String)keys.get(i);
-	    Speaker spk1 = parts_.get(key1);
-	    for (int j = 0; j < i; j++) {
-		String key2 = (String)keys.get(j);
-		Speaker spk2 = parts_.get(key2);
-		if (spk1.getTC().getLTI() < spk2.getTC().getLTI()) {
-		    spk1.getTC().incLTIR();
-		} else {
-		    spk2.getTC().incLTIR();
-		}
-		if (spk1.getTC().getSMT() < spk2.getTC().getSMT()) {
-		    spk1.getTC().incSMTR();
-		} else {
-		    spk2.getTC().incSMTR();
-		}
-		if (spk1.getTC().getCS() < spk2.getTC().getCS()) {
-		    spk1.getTC().incCSR();
-		} else {
-		    spk2.getTC().incCSR();
-		}
-		if (spk1.getTC().getTL() < spk2.getTC().getTL()) {
-		    spk1.getTC().incTLR();
-		} else {
-		    spk2.getTC().incTLR();
-		}
-		if (spk1.getTC().getCLTI() < spk2.getTC().getCLTI()) {
-		    spk1.getTC().incCLTIR();
-		    } else {
-		    spk2.getTC().incCLTIR();
-		}
-	    }
-	}
-
-
-	//System.out.println("\n\n%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%");
-	//process LTI quintile
-	ArrayList spks = new ArrayList();
-	ArrayList spks_LTI = new ArrayList();
-	for (int i = 0; i < keys.size(); i++) {
-	    String key1 = (String)keys.get(i);
-	    Speaker spk1 = parts_.get(key1);
-	    Double spk1_LTI = new Double(spk1.getTC().getLTI());
-	    boolean added = false;
-	    for (int j = 0; j < spks_LTI.size(); j++) {
-		Double spk2_LTI = (Double)spks_LTI.get(j);
-		if (spk1_LTI > spk2_LTI &&
-		    !(spk1.getName().startsWith("ilsp") ||
-		      spk1.getName().startsWith("samira") ||
-		      spk1.getName().startsWith("tomek"))) {
-		    spks.add(j, spk1);
-		    spks_LTI.add(j, spk1_LTI);
-		    added = true;
-		    break;
-		}
-	    }
-	    if (!added &&
-		!(spk1.getName().startsWith("ilsp") ||
-		  spk1.getName().startsWith("samira") ||
-		  spk1.getName().startsWith("tomek"))) {
-		spks.add(spk1);
-		spks_LTI.add(spk1_LTI);
-	    }
-	}
-	ArrayList rank = new ArrayList();
-	rank.add(1);
-	for (int j = 1; j < spks_LTI.size(); j++) {
-	    Double spk2_LTI = (Double)spks_LTI.get(j);
-	    Double spk1_LTI = (Double)spks_LTI.get(j - 1);
-	    if (spk1_LTI.doubleValue() == spk2_LTI.doubleValue()) {
-		rank.add(rank.get(rank.size() - 1));
-	    } else {
-		rank.add(j + 1);
-	    }
-	}
-
-	/*
-	System.out.println("\n++++++++++++++++++++++++++++++++\ncalculate Topic Control - LTI quintile");
-	calQuintile(spks_LTI, spks, "TPC", "LTI", null);
-	*/
-
-	//process SMT quintile
-	spks = new ArrayList();
-	ArrayList spks_SMT = new ArrayList();
-	for (int i = 0; i < keys.size(); i++) {
-	    String key1 = (String)keys.get(i);
-	    Speaker spk1 = parts_.get(key1);
-	    Double spk1_SMT = new Double(spk1.getTC().getSMT());
-	    boolean added = false;
-	    for (int j = 0; j < spks_SMT.size(); j++) {
-		Double spk2_SMT = (Double)spks_SMT.get(j);
-		if (spk1_SMT > spk2_SMT &&
-		    !(spk1.getName().startsWith("ilsp") ||
-		      spk1.getName().startsWith("samira") ||
-		      spk1.getName().startsWith("tomek"))) {
-		    spks.add(j, spk1);
-		    spks_SMT.add(j, spk1_SMT);
-		    added = true;
-		    break;
-		}
-	    }
-	    if (!added &&
-		!(spk1.getName().startsWith("ilsp") ||
-		  spk1.getName().startsWith("samira") ||
-		  spk1.getName().startsWith("tomek"))) {
-		spks.add(spk1);
-		spks_SMT.add(spk1_SMT);
-	    }
-	}
-	/*
-	System.out.println("\n++++++++++++++++++++++++++++++++\ncalculate Topic Control -  SMT quintile: ");
-	calQuintile(spks_SMT, spks, "TPC", "SMT", null);
-	*/
-	//process CS quintile
-	spks = new ArrayList();
-	ArrayList spks_CS = new ArrayList();
-	for (int i = 0; i < keys.size(); i++) {
-	    String key1 = (String)keys.get(i);
-	    Speaker spk1 = parts_.get(key1);
-	    Double spk1_CS = new Double(spk1.getTC().getCS());
-	    boolean added = false;
-	    for (int j = 0; j < spks_CS.size(); j++) {
-		Double spk2_CS = (Double)spks_CS.get(j);
-		if (spk1_CS > spk2_CS &&
-		    !(spk1.getName().startsWith("ilsp") ||
-		      spk1.getName().startsWith("samira") ||
-		      spk1.getName().startsWith("tomek"))) {
-		    spks.add(j, spk1);
-		    spks_CS.add(j, spk1_CS);
-		    added = true;
-		    break;
-		}
-	    }
-	    if (!added &&
-		!(spk1.getName().startsWith("ilsp") ||
-		  spk1.getName().startsWith("samira") ||
-		  spk1.getName().startsWith("tomek"))) {
-		spks.add(spk1);
-		spks_CS.add(spk1_CS);
-	    }
-	}
-	/*
-	System.out.println("\n++++++++++++++++++++++++++++++++\ncalculate Topic Control -  CS quintile");
-	calQuintile(spks_CS, spks, "TPC", "CS", null);
-	*/
-
-	//process TL quintile
-	spks = new ArrayList();
-	double total_tl = 0;
-	ArrayList spks_TL = new ArrayList();
-	for (int i = 0; i < keys.size(); i++) {
-	    String key1 = (String)keys.get(i);
-	    Speaker spk1 = parts_.get(key1);
-	    total_tl += spk1.getTC().getTL();
-	    Double spk1_TL = new Double(spk1.getTC().getTL());
-	    boolean added = false;
-	    for (int j = 0; j < spks_TL.size(); j++) {
-		Double spk2_TL = (Double)spks_TL.get(j);
-		if (spk1_TL > spk2_TL &&
-		    !(spk1.getName().startsWith("ilsp") ||
-		      spk1.getName().startsWith("samira") ||
-		      spk1.getName().startsWith("tomek"))) {
-		    spks.add(j, spk1);
-		    spks_TL.add(j, spk1_TL);
-		    added = true;
-		    break;
-		}
-	    }
-	    if (!added &&
-		!(spk1.getName().startsWith("ilsp") ||
-		  spk1.getName().startsWith("samira") ||
-		  spk1.getName().startsWith("tomek"))) {
-		spks.add(spk1);
-		spks_TL.add(spk1_TL);
-	    }
-	}
-	for (int i = 0; i < keys.size(); i++) {
-	    String key1 = (String)keys.get(i);
-	    Speaker spk1 = parts_.get(key1);
-	    spk1.getTC().calTLPt(total_tl);
-	}
-	/*
-	System.out.println("\n++++++++++++++++++++++++++++++++\ncalculate Topic Control -  TL quintile");
-	calQuintile(spks_TL, spks, "TPC", "TL", null);
-	*/
-
-	//process CLTI quintile
-	spks = new ArrayList();
-	ArrayList spks_CLTI = new ArrayList();
-	for (int i = 0; i < keys.size(); i++) {
-	    String key1 = (String)keys.get(i);
-	    Speaker spk1 = parts_.get(key1);
-	    Double spk1_CLTI = new Double(spk1.getTC().getCLTI());
-	    boolean added = false;
-	    for (int j = 0; j < spks_CLTI.size(); j++) {
-		Double spk2_CLTI = (Double)spks_CLTI.get(j);
-		if (spk1_CLTI > spk2_CLTI &&
-		    !(spk1.getName().startsWith("ilsp") ||
-		      spk1.getName().startsWith("samira") ||
-		      spk1.getName().startsWith("tomek"))) {
-		    spks.add(j, spk1);
-		    spks_CLTI.add(j, spk1_CLTI);
-		    added = true;
-		    break;
-		}
-	    }
-	    if (!added &&
-		!(spk1.getName().startsWith("ilsp") ||
-		  spk1.getName().startsWith("samira") ||
-		  spk1.getName().startsWith("tomek"))) {
-		spks.add(spk1);
-		spks_CLTI.add(spk1_CLTI);
-	    }
-	}
-	/*
-	    System.out.println("++++++++++++++++++++++++++++++++\ncalculate CLTI quintile");
-	    calQuintile(spks_CLTI, spks, "TPC", "CLTI", null);
-	*/
-	for (int i = 0; i < keys.size(); i++) {
-	    String key1 = (String)keys.get(i);
-	    Speaker spk1 = parts_.get(key1);
-	    spk1.getTC().calPower();
-	    //System.out.println("The topic control merged socre of " + spk1.getName() + " is: " + spk1.getTC().getPower());
-	}
+        keys = new ArrayList(parts_.keySet());
+        for (int i = 1; i < keys.size(); i++) {
+            String key1 = (String) keys.get(i);
+            Speaker spk1 = parts_.get(key1);
+            for (int j = 0; j < i; j++) {
+                String key2 = (String) keys.get(j);
+                Speaker spk2 = parts_.get(key2);
+                if (spk1.getTC().getLTI() < spk2.getTC().getLTI()) {
+                    spk1.getTC().incLTIR();
+                } else {
+                    spk2.getTC().incLTIR();
+                }
+                if (spk1.getTC().getSMT() < spk2.getTC().getSMT()) {
+                    spk1.getTC().incSMTR();
+                } else {
+                    spk2.getTC().incSMTR();
+                }
+                if (spk1.getTC().getCS() < spk2.getTC().getCS()) {
+                    spk1.getTC().incCSR();
+                } else {
+                    spk2.getTC().incCSR();
+                }
+                if (spk1.getTC().getTL() < spk2.getTC().getTL()) {
+                    spk1.getTC().incTLR();
+                } else {
+                    spk2.getTC().incTLR();
+                }
+                if (spk1.getTC().getCLTI() < spk2.getTC().getCLTI()) {
+                    spk1.getTC().incCLTIR();
+                } else {
+                    spk2.getTC().incCLTIR();
+                }
+            }
+        }
 
 
+        System.out.println("\n\n%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%");
+        //process LTI quintile
+        ArrayList spks = new ArrayList();
+        ArrayList spks_LTI = new ArrayList();
+        for (int i = 0; i < keys.size(); i++) {
+            String key1 = (String) keys.get(i);
+            Speaker spk1 = parts_.get(key1);
+            Double spk1_LTI = new Double(spk1.getTC().getLTI());
+            boolean added = false;
+            for (int j = 0; j < spks_LTI.size(); j++) {
+                Double spk2_LTI = (Double) spks_LTI.get(j);
+                if (spk1_LTI > spk2_LTI
+                        && !(spk1.getName().startsWith("ilsp")
+                        || spk1.getName().startsWith("samira")
+                        || spk1.getName().startsWith("tomek"))) {
+                    spks.add(j, spk1);
+                    spks_LTI.add(j, spk1_LTI);
+                    added = true;
+                    break;
+                }
+            }
+            if (!added
+                    && !(spk1.getName().startsWith("ilsp")
+                    || spk1.getName().startsWith("samira")
+                    || spk1.getName().startsWith("tomek"))) {
+                spks.add(spk1);
+                spks_LTI.add(spk1_LTI);
+            }
+        }
+        ArrayList rank = new ArrayList();
+        rank.add(1);
+        for (int j = 1; j < spks_LTI.size(); j++) {
+            Double spk2_LTI = (Double) spks_LTI.get(j);
+            Double spk1_LTI = (Double) spks_LTI.get(j - 1);
+            if (spk1_LTI.doubleValue() == spk2_LTI.doubleValue()) {
+                rank.add(rank.get(rank.size() - 1));
+            } else {
+                rank.add(j + 1);
+            }
+        }
 
-	//process Power quintile
-	spks = new ArrayList();
-	ArrayList spks_Power = new ArrayList();
-	for (int i = 0; i < keys.size(); i++) {
-	    String key1 = (String)keys.get(i);
-	    Speaker spk1 = parts_.get(key1);
-	    Double spk1_Power = new Double(spk1.getTC().getPower());
-	    boolean added = false;
-	    for (int j = 0; j < spks_Power.size(); j++) {
-		Double spk2_Power = (Double)spks_Power.get(j);
-		if (spk1_Power > spk2_Power &&
-		    !(spk1.getName().startsWith("ilsp") ||
-		      spk1.getName().startsWith("samira") ||
-		      spk1.getName().startsWith("tomek"))) {
-		    spks.add(j, spk1);
-		    spks_Power.add(j, spk1_Power);
-		    added = true;
-		    break;
-		}
-	    }
-	    if (!added &&
-		!(spk1.getName().startsWith("ilsp") ||
-		  spk1.getName().startsWith("samira") ||
-		  spk1.getName().startsWith("tomek"))) {
-		spks.add(spk1);
-		spks_Power.add(spk1_Power);
-		}
-	}
-	rank = new ArrayList();
-	rank.add(1);
-	for (int j = 1; j < spks_Power.size(); j++) {
-	    Double spk2_Power = (Double)spks_Power.get(j);
-	    Double spk1_Power = (Double)spks_Power.get(j - 1);
-	    if (spk1_Power.doubleValue() == spk2_Power.doubleValue()) {
-		rank.add(rank.get(rank.size() - 1));
-	    } else {
-		rank.add(j + 1);
-	    }
-	}
-	//System.out.println("++++++++++++++++++++++++++++++++\ncalculate Merged quintile");
-	calQuintile(spks_Power, spks, "TPC", "Merged", rank);
+        /*
+         * System.out.println("\n++++++++++++++++++++++++++++++++\ncalculate
+         * Topic Control - LTI quintile"); calQuintile(spks_LTI, spks, "TPC",
+         * "LTI", null);
+         */
+
+        //process SMT quintile
+        spks = new ArrayList();
+        ArrayList spks_SMT = new ArrayList();
+        for (int i = 0; i < keys.size(); i++) {
+            String key1 = (String) keys.get(i);
+            Speaker spk1 = parts_.get(key1);
+            Double spk1_SMT = new Double(spk1.getTC().getSMT());
+            boolean added = false;
+            for (int j = 0; j < spks_SMT.size(); j++) {
+                Double spk2_SMT = (Double) spks_SMT.get(j);
+                if (spk1_SMT > spk2_SMT
+                        && !(spk1.getName().startsWith("ilsp")
+                        || spk1.getName().startsWith("samira")
+                        || spk1.getName().startsWith("tomek"))) {
+                    spks.add(j, spk1);
+                    spks_SMT.add(j, spk1_SMT);
+                    added = true;
+                    break;
+                }
+            }
+            if (!added
+                    && !(spk1.getName().startsWith("ilsp")
+                    || spk1.getName().startsWith("samira")
+                    || spk1.getName().startsWith("tomek"))) {
+                spks.add(spk1);
+                spks_SMT.add(spk1_SMT);
+            }
+        }
+        /*
+         * System.out.println("\n++++++++++++++++++++++++++++++++\ncalculate
+         * Topic Control - SMT quintile: "); calQuintile(spks_SMT, spks, "TPC",
+         * "SMT", null);
+         */
+        //process CS quintile
+        spks = new ArrayList();
+        ArrayList spks_CS = new ArrayList();
+        for (int i = 0; i < keys.size(); i++) {
+            String key1 = (String) keys.get(i);
+            Speaker spk1 = parts_.get(key1);
+            Double spk1_CS = new Double(spk1.getTC().getCS());
+            boolean added = false;
+            for (int j = 0; j < spks_CS.size(); j++) {
+                Double spk2_CS = (Double) spks_CS.get(j);
+                if (spk1_CS > spk2_CS
+                        && !(spk1.getName().startsWith("ilsp")
+                        || spk1.getName().startsWith("samira")
+                        || spk1.getName().startsWith("tomek"))) {
+                    spks.add(j, spk1);
+                    spks_CS.add(j, spk1_CS);
+                    added = true;
+                    break;
+                }
+            }
+            if (!added
+                    && !(spk1.getName().startsWith("ilsp")
+                    || spk1.getName().startsWith("samira")
+                    || spk1.getName().startsWith("tomek"))) {
+                spks.add(spk1);
+                spks_CS.add(spk1_CS);
+            }
+        }
+        /*
+         * System.out.println("\n++++++++++++++++++++++++++++++++\ncalculate
+         * Topic Control - CS quintile"); calQuintile(spks_CS, spks, "TPC",
+         * "CS", null);
+         */
+
+        //process TL quintile
+        spks = new ArrayList();
+        double total_tl = 0;
+        ArrayList spks_TL = new ArrayList();
+        for (int i = 0; i < keys.size(); i++) {
+            String key1 = (String) keys.get(i);
+            Speaker spk1 = parts_.get(key1);
+            total_tl += spk1.getTC().getTL();
+            Double spk1_TL = new Double(spk1.getTC().getTL());
+            boolean added = false;
+            for (int j = 0; j < spks_TL.size(); j++) {
+                Double spk2_TL = (Double) spks_TL.get(j);
+                if (spk1_TL > spk2_TL
+                        && !(spk1.getName().startsWith("ilsp")
+                        || spk1.getName().startsWith("samira")
+                        || spk1.getName().startsWith("tomek"))) {
+                    spks.add(j, spk1);
+                    spks_TL.add(j, spk1_TL);
+                    added = true;
+                    break;
+                }
+            }
+            if (!added
+                    && !(spk1.getName().startsWith("ilsp")
+                    || spk1.getName().startsWith("samira")
+                    || spk1.getName().startsWith("tomek"))) {
+                spks.add(spk1);
+                spks_TL.add(spk1_TL);
+            }
+        }
+        for (int i = 0; i < keys.size(); i++) {
+            String key1 = (String) keys.get(i);
+            Speaker spk1 = parts_.get(key1);
+            spk1.getTC().calTLPt(total_tl);
+        }
+        /*
+         * System.out.println("\n++++++++++++++++++++++++++++++++\ncalculate
+         * Topic Control - TL quintile"); calQuintile(spks_TL, spks, "TPC",
+         * "TL", null);
+         */
+
+        //process CLTI quintile
+        spks = new ArrayList();
+        ArrayList spks_CLTI = new ArrayList();
+        for (int i = 0; i < keys.size(); i++) {
+            String key1 = (String) keys.get(i);
+            Speaker spk1 = parts_.get(key1);
+            Double spk1_CLTI = new Double(spk1.getTC().getCLTI());
+            boolean added = false;
+            for (int j = 0; j < spks_CLTI.size(); j++) {
+                Double spk2_CLTI = (Double) spks_CLTI.get(j);
+                if (spk1_CLTI > spk2_CLTI
+                        && !(spk1.getName().startsWith("ilsp")
+                        || spk1.getName().startsWith("samira")
+                        || spk1.getName().startsWith("tomek"))) {
+                    spks.add(j, spk1);
+                    spks_CLTI.add(j, spk1_CLTI);
+                    added = true;
+                    break;
+                }
+            }
+            if (!added
+                    && !(spk1.getName().startsWith("ilsp")
+                    || spk1.getName().startsWith("samira")
+                    || spk1.getName().startsWith("tomek"))) {
+                spks.add(spk1);
+                spks_CLTI.add(spk1_CLTI);
+            }
+        }
+        /*
+         * System.out.println("++++++++++++++++++++++++++++++++\ncalculate CLTI
+         * quintile"); calQuintile(spks_CLTI, spks, "TPC", "CLTI", null);
+         */
+        for (int i = 0; i < keys.size(); i++) {
+            String key1 = (String) keys.get(i);
+            Speaker spk1 = parts_.get(key1);
+            spk1.getTC().calPower();
+            //System.out.println("The topic control merged socre of " + spk1.getName() + " is: " + spk1.getTC().getPower());
+        }
+
+
+
+        //process Power quintile
+        spks = new ArrayList();
+        ArrayList spks_Power = new ArrayList();
+        for (int i = 0; i < keys.size(); i++) {
+            String key1 = (String) keys.get(i);
+            Speaker spk1 = parts_.get(key1);
+            Double spk1_Power = new Double(spk1.getTC().getPower());
+            boolean added = false;
+            for (int j = 0; j < spks_Power.size(); j++) {
+                Double spk2_Power = (Double) spks_Power.get(j);
+                if (spk1_Power > spk2_Power
+                        && !(spk1.getName().startsWith("ilsp")
+                        || spk1.getName().startsWith("samira")
+                        || spk1.getName().startsWith("tomek"))) {
+                    spks.add(j, spk1);
+                    spks_Power.add(j, spk1_Power);
+                    added = true;
+                    break;
+                }
+            }
+            if (!added
+                    && !(spk1.getName().startsWith("ilsp")
+                    || spk1.getName().startsWith("samira")
+                    || spk1.getName().startsWith("tomek"))) {
+                spks.add(spk1);
+                spks_Power.add(spk1_Power);
+            }
+        }
+        rank = new ArrayList();
+        rank.add(1);
+        for (int j = 1; j < spks_Power.size(); j++) {
+            Double spk2_Power = (Double) spks_Power.get(j);
+            Double spk1_Power = (Double) spks_Power.get(j - 1);
+            if (spk1_Power.doubleValue() == spk2_Power.doubleValue()) {
+                rank.add(rank.get(rank.size() - 1));
+            } else {
+                rank.add(j + 1);
+            }
+        }
+        //System.out.println("++++++++++++++++++++++++++++++++\ncalculate Merged quintile");
+        calQuintile(spks_Power, spks, "TPC", "Merged", rank);
     }
 
-
     public void calQuintile() {
-	try {
-	    BufferedReader br = new BufferedReader(new FileReader(new File("/projects/SHARED/data/dsarmd/eval_2010_aug_auto/auto_actual_score.txt")));///projects/SHARED/data/dsarmd/eval_2010_aug_postsession_survey/average_scores")));//home/ting/tools/scil_installation/data/reynard/back/annotated.txt")));
-	    br.readLine(); //scrip title
-	    String a_line = null;
-	    ArrayList spks = new ArrayList();
-	    ArrayList dis = new ArrayList();
-	    String session = null;
-	    while ((a_line = br.readLine()) != null) {
-		String[] items = a_line.split("\\t");
-		if (session == null) session = items[1];
-		if (//items[0].equals("Average")
-		    !items[1].equals(session)) {
-		    System.out.println("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n\n++++++++++++++++++++++++++++++++\n\nprocessing session (" + session + "): ");
-		    calQuintile(dis, spks);
-		    dis.clear();
-		    spks.clear();
-		    spks.add(items[0]);
-		    dis.add(new Double(items[2].trim()));
-		    session = items[1];
-		} else {
-		    spks.add(items[0]);
-		    dis.add(new Double(items[2].trim()));
-		}
-	    }
-	    if (spks.size() > 0) {
-		System.out.println("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n\n++++++++++++++++++++++++++++++++\n\nprocessing session (" + session + "): ");
-		calQuintile(dis, spks);
-	    }
-	}catch (Exception e) {
-	    e.printStackTrace();
-	}
-	/*
-	ArrayList dis = new ArrayList();
-	dis.add(new Double(6.55));
-	dis.add(new Double(5.5));
-	dis.add(new Double(5.4));
-	dis.add(new Double(4.65));
-	dis.add(new Double(4.5));
-	dis.add(new Double(4.3));
-	double[] dis1 = new double[dis.size()];
-	for (int j = 0; j < dis.size(); j++) {
-	    dis1[j] = ((Double)dis.get(j)).doubleValue();
-	}
-	double[] qt_thrs = Util.genQTThrs(dis1);
-	*/
+        try {
+            BufferedReader br = new BufferedReader(new FileReader(new File("/projects/SHARED/data/dsarmd/eval_2010_aug_auto/auto_actual_score.txt")));///projects/SHARED/data/dsarmd/eval_2010_aug_postsession_survey/average_scores")));//home/ting/tools/scil_installation/data/reynard/back/annotated.txt")));
+            br.readLine(); //scrip title
+            String a_line = null;
+            ArrayList spks = new ArrayList();
+            ArrayList dis = new ArrayList();
+            String session = null;
+            while ((a_line = br.readLine()) != null) {
+                String[] items = a_line.split("\\t");
+                if (session == null) {
+                    session = items[1];
+                }
+                if (//items[0].equals("Average")
+                        !items[1].equals(session)) {
+                    System.out.println("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n\n++++++++++++++++++++++++++++++++\n\nprocessing session (" + session + "): ");
+                    calQuintile(dis, spks);
+                    dis.clear();
+                    spks.clear();
+                    spks.add(items[0]);
+                    dis.add(new Double(items[2].trim()));
+                    session = items[1];
+                } else {
+                    spks.add(items[0]);
+                    dis.add(new Double(items[2].trim()));
+                }
+            }
+            if (spks.size() > 0) {
+                System.out.println("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n\n++++++++++++++++++++++++++++++++\n\nprocessing session (" + session + "): ");
+                calQuintile(dis, spks);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        /*
+         * ArrayList dis = new ArrayList(); dis.add(new Double(6.55));
+         * dis.add(new Double(5.5)); dis.add(new Double(5.4)); dis.add(new
+         * Double(4.65)); dis.add(new Double(4.5)); dis.add(new Double(4.3));
+         * double[] dis1 = new double[dis.size()]; for (int j = 0; j <
+         * dis.size(); j++) { dis1[j] = ((Double)dis.get(j)).doubleValue(); }
+         * double[] qt_thrs = Util.genQTThrs(dis1);
+         */
     }
 
     public void calQuintile(ArrayList dis, ArrayList spks) {
-	double[] dis1 = new double[dis.size()];
-	for (int j = 0; j < dis.size(); j++) {
-	    dis1[j] = ((Double)dis.get(j)).doubleValue();
-	}
-	double[] qt_thrs = Util.genQTThrs(dis1);
-	HashMap qscs = new HashMap();
-	//System.out.println("\n=====================================\n");
-	boolean same_thrs = true;
-	for (int j = 1; j < qt_thrs.length; j++) {
-	    if (qt_thrs[j] != qt_thrs[j - 1]) {
-		same_thrs = false;
-		break;
-	    }
-	}
-	if (same_thrs) {
-	    for (int j = 0; j < dis.size(); j++) {
-		double di = ((Double)dis.get(j)).doubleValue();
-		String spk = ((String)spks.get(j));
-		int index = spks_.indexOf(spk);
-		String id_spk = index + "_" + spk;
-		if (di == qt_thrs[0]) {
+        double[] dis1 = new double[dis.size()];
+        for (int j = 0; j < dis.size(); j++) {
+            dis1[j] = ((Double) dis.get(j)).doubleValue();
+        }
+        double[] qt_thrs = Util.genQTThrs(dis1);
+        HashMap qscs = new HashMap();
+        //System.out.println("\n=====================================\n");
+        boolean same_thrs = true;
+        for (int j = 1; j < qt_thrs.length; j++) {
+            if (qt_thrs[j] != qt_thrs[j - 1]) {
+                same_thrs = false;
+                break;
+            }
+        }
+        if (same_thrs) {
+            for (int j = 0; j < dis.size(); j++) {
+                double di = ((Double) dis.get(j)).doubleValue();
+                String spk = ((String) spks.get(j));
+                int index = spks_.indexOf(spk);
+                String id_spk = index + "_" + spk;
+                if (di == qt_thrs[0]) {
                     // modified by Laura, Apirl 13, 2011
-		    System.out.println(/*"The quintile score of " + */((String)spks.get(j)) + /*" is: "*/ " : " + 3);// + " --- actual score: " + di);
-		    qscs.put(id_spk, 3);
-		} else if (di > qt_thrs[0]) {
+                    System.out.println(/*
+                             * "The quintile score of " +
+                             */((String) spks.get(j)) + /*
+                             * " is: "
+                             */ " : " + 3);// + " --- actual score: " + di);
+                    qscs.put(id_spk, 3);
+                } else if (di > qt_thrs[0]) {
                     // modified by Laura, Apirl 13, 2011
-		    System.out.println(/*"The quintile score " + */((String)spks.get(j)) + /*" is: "*/ " : "+ 5);// + " --- actual score: " + di);
-		    qscs.put(id_spk, 5);
-		} else if (di < qt_thrs[1]) {
+                    System.out.println(/*
+                             * "The quintile score " +
+                             */((String) spks.get(j)) + /*
+                             * " is: "
+                             */ " : " + 5);// + " --- actual score: " + di);
+                    qscs.put(id_spk, 5);
+                } else if (di < qt_thrs[1]) {
                     // modified by Laura, Apirl 13, 2011
-		    System.out.println(/*"The quintile score " + */((String)spks.get(j)) + /*" is: "*/ " : " + 1);// + " --- actual score: " + di);
-		    qscs.put(id_spk, 1);
-		}
-	    }
-	} else {
-	    for (int j = 0; j < dis.size(); j++) {
-		double di = ((Double)dis.get(j)).doubleValue();
-		String spk = ((String)spks.get(j));
-		int index = spks_.indexOf(spk);
-		String id_spk = index + "_" + spk;
-		if (qt_thrs[0] == qt_thrs[1] &&
-		    qt_thrs[1] == qt_thrs[2] &&
-		    di == qt_thrs[0]) {
+                    System.out.println(/*
+                             * "The quintile score " +
+                             */((String) spks.get(j)) + /*
+                             * " is: "
+                             */ " : " + 1);// + " --- actual score: " + di);
+                    qscs.put(id_spk, 1);
+                }
+            }
+        } else {
+            for (int j = 0; j < dis.size(); j++) {
+                double di = ((Double) dis.get(j)).doubleValue();
+                String spk = ((String) spks.get(j));
+                int index = spks_.indexOf(spk);
+                String id_spk = index + "_" + spk;
+                if (qt_thrs[0] == qt_thrs[1]
+                        && qt_thrs[1] == qt_thrs[2]
+                        && di == qt_thrs[0]) {
                     // modified by Laura, Apirl 13, 2011
-		    System.out.println(/*"The quintile score of " + */((String)spks.get(j)) + /*" is: "*/" : " + 4);// + " --- actual score: " + di);
-		    qscs.put(id_spk, 4);
-		}
-		else if (di > qt_thrs[0] &&
-			 di > 0) {
+                    System.out.println(/*
+                             * "The quintile score of " +
+                             */((String) spks.get(j)) + /*
+                             * " is: "
+                             */ " : " + 4);// + " --- actual score: " + di);
+                    qscs.put(id_spk, 4);
+                } else if (di > qt_thrs[0]
+                        && di > 0) {
                     // modified by Laura, Apirl 13, 2011
-		    System.out.println(/*"The quintile score of " + */((String)spks.get(j)) + /*" is: "*/" : " + 5);// + " --- actual score: " + di);
-		    qscs.put(id_spk, 5);
-		} else if (di <= qt_thrs[0] &&
-			   di > qt_thrs[1] &&
-			   di > 0) {
+                    System.out.println(/*
+                             * "The quintile score of " +
+                             */((String) spks.get(j)) + /*
+                             * " is: "
+                             */ " : " + 5);// + " --- actual score: " + di);
+                    qscs.put(id_spk, 5);
+                } else if (di <= qt_thrs[0]
+                        && di > qt_thrs[1]
+                        && di > 0) {
                     // modified by Laura, Apirl 13, 2011
-		    System.out.println(/*"The quintile score " + */((String)spks.get(j)) + /*" is: "*/" : " + 4);// + " --- actual score: " + di);
-		    qscs.put(id_spk, 4);
-		} else if (di <= qt_thrs[1] &&
-		       di > qt_thrs[2] &&
-			   di > 0) {
+                    System.out.println(/*
+                             * "The quintile score " +
+                             */((String) spks.get(j)) + /*
+                             * " is: "
+                             */ " : " + 4);// + " --- actual score: " + di);
+                    qscs.put(id_spk, 4);
+                } else if (di <= qt_thrs[1]
+                        && di > qt_thrs[2]
+                        && di > 0) {
                     // modified by Laura, Apirl 13, 2011
-		    System.out.println(/*"The quintile score " + */((String)spks.get(j)) + /*" is: "*/" : " + 3);// + " --- actual score: " + di);
-		    qscs.put(id_spk, 3);
-		} else if (di <= qt_thrs[2] &&
-			   di > qt_thrs[3] &&
-			   di > 0) {
+                    System.out.println(/*
+                             * "The quintile score " +
+                             */((String) spks.get(j)) + /*
+                             * " is: "
+                             */ " : " + 3);// + " --- actual score: " + di);
+                    qscs.put(id_spk, 3);
+                } else if (di <= qt_thrs[2]
+                        && di > qt_thrs[3]
+                        && di > 0) {
                     // modified by Laura, Apirl 13, 2011
-		    System.out.println(/*"The quintile score " + */((String)spks.get(j)) + /*" is: "*/" : " + 2);// + " --- actual score: " + di);
-		    qscs.put(id_spk, 2);
-		} else if (di <= qt_thrs[3]) {
+                    System.out.println(/*
+                             * "The quintile score " +
+                             */((String) spks.get(j)) + /*
+                             * " is: "
+                             */ " : " + 2);// + " --- actual score: " + di);
+                    qscs.put(id_spk, 2);
+                } else if (di <= qt_thrs[3]) {
                     // modified by Laura, Apirl 13, 2011
-		    System.out.println(/*"The quintile score " + */((String)spks.get(j)) + /*" is: "*/" : " + 1);// + " --- actual score: " + di);
-		    qscs.put(id_spk, 1);
-		}
-	    }
-	}
-	/*
-	if (ind_type.equals("Merged")) {
-	    HashMap final_qscs = new HashMap();
-	    if (ass_type.equals("TPC")) {
-		for (int j = 0; j < dis.size(); j++) {
-		    double di = ((Double)dis.get(j)).doubleValue();
-		    String spknm = ((Speaker)spks.get(j)).getName();
-		    int index = spks_.indexOf(spknm);
-		    String id_spk = index + "_" + spknm;
-		    Speaker spk = (Speaker)spks.get(j);
-		    StringBuffer evidence = new StringBuffer();
-		    evidence.append("Participant " + spk.getName() + " introduces " + spk.getTC().getLTI() * 100 + "% of LTI Index, ");
-		    evidence.append(spk.getTC().getSMT() * 100 + "% of SMT Index, ");
-		    evidence.append(spk.getTC().getCS() * 100 + "% of Cite Score, ");
-		    evidence.append(" and has " + spk.getTC().getTL() + " TL Index.");
-		    ArrayList val_evi = new ArrayList();
-		    val_evi.add(qscs.get(id_spk));
-		    val_evi.add(evidence.toString());
-		    final_qscs.put(id_spk, val_evi);
-		}
-		prxmlp_.setTopicControl(final_qscs);
-	    } else {
-		for (int j = 0; j < dis.size(); j++) {
-		    double di = ((Double)dis.get(j)).doubleValue();
-		    String spknm = ((Speaker)spks.get(j)).getName();
-		    int index = spks_.indexOf(spknm);
-		    String id_spk = index + "_" + spknm;
-		    Speaker spk = (Speaker)spks.get(j);
-		    StringBuffer evidence = new StringBuffer();
-		    evidence.append("Participant " + spk.getName() + " introduces " + spk.getInv().getNPI() * 100 + "% of NPI Index, ");
-		    evidence.append(spk.getInv().getTI() * 100 + "% of TI Index, ");
-		    evidence.append(spk.getInv().getTCI() * 100 + "% of TCI Index, ");
-		    evidence.append(spk.getInv().getASMI() * 100 + "% of ASM Index, and");
-		    evidence.append(spk.getInv().getALLOTP() * 100 + "% of ALLOTP Index. ");
-		    ArrayList val_evi = new ArrayList();
-		    val_evi.add(qscs.get(id_spk));
-		    val_evi.add(evidence.toString());
-		    final_qscs.put(id_spk, val_evi);
-		}
-		prxmlp_.setInvolvementClaim(final_qscs);
-	    }
-	}
-	*/
+                    System.out.println(/*
+                             * "The quintile score " +
+                             */((String) spks.get(j)) + /*
+                             * " is: "
+                             */ " : " + 1);// + " --- actual score: " + di);
+                    qscs.put(id_spk, 1);
+                }
+            }
+        }
+        /*
+         * if (ind_type.equals("Merged")) { HashMap final_qscs = new HashMap();
+         * if (ass_type.equals("TPC")) { for (int j = 0; j < dis.size(); j++) {
+         * double di = ((Double)dis.get(j)).doubleValue(); String spknm =
+         * ((Speaker)spks.get(j)).getName(); int index = spks_.indexOf(spknm);
+         * String id_spk = index + "_" + spknm; Speaker spk =
+         * (Speaker)spks.get(j); StringBuffer evidence = new StringBuffer();
+         * evidence.append("Participant " + spk.getName() + " introduces " +
+         * spk.getTC().getLTI() * 100 + "% of LTI Index, ");
+         * evidence.append(spk.getTC().getSMT() * 100 + "% of SMT Index, ");
+         * evidence.append(spk.getTC().getCS() * 100 + "% of Cite Score, ");
+         * evidence.append(" and has " + spk.getTC().getTL() + " TL Index.");
+         * ArrayList val_evi = new ArrayList(); val_evi.add(qscs.get(id_spk));
+         * val_evi.add(evidence.toString()); final_qscs.put(id_spk, val_evi); }
+         * prxmlp_.setTopicControl(final_qscs); } else { for (int j = 0; j <
+         * dis.size(); j++) { double di = ((Double)dis.get(j)).doubleValue();
+         * String spknm = ((Speaker)spks.get(j)).getName(); int index =
+         * spks_.indexOf(spknm); String id_spk = index + "_" + spknm; Speaker
+         * spk = (Speaker)spks.get(j); StringBuffer evidence = new
+         * StringBuffer(); evidence.append("Participant " + spk.getName() + "
+         * introduces " + spk.getInv().getNPI() * 100 + "% of NPI Index, ");
+         * evidence.append(spk.getInv().getTI() * 100 + "% of TI Index, ");
+         * evidence.append(spk.getInv().getTCI() * 100 + "% of TCI Index, ");
+         * evidence.append(spk.getInv().getASMI() * 100 + "% of ASM Index,
+         * and"); evidence.append(spk.getInv().getALLOTP() * 100 + "% of ALLOTP
+         * Index. "); ArrayList val_evi = new ArrayList();
+         * val_evi.add(qscs.get(id_spk)); val_evi.add(evidence.toString());
+         * final_qscs.put(id_spk, val_evi); }
+         * prxmlp_.setInvolvementClaim(final_qscs); } }
+         */
     }
 
     public void calQuintile(ArrayList dis, ArrayList spks, String ass_type, String ind_type, ArrayList<Integer> ranks) {
-	double[] dis1 = new double[dis.size()];
-	for (int j = 0; j < dis.size(); j++) {
-	    dis1[j] = ((Double)dis.get(j)).doubleValue();
-	}
-	double[] qt_thrs = Util.genQTThrs(dis1);
-	HashMap qscs = new HashMap();
-	//System.out.println("\n=====================================\n");
-	boolean same_thrs = true;
-	for (int j = 1; j < qt_thrs.length; j++) {
-	    if (qt_thrs[j] != qt_thrs[j - 1]) {
-		same_thrs = false;
-		break;
-	    }
-	}
-	ArrayList out_spks = new ArrayList();
-	ArrayList out_qts = new ArrayList();
-	ArrayList out_acts = new ArrayList();
-	ArrayList out_actcs = new ArrayList(); //actual counts
-	if (same_thrs) {
-	    for (int j = 0; j < dis.size(); j++) {
-		double di = ((Double)dis.get(j)).doubleValue();
-		String spk = ((Speaker)spks.get(j)).getName();
-		int index = spks_.indexOf(spk);
-		String id_spk = index + "_" + spk;
-		//System.out.println("ass_type: " + ass_type + " --- ind_type: " + ind_type);
-		if (ass_type.equals("TPC") &&
-		    ind_type.equals("Merged")) {
-		    System.out.println("set tpc cs rank on " + ((Speaker)spks.get(j)).getName() + " with " + (j + 1));
-		    ((Speaker)spks.get(j)).setTPCRank(ranks.get(j).intValue());
-		} else if (ass_type.equals("INV") &&
-			   ind_type.equals("Merged")) {
-		    ((Speaker)spks.get(j)).setINVRank(ranks.get(j).intValue());
-		}
-		if (di == qt_thrs[0]) {
-		    if (ass_type.equals("TPC")) {
-			((Speaker)spks.get(j)).setTpQScore(3, ind_type);
+        double[] dis1 = new double[dis.size()];
+        for (int j = 0; j < dis.size(); j++) {
+            dis1[j] = ((Double) dis.get(j)).doubleValue();
+        }
+        double[] qt_thrs = Util.genQTThrs(dis1);
+        HashMap qscs = new HashMap();
+        //System.out.println("\n=====================================\n");
+        boolean same_thrs = true;
+        for (int j = 1; j < qt_thrs.length; j++) {
+            if (qt_thrs[j] != qt_thrs[j - 1]) {
+                same_thrs = false;
+                break;
+            }
+        }
+        ArrayList out_spks = new ArrayList();
+        ArrayList out_qts = new ArrayList();
+        ArrayList out_acts = new ArrayList();
+        ArrayList out_actcs = new ArrayList(); //actual counts
+        //System.out.println("same_thrs: " + same_thrs);
+        if (same_thrs) {
+            for (int j = 0; j < dis.size(); j++) {
+                double di = ((Double) dis.get(j)).doubleValue();
+                String spk = ((Speaker) spks.get(j)).getName();
+                int index = spks_.indexOf(spk);
+                String id_spk = index + "_" + spk;
+                System.out.println("ass_type: " + ass_type + " --- ind_type: " + ind_type);
+                if (ass_type.equals("TPC")
+                        && ind_type.equals("Merged")) {
+                    System.out.println("set tpc cs rank on " + ((Speaker) spks.get(j)).getName() + " with " + (j + 1));
+                    ((Speaker) spks.get(j)).setTPCRank(ranks.get(j).intValue());
+                } else if (ass_type.equals("INV")
+                        && ind_type.equals("Merged")) {
+                    ((Speaker) spks.get(j)).setINVRank(ranks.get(j).intValue());
+                }
+                if (di == qt_thrs[0]) {
+                    if (ass_type.equals("TPC")) {
+                        ((Speaker) spks.get(j)).setTpQScore(3, ind_type);
 
-		    } else if (ass_type.equals("INV")) {
-			((Speaker)spks.get(j)).setInvQScore(3, ind_type);
-		    }
+                    } else if (ass_type.equals("INV")) {
+                        ((Speaker) spks.get(j)).setInvQScore(3, ind_type);
+                    }
                     // modified by Laura, Apirl 13, 2011
-		    System.out.println(/*"The quintile score of " + */((Speaker)spks.get(j)).getName() + " : " /*+ 3 + " --- actual score: "*/ + di);
-		    //System.out.println("The actual count of
-		    out_spks.add(((Speaker)spks.get(j)).getName());
-		    out_qts.add(3);
-		    out_acts.add(di);
-		    out_actcs.add(((Speaker)spks.get(j)).sizeOfILTs());
-		    qscs.put(id_spk, 3);
-		} else if (di > qt_thrs[0]) {
-		    if (ass_type.equals("TPC")) {
-			((Speaker)spks.get(j)).setTpQScore(5, ind_type);
-		    } else if (ass_type.equals("INV")) {
-			((Speaker)spks.get(j)).setInvQScore(5, ind_type);
-		    }
+                    System.out.println(/*
+                             * "The quintile score of " +
+                             */((Speaker) spks.get(j)).getName() + " : " /*
+                             * + 3 + " --- actual score: "
+                             */ + di);
+                    //System.out.println("The actual count of
+                    out_spks.add(((Speaker) spks.get(j)).getName());
+                    out_qts.add(3);
+                    out_acts.add(di);
+                    out_actcs.add(((Speaker) spks.get(j)).sizeOfILTs());
+                    qscs.put(id_spk, 3);
+                } else if (di > qt_thrs[0]) {
+                    if (ass_type.equals("TPC")) {
+                        ((Speaker) spks.get(j)).setTpQScore(5, ind_type);
+                    } else if (ass_type.equals("INV")) {
+                        ((Speaker) spks.get(j)).setInvQScore(5, ind_type);
+                    }
                     // modified by Laura, Apirl 13, 2011
-		    System.out.println(/*"The quintile score " + */((Speaker)spks.get(j)).getName() + " : " /*+ 5 + " --- actual score: " */+ di);
-		    out_spks.add(((Speaker)spks.get(j)).getName());
-		    out_qts.add(5);
-		    out_acts.add(di);
-		    out_actcs.add(((Speaker)spks.get(j)).sizeOfILTs());
-		    qscs.put(id_spk, 5);
-		} else if (di < qt_thrs[1]) {
-		    if (ass_type.equals("TPC")) {
-			((Speaker)spks.get(j)).setTpQScore(1, ind_type);
-		    } else if (ass_type.equals("INV")) {
-			((Speaker)spks.get(j)).setInvQScore(1, ind_type);
-		    }
+                    System.out.println(/*
+                             * "The quintile score " +
+                             */((Speaker) spks.get(j)).getName() + " : " /*
+                             * + 5 + " --- actual score: "
+                             */ + di);
+                    out_spks.add(((Speaker) spks.get(j)).getName());
+                    out_qts.add(5);
+                    out_acts.add(di);
+                    out_actcs.add(((Speaker) spks.get(j)).sizeOfILTs());
+                    qscs.put(id_spk, 5);
+                } else if (di < qt_thrs[1]) {
+                    if (ass_type.equals("TPC")) {
+                        ((Speaker) spks.get(j)).setTpQScore(1, ind_type);
+                    } else if (ass_type.equals("INV")) {
+                        ((Speaker) spks.get(j)).setInvQScore(1, ind_type);
+                    }
                     // modified by Laura, Apirl 13, 2011
-		    System.out.println(/*"The quintile score " + */((Speaker)spks.get(j)).getName() + " : "/* + 1 + " --- actual score: " */+ di);
-		    out_spks.add(((Speaker)spks.get(j)).getName());
-		    out_qts.add(1);
-		    out_acts.add(di);
-		    out_actcs.add(((Speaker)spks.get(j)).sizeOfILTs());
-		    qscs.put(id_spk, 1);
-		}
-	    }
-	} else {
-	    for (int j = 0; j < dis.size(); j++) {
-		double di = ((Double)dis.get(j)).doubleValue();
-		String spk = ((Speaker)spks.get(j)).getName();
-		int index = spks_.indexOf(spk);
-		String id_spk = index + "_" + spk;
-		if (ass_type.equals("TPC") &&
-		    ind_type.equals("Merged")) {
-		    //System.out.println("set tpc cs rank on " + ((Speaker)spks.get(j)).getName() + " with " + (j + 1));
-		    ((Speaker)spks.get(j)).setTPCRank(ranks.get(j).intValue());
-		} else if (ass_type.equals("INV") &&
-			   ind_type.equals("Merged")) {
-		    ((Speaker)spks.get(j)).setINVRank(ranks.get(j).intValue());
-		}
-		if (qt_thrs[0] == qt_thrs[1] &&
-		    qt_thrs[1] == qt_thrs[2] &&
-		    di == qt_thrs[0]) {
-		    if (ass_type.equals("TPC")) {
-			((Speaker)spks.get(j)).setTpQScore(4, ind_type);
-		    } else if (ass_type.equals("INV")) {
-			((Speaker)spks.get(j)).setInvQScore(4, ind_type);
-		    }
+                    System.out.println(/*
+                             * "The quintile score " +
+                             */((Speaker) spks.get(j)).getName() + " : "/*
+                             * + 1 + " --- actual score: "
+                             */ + di);
+                    out_spks.add(((Speaker) spks.get(j)).getName());
+                    out_qts.add(1);
+                    out_acts.add(di);
+                    out_actcs.add(((Speaker) spks.get(j)).sizeOfILTs());
+                    qscs.put(id_spk, 1);
+                }
+            }
+        } else {
+            //System.out.println("dis: " + dis);
+            for (int j = 0; j < dis.size(); j++) {
+                double di = ((Double) dis.get(j)).doubleValue();
+                String spk = ((Speaker) spks.get(j)).getName();
+                int index = spks_.indexOf(spk);
+                String id_spk = index + "_" + spk;
+                if (ass_type.equals("TPC")
+                        && ind_type.equals("Merged")) {
+                    //System.out.println("set tpc cs rank on " + ((Speaker)spks.get(j)).getName() + " with " + (j + 1));
+                    ((Speaker) spks.get(j)).setTPCRank(ranks.get(j).intValue());
+                } else if (ass_type.equals("INV")
+                        && ind_type.equals("Merged")) {
+                    ((Speaker) spks.get(j)).setINVRank(ranks.get(j).intValue());
+                }
+                if (qt_thrs[0] == qt_thrs[1]
+                        && qt_thrs[1] == qt_thrs[2]
+                        && di == qt_thrs[0]) {
+                    if (ass_type.equals("TPC")) {
+                        ((Speaker) spks.get(j)).setTpQScore(4, ind_type);
+                    } else if (ass_type.equals("INV")) {
+                        ((Speaker) spks.get(j)).setInvQScore(4, ind_type);
+                    }
                     // modified by Laura, Apirl 13, 2011
-		    System.out.println(/*"The quintile score of " + */((Speaker)spks.get(j)).getName() + " : "/* + 4 + " --- actual score: " */+ di);
-		    out_spks.add(((Speaker)spks.get(j)).getName());
-		    out_qts.add(4);
-		    out_acts.add(di);
-		    out_actcs.add(((Speaker)spks.get(j)).sizeOfILTs());
-		    qscs.put(id_spk, 4);
-		}
-		else if (di > qt_thrs[0] &&
-			 di > 0) {
-		    if (ass_type.equals("TPC")) {
-			((Speaker)spks.get(j)).setTpQScore(5, ind_type);
-		    } else if (ass_type.equals("INV")) {
-			((Speaker)spks.get(j)).setInvQScore(5, ind_type);
-		    }
-		    out_spks.add(((Speaker)spks.get(j)).getName());
-		    out_qts.add(5);
-		    out_acts.add(di);
-		    out_actcs.add(((Speaker)spks.get(j)).sizeOfILTs());
+                    System.out.println(/*
+                             * "The quintile score of " +
+                             */((Speaker) spks.get(j)).getName() + " : "/*
+                             * + 4 + " --- actual score: "
+                             */ + di);
+                    out_spks.add(((Speaker) spks.get(j)).getName());
+                    out_qts.add(4);
+                    out_acts.add(di);
+                    out_actcs.add(((Speaker) spks.get(j)).sizeOfILTs());
+                    qscs.put(id_spk, 4);
+                } else if (di > qt_thrs[0]
+                        && di > 0) {
+                    if (ass_type.equals("TPC")) {
+                        ((Speaker) spks.get(j)).setTpQScore(5, ind_type);
+                    } else if (ass_type.equals("INV")) {
+                        ((Speaker) spks.get(j)).setInvQScore(5, ind_type);
+                    }
+                    out_spks.add(((Speaker) spks.get(j)).getName());
+                    out_qts.add(5);
+                    out_acts.add(di);
+                    out_actcs.add(((Speaker) spks.get(j)).sizeOfILTs());
                     // modified by Laura, Apirl 13, 2011
-		    System.out.println(/*"The quintile score of " + */((Speaker)spks.get(j)).getName() + " : "/* + 5 + " --- actual score: "*/ + di);
-		    qscs.put(id_spk, 5);
-		} else if (di <= qt_thrs[0] &&
-			   di > qt_thrs[1] &&
-			   di > 0) {
-		    if (ass_type.equals("TPC")) {
-			((Speaker)spks.get(j)).setTpQScore(4, ind_type);
-		    } else if (ass_type.equals("INV")) {
-			((Speaker)spks.get(j)).setInvQScore(4, ind_type);
-		    }
+                    System.out.println(/*
+                             * "The quintile score of " +
+                             */((Speaker) spks.get(j)).getName() + " : "/*
+                             * + 5 + " --- actual score: "
+                             */ + di);
+                    qscs.put(id_spk, 5);
+                } else if (di <= qt_thrs[0]
+                        && di > qt_thrs[1]
+                        && di > 0) {
+                    if (ass_type.equals("TPC")) {
+                        ((Speaker) spks.get(j)).setTpQScore(4, ind_type);
+                    } else if (ass_type.equals("INV")) {
+                        ((Speaker) spks.get(j)).setInvQScore(4, ind_type);
+                    }
                     // modified by Laura, Apirl 13, 2011
-		    System.out.println(/*"The quintile score " + */((Speaker)spks.get(j)).getName() + " : "/* + 4 + " --- actual score: " */+ di);
-		    out_spks.add(((Speaker)spks.get(j)).getName());
-		    out_qts.add(4);
-		    out_acts.add(di);
-		    out_actcs.add(((Speaker)spks.get(j)).sizeOfILTs());
-		    qscs.put(id_spk, 4);
-		} else if (di <= qt_thrs[1] &&
-		       di > qt_thrs[2] &&
-			   di > 0) {
-		    if (ass_type.equals("TPC")) {
-			((Speaker)spks.get(j)).setTpQScore(3, ind_type);
-		    } else if (ass_type.equals("INV")) {
-			((Speaker)spks.get(j)).setInvQScore(3, ind_type);
-		    }
+                    System.out.println(/*
+                             * "The quintile score " +
+                             */((Speaker) spks.get(j)).getName() + " : "/*
+                             * + 4 + " --- actual score: "
+                             */ + di);
+                    out_spks.add(((Speaker) spks.get(j)).getName());
+                    out_qts.add(4);
+                    out_acts.add(di);
+                    out_actcs.add(((Speaker) spks.get(j)).sizeOfILTs());
+                    qscs.put(id_spk, 4);
+                } else if (di <= qt_thrs[1]
+                        && di > qt_thrs[2]
+                        && di > 0) {
+                    if (ass_type.equals("TPC")) {
+                        ((Speaker) spks.get(j)).setTpQScore(3, ind_type);
+                    } else if (ass_type.equals("INV")) {
+                        ((Speaker) spks.get(j)).setInvQScore(3, ind_type);
+                    }
                     // modified by Laura, Apirl 13, 2011
-		    System.out.println(/*"The quintile score " + */((Speaker)spks.get(j)).getName() + " : "/* + 3 + " --- actual score: " */+ di);
-		    out_spks.add(((Speaker)spks.get(j)).getName());
-		    out_qts.add(3);
-		    out_acts.add(di);
-		    out_actcs.add(((Speaker)spks.get(j)).sizeOfILTs());
-		    qscs.put(id_spk, 3);
-		} else if (di <= qt_thrs[2] &&
-			   di > qt_thrs[3] &&
-			   di > 0) {
-		    if (ass_type.equals("TPC")) {
-			((Speaker)spks.get(j)).setTpQScore(2, ind_type);
-		    } else if (ass_type.equals("INV")) {
-			((Speaker)spks.get(j)).setInvQScore(2, ind_type);
-		    }
+                    System.out.println(/*
+                             * "The quintile score " +
+                             */((Speaker) spks.get(j)).getName() + " : "/*
+                             * + 3 + " --- actual score: "
+                             */ + di);
+                    out_spks.add(((Speaker) spks.get(j)).getName());
+                    out_qts.add(3);
+                    out_acts.add(di);
+                    out_actcs.add(((Speaker) spks.get(j)).sizeOfILTs());
+                    qscs.put(id_spk, 3);
+                } else if (di <= qt_thrs[2]
+                        && di > qt_thrs[3]
+                        && di > 0) {
+                    if (ass_type.equals("TPC")) {
+                        ((Speaker) spks.get(j)).setTpQScore(2, ind_type);
+                    } else if (ass_type.equals("INV")) {
+                        ((Speaker) spks.get(j)).setInvQScore(2, ind_type);
+                    }
                     // modified by Laura, Apirl 13, 2011
-		    System.out.println(/*"The quintile score " + */((Speaker)spks.get(j)).getName() + " : " /*+ 2 + " --- actual score: "*/ + di);
-		    out_spks.add(((Speaker)spks.get(j)).getName());
-		    out_qts.add(2);
-		    out_acts.add(di);
-		    out_actcs.add(((Speaker)spks.get(j)).sizeOfILTs());
-		    qscs.put(id_spk, 2);
-		} else if (di <= qt_thrs[3]) {
-		    if (ass_type.equals("TPC")) {
-			((Speaker)spks.get(j)).setTpQScore(1, ind_type);
-		} else if (ass_type.equals("INV")) {
-			((Speaker)spks.get(j)).setInvQScore(1, ind_type);
-		    }
+                    System.out.println(/*
+                             * "The quintile score " +
+                             */((Speaker) spks.get(j)).getName() + " : " /*
+                             * + 2 + " --- actual score: "
+                             */ + di);
+                    out_spks.add(((Speaker) spks.get(j)).getName());
+                    out_qts.add(2);
+                    out_acts.add(di);
+                    out_actcs.add(((Speaker) spks.get(j)).sizeOfILTs());
+                    qscs.put(id_spk, 2);
+                } else if (di <= qt_thrs[3]) {
+                    if (ass_type.equals("TPC")) {
+                        ((Speaker) spks.get(j)).setTpQScore(1, ind_type);
+                    } else if (ass_type.equals("INV")) {
+                        ((Speaker) spks.get(j)).setInvQScore(1, ind_type);
+                    }
                     // modified by Laura, Apirl 13, 2011
-		    System.out.println(/*"The quintile score " + */((Speaker)spks.get(j)).getName() + " : "/* + 1 + " --- actual score: " */+ di);
-		    out_spks.add(((Speaker)spks.get(j)).getName());
-		    out_qts.add(1);
-		    out_acts.add(di);
-		    out_actcs.add(((Speaker)spks.get(j)).sizeOfILTs());
-		    qscs.put(id_spk, 1);
-		}
-	    }
-	}
+                    System.out.println(/*
+                             * "The quintile score " +
+                             */((Speaker) spks.get(j)).getName() + " : "/*
+                             * + 1 + " --- actual score: "
+                             */ + di);
+                    out_spks.add(((Speaker) spks.get(j)).getName());
+                    out_qts.add(1);
+                    out_acts.add(di);
+                    out_actcs.add(((Speaker) spks.get(j)).sizeOfILTs());
+                    qscs.put(id_spk, 1);
+                }
+            }
+        }
 
-	if (ind_type.equals("Merged")) {
-	    HashMap final_qscs = new HashMap();
-	    if (ass_type.equals("TPC")) {
-		for (int j = 0; j < dis.size(); j++) {
-		    double di = ((Double)dis.get(j)).doubleValue();
-		    String spknm = ((Speaker)spks.get(j)).getName();
-		    int index = spks_.indexOf(spknm);
-		    String id_spk = index + "_" + spknm;
-		    Speaker spk = (Speaker)spks.get(j);
-		    StringBuffer evidence = new StringBuffer();
-		    evidence.append("Participant " + spk.getName() + " introduces " + spk.getTC().getLTI() * 100 + "% of LTI Index, ");
-		    evidence.append(spk.getTC().getSMT() * 100 + "% of SMT Index, ");
-		    evidence.append(spk.getTC().getCS() * 100 + "% of Cite Score, ");
-		    evidence.append(" and has " + spk.getTC().getTL() + " TL Index.");
-		    ArrayList val_evi = new ArrayList();
-		    val_evi.add(qscs.get(id_spk));
-		    val_evi.add(evidence.toString());
-		    final_qscs.put(id_spk, val_evi);
-		}
-		//prxmlp_.setTopicControl(final_qscs);
-	    } else {
-		for (int j = 0; j < dis.size(); j++) {
-		    double di = ((Double)dis.get(j)).doubleValue();
-		    String spknm = ((Speaker)spks.get(j)).getName();
-		    int index = spks_.indexOf(spknm);
-		    String id_spk = index + "_" + spknm;
-		    Speaker spk = (Speaker)spks.get(j);
-		    StringBuffer evidence = new StringBuffer();
-		    evidence.append("Participant " + spk.getName() + " introduces " + spk.getInv().getNPI() * 100 + "% of NPI Index, ");
-		    evidence.append(spk.getInv().getTI() * 100 + "% of TI Index, ");
-		    evidence.append(spk.getInv().getTCI() * 100 + "% of TCI Index, ");
-		    evidence.append(spk.getInv().getASMI() * 100 + "% of ASM Index, and");
-		    evidence.append(spk.getInv().getALLOTP() * 100 + "% of ALLOTP Index. ");
-		    ArrayList val_evi = new ArrayList();
-		    val_evi.add(qscs.get(id_spk));
-		    val_evi.add(evidence.toString());
-		    final_qscs.put(id_spk, val_evi);
-		}
-		//prxmlp_.setInvolvementClaim(final_qscs);
-	    }
-	}
-	/*
-
-	for (int i = 0; i < out_spks.size(); i++) {
-	    System.out.print("," + out_spks.get(i));
-	}
-	System.out.println();
-	for (int i = 0; i < out_qts.size(); i++) {
-	    System.out.print(", " + out_qts.get(i));
-	}
-	System.out.println();
-	for (int i = 0; i < out_actcs.size(); i++) {
-	    System.out.print(", " + out_actcs.get(i));
-	}
-	System.out.println();
-	*/
+        if (ind_type.equals("Merged")) {
+            HashMap final_qscs = new HashMap();
+            if (ass_type.equals("TPC")) {
+                for (int j = 0; j < dis.size(); j++) {
+                    double di = ((Double) dis.get(j)).doubleValue();
+                    String spknm = ((Speaker) spks.get(j)).getName();
+                    int index = spks_.indexOf(spknm);
+                    String id_spk = index + "_" + spknm;
+                    Speaker spk = (Speaker) spks.get(j);
+                    StringBuffer evidence = new StringBuffer();
+                    evidence.append("Participant " + spk.getName() + " introduces " + spk.getTC().getLTI() * 100 + "% of LTI Index, ");
+                    evidence.append(spk.getTC().getSMT() * 100 + "% of SMT Index, ");
+                    evidence.append(spk.getTC().getCS() * 100 + "% of Cite Score, ");
+                    evidence.append(" and has " + spk.getTC().getTL() + " TL Index.");
+                    ArrayList val_evi = new ArrayList();
+                    val_evi.add(qscs.get(id_spk));
+                    val_evi.add(evidence.toString());
+                    final_qscs.put(id_spk, val_evi);
+                }
+                //prxmlp_.setTopicControl(final_qscs);
+            } else {
+                for (int j = 0; j < dis.size(); j++) {
+                    double di = ((Double) dis.get(j)).doubleValue();
+                    String spknm = ((Speaker) spks.get(j)).getName();
+                    int index = spks_.indexOf(spknm);
+                    String id_spk = index + "_" + spknm;
+                    Speaker spk = (Speaker) spks.get(j);
+                    StringBuffer evidence = new StringBuffer();
+                    evidence.append("Participant " + spk.getName() + " introduces " + spk.getInv().getNPI() * 100 + "% of NPI Index, ");
+                    evidence.append(spk.getInv().getTI() * 100 + "% of TI Index, ");
+                    evidence.append(spk.getInv().getTCI() * 100 + "% of TCI Index, ");
+                    evidence.append(spk.getInv().getASMI() * 100 + "% of ASM Index, and");
+                    evidence.append(spk.getInv().getALLOTP() * 100 + "% of ALLOTP Index. ");
+                    ArrayList val_evi = new ArrayList();
+                    val_evi.add(qscs.get(id_spk));
+                    val_evi.add(evidence.toString());
+                    final_qscs.put(id_spk, val_evi);
+                }
+                //prxmlp_.setInvolvementClaim(final_qscs);
+            }
+        }
+        /*
+         *
+         * for (int i = 0; i < out_spks.size(); i++) { System.out.print("," +
+         * out_spks.get(i)); } System.out.println(); for (int i = 0; i <
+         * out_qts.size(); i++) { System.out.print(", " + out_qts.get(i)); }
+         * System.out.println(); for (int i = 0; i < out_actcs.size(); i++) {
+         * System.out.print(", " + out_actcs.get(i)); } System.out.println();
+         */
 
 
     }
 
     public void calTkCtl(int j) {
-	is_inv_ = false;
-	is_tskc_ = true;
-	//for (int j = 0; j < docs_utts_.size(); j++) {
-	//utts_ = (ArrayList)docs_utts_.get(j);
-	//System.out.println("\n\n$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$\nprocessing: " + doc_names_.get(j));
+        is_inv_ = false;
+        is_tskc_ = true;
+        //for (int j = 0; j < docs_utts_.size(); j++) {
+        //utts_ = (ArrayList)docs_utts_.get(j);
+        //System.out.println("\n\n$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$\nprocessing: " + doc_names_.get(j));
 	/*
-	parts_.clear();
-	PhraseCheck phr_ch = (PhraseCheck)phr_checks_.get(j);
-	XMLParse xp = xmlps_.get(j);
-	buildLocalTopicList(phr_ch, xp);
-	*/
-	tkc_ = new TaskControl(parts_);
-	tkc_.setUtterances(utts_);
-	tkc_.calTkC(prxmlp_, spks_, nls_);
-	//}
+         * parts_.clear(); PhraseCheck phr_ch = (PhraseCheck)phr_checks_.get(j);
+         * XMLParse xp = xmlps_.get(j); buildLocalTopicList(phr_ch, xp);
+         */
+        tkc_ = new TaskControl(parts_);
+        tkc_.setUtterances(utts_);
+        tkc_.calTkC(prxmlp_, spks_, nls_);
+        //}
     }
 
     public void calInv(int k) {
-	is_inv_ = true;
-	is_tskc_ = false;
-	//for (int k = 0; k < docs_utts_.size(); k++) {
-	//System.out.println("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$\nprocessing: " + (String)doc_names_.get(k));
-	//utts_ = (ArrayList)docs_utts_.get(k);
+        is_inv_ = true;
+        is_tskc_ = false;
+        //for (int k = 0; k < docs_utts_.size(); k++) {
+        //System.out.println("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$\nprocessing: " + (String)doc_names_.get(k));
+        //utts_ = (ArrayList)docs_utts_.get(k);
 	/*
-	parts_.clear();
-	*/
-	PhraseCheck phr_ch = (PhraseCheck)phr_checks_.get(k);
-	XMLParse xp = xmlps_.get(k);
-	if (Settings.getValue(Settings.PROCESS_TYPE).equals("annotated")) {
-	    //parts_.clear();
-	    //buildALocalTopicList(phr_ch, xp);
-	} else if (Settings.getValue(Settings.PROCESS_TYPE).equals("automated")) {
-	    //buildLocalTopicList(phr_ch, xp );
-	}
-	ArrayList keys = new ArrayList(parts_.keySet());
-	for (int i = 0; i < keys.size(); i++) {
-	    String key = (String)keys.get(i);
-	    Speaker spk = parts_.get(key);
-	    if (Settings.getValue(Settings.PROCESS_TYPE).equals("annotated")) {
-		spk.calAInv(lts_, utts_, nls1_, top10nouns_, spks_);
-	    } else if (Settings.getValue(Settings.PROCESS_TYPE).equals("automated")) {
-		spk.calInv(lts_, utts_, nls_, top10nouns_);
-	    }
-	    /*
-	      System.out.println("==========================================");
-	      System.out.println("speaker name: " + spk.getName());
-	      System.out.println(spk.getInv());
-	    */
-	}
-	keys = new ArrayList(parts_.keySet());
-	for (int i = 1; i < keys.size(); i++) {
-	    String key1 = (String)keys.get(i);
-	    Speaker spk1 = parts_.get(key1);
-	    for (int jj = 0; jj < i; jj++) {
-		String key2 = (String)keys.get(jj);
-		Speaker spk2 = parts_.get(key2);
-		if (spk1.getInv().getNPI() < spk2.getInv().getNPI()) {
-		    spk1.getInv().incNPIR();
-		}else {
-		    spk2.getInv().incNPIR();
-		}
-		if (spk1.getInv().getTI() < spk2.getInv().getTI()) {
-		    spk1.getInv().incTIR();
-		}else {
-		    spk2.getInv().incTIR();
-		}
-		if (spk1.getInv().getTCI() < spk2.getInv().getTCI()) {
-		    spk1.getInv().incTCIR();
-		}else {
-		    spk2.getInv().incTCIR();
-		}
-		if (spk1.getInv().getALLOTP() < spk2.getInv().getALLOTP()) {
-		    spk1.getInv().incALLOTPR();
-		}else {
-		    spk2.getInv().incALLOTPR();
-		}
-		if (spk1.getInv().getASMI() < spk2.getInv().getASMI()) {
-		    spk1.getInv().incASMIR();
-		}else {
-		    spk2.getInv().incASMIR();
-		}
-	    }
-	}
+         * parts_.clear();
+         */
+        PhraseCheck phr_ch = (PhraseCheck) phr_checks_.get(k);
+        XMLParse xp = xmlps_.get(k);
+        if (Settings.getValue(Settings.PROCESS_TYPE).equals("annotated")) {
+            //parts_.clear();
+            //buildALocalTopicList(phr_ch, xp);
+        } else if (Settings.getValue(Settings.PROCESS_TYPE).equals("automated")) {
+            //buildLocalTopicList(phr_ch, xp );
+        }
+        ArrayList keys = new ArrayList(parts_.keySet());
+        for (int i = 0; i < keys.size(); i++) {
+            String key = (String) keys.get(i);
+            Speaker spk = parts_.get(key);
+            if (Settings.getValue(Settings.PROCESS_TYPE).equals("annotated")) {
+                spk.calAInv(lts_, utts_, nls1_, top10nouns_, spks_);
+            } else if (Settings.getValue(Settings.PROCESS_TYPE).equals("automated")) {
+                spk.calInv(lts_, utts_, nls_, top10nouns_);
+            }
+            /*
+             * System.out.println("==========================================");
+             * System.out.println("speaker name: " + spk.getName());
+             * System.out.println(spk.getInv());
+             */
+        }
+        keys = new ArrayList(parts_.keySet());
+        for (int i = 1; i < keys.size(); i++) {
+            String key1 = (String) keys.get(i);
+            Speaker spk1 = parts_.get(key1);
+            for (int jj = 0; jj < i; jj++) {
+                String key2 = (String) keys.get(jj);
+                Speaker spk2 = parts_.get(key2);
+                if (spk1.getInv().getNPI() < spk2.getInv().getNPI()) {
+                    spk1.getInv().incNPIR();
+                } else {
+                    spk2.getInv().incNPIR();
+                }
+                if (spk1.getInv().getTI() < spk2.getInv().getTI()) {
+                    spk1.getInv().incTIR();
+                } else {
+                    spk2.getInv().incTIR();
+                }
+                if (spk1.getInv().getTCI() < spk2.getInv().getTCI()) {
+                    spk1.getInv().incTCIR();
+                } else {
+                    spk2.getInv().incTCIR();
+                }
+                if (spk1.getInv().getALLOTP() < spk2.getInv().getALLOTP()) {
+                    spk1.getInv().incALLOTPR();
+                } else {
+                    spk2.getInv().incALLOTPR();
+                }
+                if (spk1.getInv().getASMI() < spk2.getInv().getASMI()) {
+                    spk1.getInv().incASMIR();
+                } else {
+                    spk2.getInv().incASMIR();
+                }
+            }
+        }
 
-	//System.out.println("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%");
-	//process NPI quintile
-	ArrayList spks = new ArrayList();
-	ArrayList spks_NPI = new ArrayList();
-	for (int i = 0; i < keys.size(); i++) {
-	    String key1 = (String)keys.get(i);
-	    Speaker spk1 = parts_.get(key1);
-	    Double spk1_NPI = new Double(spk1.getInv().getNPI());
-	    boolean added = false;
-	    for (int j = 0; j < spks_NPI.size(); j++) {
-		Double spk2_NPI = (Double)spks_NPI.get(j);
-		if (spk1_NPI > spk2_NPI &&
-		    !(spk1.getName().startsWith("ilsp") ||
-		      spk1.getName().startsWith("samira") ||
-		      spk1.getName().startsWith("tomek"))) {
-		    spks.add(j, spk1);
-		    spks_NPI.add(j, spk1_NPI);
-		    added = true;
-		    break;
-		}
-	    }
-	    if (!added &&
-		!(spk1.getName().startsWith("ilsp") ||
-		  spk1.getName().startsWith("samira") ||
-		  spk1.getName().startsWith("tomek"))) {
-		spks.add(spk1);
-		spks_NPI.add(spk1_NPI);
-	    }
-	}
-	//System.out.println("\n++++++++++++++++++++++++++++++++\ncalculate Involvement - NPI quintile");
+        //System.out.println("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%");
+        //process NPI quintile
+        ArrayList spks = new ArrayList();
+        ArrayList spks_NPI = new ArrayList();
+        for (int i = 0; i < keys.size(); i++) {
+            String key1 = (String) keys.get(i);
+            Speaker spk1 = parts_.get(key1);
+            Double spk1_NPI = new Double(spk1.getInv().getNPI());
+            boolean added = false;
+            for (int j = 0; j < spks_NPI.size(); j++) {
+                Double spk2_NPI = (Double) spks_NPI.get(j);
+                if (spk1_NPI > spk2_NPI
+                        && !(spk1.getName().startsWith("ilsp")
+                        || spk1.getName().startsWith("samira")
+                        || spk1.getName().startsWith("tomek"))) {
+                    spks.add(j, spk1);
+                    spks_NPI.add(j, spk1_NPI);
+                    added = true;
+                    break;
+                }
+            }
+            if (!added
+                    && !(spk1.getName().startsWith("ilsp")
+                    || spk1.getName().startsWith("samira")
+                    || spk1.getName().startsWith("tomek"))) {
+                spks.add(spk1);
+                spks_NPI.add(spk1_NPI);
+            }
+        }
+        //System.out.println("\n++++++++++++++++++++++++++++++++\ncalculate Involvement - NPI quintile");
 	/*
-	System.out.print("NPI");
-	calQuintile(spks_NPI, spks, "INV", "NPI", null);
-	*/
-	//process TI quintile
-	spks = new ArrayList();
-	ArrayList spks_TI = new ArrayList();
-	for (int i = 0; i < keys.size(); i++) {
-	    String key1 = (String)keys.get(i);
-	    Speaker spk1 = parts_.get(key1);
-	    Double spk1_TI = new Double(spk1.getInv().getTI());
-	    boolean added = false;
-	    for (int j = 0; j < spks_TI.size(); j++) {
-		Double spk2_TI = (Double)spks_TI.get(j);
-		if (spk1_TI > spk2_TI &&
-		    !(spk1.getName().startsWith("ilsp") ||
-		      spk1.getName().startsWith("samira") ||
-		      spk1.getName().startsWith("tomek"))) {
-		    spks.add(j, spk1);
-		    spks_TI.add(j, spk1_TI);
-		    added = true;
-		    break;
-		}
-	    }
-	    if (!added &&
-		!(spk1.getName().startsWith("ilsp") ||
-		  spk1.getName().startsWith("samira") ||
-		  spk1.getName().startsWith("tomek"))) {
-		spks.add(spk1);
-		spks_TI.add(spk1_TI);
-	    }
-	}
-	//System.out.println("\n++++++++++++++++++++++++++++++++\ncalculate Involvement - TI quintile");
+         * System.out.print("NPI"); calQuintile(spks_NPI, spks, "INV", "NPI",
+         * null);
+         */
+        //process TI quintile
+        spks = new ArrayList();
+        ArrayList spks_TI = new ArrayList();
+        for (int i = 0; i < keys.size(); i++) {
+            String key1 = (String) keys.get(i);
+            Speaker spk1 = parts_.get(key1);
+            Double spk1_TI = new Double(spk1.getInv().getTI());
+            boolean added = false;
+            for (int j = 0; j < spks_TI.size(); j++) {
+                Double spk2_TI = (Double) spks_TI.get(j);
+                if (spk1_TI > spk2_TI
+                        && !(spk1.getName().startsWith("ilsp")
+                        || spk1.getName().startsWith("samira")
+                        || spk1.getName().startsWith("tomek"))) {
+                    spks.add(j, spk1);
+                    spks_TI.add(j, spk1_TI);
+                    added = true;
+                    break;
+                }
+            }
+            if (!added
+                    && !(spk1.getName().startsWith("ilsp")
+                    || spk1.getName().startsWith("samira")
+                    || spk1.getName().startsWith("tomek"))) {
+                spks.add(spk1);
+                spks_TI.add(spk1_TI);
+            }
+        }
+        //System.out.println("\n++++++++++++++++++++++++++++++++\ncalculate Involvement - TI quintile");
 	/*
-	System.out.print("TI");
-	calQuintile(spks_TI, spks, "INV", "TI", null);
-	*/
-	//process TCI quintile
-	spks = new ArrayList();
-	ArrayList spks_TCI = new ArrayList();
-	for (int i = 0; i < keys.size(); i++) {
-	    String key1 = (String)keys.get(i);
-	    Speaker spk1 = parts_.get(key1);
-	    Double spk1_TCI = new Double(spk1.getInv().getTCI());
-	    boolean added = false;
-	    for (int j = 0; j < spks_TCI.size(); j++) {
-		Double spk2_TCI = (Double)spks_TCI.get(j);
-		if (spk1_TCI > spk2_TCI &&
-		    !(spk1.getName().startsWith("ilsp") ||
-		      spk1.getName().startsWith("samira") ||
-		      spk1.getName().startsWith("tomek"))) {
-		    spks.add(j, spk1);
-		    spks_TCI.add(j, spk1_TCI);
-		    added = true;
-		    break;
-		}
-	    }
-	    if (!added &&
-		!(spk1.getName().startsWith("ilsp") ||
-		  spk1.getName().startsWith("samira") ||
-		  spk1.getName().startsWith("tomek"))) {
-		spks.add(spk1);
-		spks_TCI.add(spk1_TCI);
-	    }
-	}
-	//System.out.println("\n++++++++++++++++++++++++++++++++\ncalculate Involvement - TCI quintile: " + spks_TCI);
+         * System.out.print("TI"); calQuintile(spks_TI, spks, "INV", "TI",
+         * null);
+         */
+        //process TCI quintile
+        spks = new ArrayList();
+        ArrayList spks_TCI = new ArrayList();
+        for (int i = 0; i < keys.size(); i++) {
+            String key1 = (String) keys.get(i);
+            Speaker spk1 = parts_.get(key1);
+            Double spk1_TCI = new Double(spk1.getInv().getTCI());
+            boolean added = false;
+            for (int j = 0; j < spks_TCI.size(); j++) {
+                Double spk2_TCI = (Double) spks_TCI.get(j);
+                if (spk1_TCI > spk2_TCI
+                        && !(spk1.getName().startsWith("ilsp")
+                        || spk1.getName().startsWith("samira")
+                        || spk1.getName().startsWith("tomek"))) {
+                    spks.add(j, spk1);
+                    spks_TCI.add(j, spk1_TCI);
+                    added = true;
+                    break;
+                }
+            }
+            if (!added
+                    && !(spk1.getName().startsWith("ilsp")
+                    || spk1.getName().startsWith("samira")
+                    || spk1.getName().startsWith("tomek"))) {
+                spks.add(spk1);
+                spks_TCI.add(spk1_TCI);
+            }
+        }
+        //System.out.println("\n++++++++++++++++++++++++++++++++\ncalculate Involvement - TCI quintile: " + spks_TCI);
 	/*
-	System.out.print("TCI");
-	calQuintile(spks_TCI, spks, "INV", "TCI", null);
-	*/
-	//process ALLOTP quintile
-	spks = new ArrayList();
-	ArrayList spks_ALLOTP = new ArrayList();
-	for (int i = 0; i < keys.size(); i++) {
-	    String key1 = (String)keys.get(i);
-	    Speaker spk1 = parts_.get(key1);
-	    Double spk1_ALLOTP = new Double(spk1.getInv().getALLOTP());
-	    boolean added = false;
-	    for (int j = 0; j < spks_ALLOTP.size(); j++) {
-		Double spk2_ALLOTP = (Double)spks_ALLOTP.get(j);
-		if (spk1_ALLOTP > spk2_ALLOTP &&
-		    !(spk1.getName().startsWith("ilsp") ||
-		      spk1.getName().startsWith("samira") ||
-		      spk1.getName().startsWith("tomek"))) {
-		    spks.add(j, spk1);
-		    spks_ALLOTP.add(j, spk1_ALLOTP);
-		    added = true;
-		    break;
-		}
-	    }
-	    if (!added &&
-		!(spk1.getName().startsWith("ilsp") ||
-		  spk1.getName().startsWith("samira") ||
-		  spk1.getName().startsWith("tomek"))) {
-		spks.add(spk1);
-		spks_ALLOTP.add(spk1_ALLOTP);
-	    }
-	}
-	//System.out.println("\n++++++++++++++++++++++++++++++++\ncalculate Involvement - ALLOTP quintile");
+         * System.out.print("TCI"); calQuintile(spks_TCI, spks, "INV", "TCI",
+         * null);
+         */
+        //process ALLOTP quintile
+        spks = new ArrayList();
+        ArrayList spks_ALLOTP = new ArrayList();
+        for (int i = 0; i < keys.size(); i++) {
+            String key1 = (String) keys.get(i);
+            Speaker spk1 = parts_.get(key1);
+            Double spk1_ALLOTP = new Double(spk1.getInv().getALLOTP());
+            boolean added = false;
+            for (int j = 0; j < spks_ALLOTP.size(); j++) {
+                Double spk2_ALLOTP = (Double) spks_ALLOTP.get(j);
+                if (spk1_ALLOTP > spk2_ALLOTP
+                        && !(spk1.getName().startsWith("ilsp")
+                        || spk1.getName().startsWith("samira")
+                        || spk1.getName().startsWith("tomek"))) {
+                    spks.add(j, spk1);
+                    spks_ALLOTP.add(j, spk1_ALLOTP);
+                    added = true;
+                    break;
+                }
+            }
+            if (!added
+                    && !(spk1.getName().startsWith("ilsp")
+                    || spk1.getName().startsWith("samira")
+                    || spk1.getName().startsWith("tomek"))) {
+                spks.add(spk1);
+                spks_ALLOTP.add(spk1_ALLOTP);
+            }
+        }
+        //System.out.println("\n++++++++++++++++++++++++++++++++\ncalculate Involvement - ALLOTP quintile");
 	/*
-	System.out.print("ALLOTP");
-	calQuintile(spks_ALLOTP, spks, "INV", "ALLOTP", null);
-	*/
-	//process ASMI quintile
-	spks = new ArrayList();
-	ArrayList spks_ASMI = new ArrayList();
-	for (int i = 0; i < keys.size(); i++) {
-	    String key1 = (String)keys.get(i);
-	    Speaker spk1 = parts_.get(key1);
-	    Double spk1_ASMI = new Double(spk1.getInv().getASMI());
-	    boolean added = false;
-	    for (int j = 0; j < spks_ASMI.size(); j++) {
-		Double spk2_ASMI = (Double)spks_ASMI.get(j);
-		if (spk1_ASMI > spk2_ASMI &&
-		    !(spk1.getName().startsWith("ilsp") ||
-		      spk1.getName().startsWith("samira") ||
-		      spk1.getName().startsWith("tomek"))) {
-		    spks.add(j, spk1);
-		    spks_ASMI.add(j, spk1_ASMI);
-		    added = true;
-		    break;
-		}
-	    }
-	    if (!added &&
-		!(spk1.getName().startsWith("ilsp") ||
-		  spk1.getName().startsWith("samira") ||
-		  spk1.getName().startsWith("tomek"))) {
-		spks.add(spk1);
-		spks_ASMI.add(spk1_ASMI);
-	    }
-	}
-	//System.out.println("\n++++++++++++++++++++++++++++++++\ncalculate Involvement - ASMI quintile");
+         * System.out.print("ALLOTP"); calQuintile(spks_ALLOTP, spks, "INV",
+         * "ALLOTP", null);
+         */
+        //process ASMI quintile
+        spks = new ArrayList();
+        ArrayList spks_ASMI = new ArrayList();
+        for (int i = 0; i < keys.size(); i++) {
+            String key1 = (String) keys.get(i);
+            Speaker spk1 = parts_.get(key1);
+            Double spk1_ASMI = new Double(spk1.getInv().getASMI());
+            boolean added = false;
+            for (int j = 0; j < spks_ASMI.size(); j++) {
+                Double spk2_ASMI = (Double) spks_ASMI.get(j);
+                if (spk1_ASMI > spk2_ASMI
+                        && !(spk1.getName().startsWith("ilsp")
+                        || spk1.getName().startsWith("samira")
+                        || spk1.getName().startsWith("tomek"))) {
+                    spks.add(j, spk1);
+                    spks_ASMI.add(j, spk1_ASMI);
+                    added = true;
+                    break;
+                }
+            }
+            if (!added
+                    && !(spk1.getName().startsWith("ilsp")
+                    || spk1.getName().startsWith("samira")
+                    || spk1.getName().startsWith("tomek"))) {
+                spks.add(spk1);
+                spks_ASMI.add(spk1_ASMI);
+            }
+        }
+        //System.out.println("\n++++++++++++++++++++++++++++++++\ncalculate Involvement - ASMI quintile");
 	/*
-	System.out.print("ASMI");
-	calQuintile(spks_ASMI, spks, "INV", "ASMI", null);
-	*/
+         * System.out.print("ASMI"); calQuintile(spks_ASMI, spks, "INV", "ASMI",
+         * null);
+         */
 
-	/*
-	 */
-	for (int i = 0; i < keys.size(); i++) {
-	    String key1 = (String)keys.get(i);
-	    Speaker spk1 = parts_.get(key1);
-	    spk1.getInv().calPower();
-	    //System.out.println("The involvement power of " + spk1.getName() + " is: " + spk1.getInv().getPower());
-	}
-	//process Power quintile
-	spks = new ArrayList();
-	ArrayList spks_Power = new ArrayList();
-	for (int i = 0; i < keys.size(); i++) {
-	    String key1 = (String)keys.get(i);
-	    Speaker spk1 = parts_.get(key1);
-	    Double spk1_Power = new Double(spk1.getInv().getPower());
-	    boolean added = false;
-	    for (int j = 0; j < spks_Power.size(); j++) {
-		Double spk2_Power = (Double)spks_Power.get(j);
-		if (spk1_Power > spk2_Power &&
-		    !(spk1.getName().startsWith("ilsp") ||
-		      spk1.getName().startsWith("samira") ||
-		      spk1.getName().startsWith("tomek"))) {
-		    spks.add(j, spk1);
-		    spks_Power.add(j, spk1_Power);
-		    added = true;
-		    break;
-		}
-	    }
-	    if (!added &&
-		!(spk1.getName().startsWith("ilsp") ||
-		  spk1.getName().startsWith("samira") ||
-		  spk1.getName().startsWith("tomek"))) {
-		spks.add(spk1);
-		spks_Power.add(spk1_Power);
-	    }
-	}
-	ArrayList rank = new ArrayList();
-	rank.add(1);
-	for (int j = 1; j < spks_Power.size(); j++) {
-	    Double spk2_Power = (Double)spks_Power.get(j);
-	    Double spk1_Power = (Double)spks_Power.get(j - 1);
-	    if (spk1_Power.doubleValue() == spk2_Power.doubleValue()) {
-		rank.add(rank.get(rank.size() - 1));
-	    } else {
-		rank.add(j + 1);
-	    }
-	}
-	//System.out.println("++++++++++++++++++++++++++++++++\ncalculate Merged quintile");
-	calQuintile(spks_Power, spks, "INV", "Merged", rank);
+        /*
+         */
+        for (int i = 0; i < keys.size(); i++) {
+            String key1 = (String) keys.get(i);
+            Speaker spk1 = parts_.get(key1);
+            spk1.getInv().calPower();
+            //System.out.println("The involvement power of " + spk1.getName() + " is: " + spk1.getInv().getPower());
+        }
+        //process Power quintile
+        spks = new ArrayList();
+        ArrayList spks_Power = new ArrayList();
+        for (int i = 0; i < keys.size(); i++) {
+            String key1 = (String) keys.get(i);
+            Speaker spk1 = parts_.get(key1);
+            Double spk1_Power = new Double(spk1.getInv().getPower());
+            boolean added = false;
+            for (int j = 0; j < spks_Power.size(); j++) {
+                Double spk2_Power = (Double) spks_Power.get(j);
+                if (spk1_Power > spk2_Power
+                        && !(spk1.getName().startsWith("ilsp")
+                        || spk1.getName().startsWith("samira")
+                        || spk1.getName().startsWith("tomek"))) {
+                    spks.add(j, spk1);
+                    spks_Power.add(j, spk1_Power);
+                    added = true;
+                    break;
+                }
+            }
+            if (!added
+                    && !(spk1.getName().startsWith("ilsp")
+                    || spk1.getName().startsWith("samira")
+                    || spk1.getName().startsWith("tomek"))) {
+                spks.add(spk1);
+                spks_Power.add(spk1_Power);
+            }
+        }
+        ArrayList rank = new ArrayList();
+        rank.add(1);
+        for (int j = 1; j < spks_Power.size(); j++) {
+            Double spk2_Power = (Double) spks_Power.get(j);
+            Double spk1_Power = (Double) spks_Power.get(j - 1);
+            if (spk1_Power.doubleValue() == spk2_Power.doubleValue()) {
+                rank.add(rank.get(rank.size() - 1));
+            } else {
+                rank.add(j + 1);
+            }
+        }
+        //System.out.println("++++++++++++++++++++++++++++++++\ncalculate Merged quintile");
+        calQuintile(spks_Power, spks, "INV", "Merged", rank);
     }
-
-    //}
-
-    public void calCommLink(XMLParse xp) {
-	/*
-	for (int i = 0; i < docs_utts_.size(); i++)
-	{
-	    utts_ = (ArrayList<Utterance>)docs_utts_.get(i);
-	    //	    utts_ = cl.getUtts();
-	    */
-	CommunicationLinkX clx = new CommunicationLinkX(utts_, isEnglish_, isChinese_);
-	    //cl.setUtts(utts_);
-	    //cl.calCLFts();
-	    clx.collectCLFtsX();
-	    utts_ = clx.getUtts();
-	    //    	WriteXML wlx = new WriteXML(clx.getMap(),utts_);
-	    //    	wlx.outputXML();
-
-	    //}
-	ArrayList tr_utts = new ArrayList();
-	CommunicationLink cl = new CommunicationLink(all_utts_, tr_utts, wn_, utts_, parts_);
-	cl.setUtts(utts_);
-	cl.callContOf();
-	utts_ = cl.getUtts();
-
-	ArrayList cls = new ArrayList();
-	for(int index=0; index<utts_.size(); index++)
-	    {
-		if(utts_.get(index).getRespTo() == null) {
-		    utts_.get(index).setRespTo("all-users");
-		    cls.add("all-users");
-		} else { cls.add(utts_.get(index).getRespTo()); }
-
-		//System.out.println("Turn no " + (index+1) + " : " + utts_.get(index).getSysRespTo());
-	    }
-	xp.setCommActLinks(cls);
-	//	    WriteXML wx = new WriteXML(cl.getMap(),utts_);
-	//	    wx.outputXML();
-    }
-
+    
+    /**
+     * m2w: pursuit of power
+     */
     public void calPop(){
         PursuitOfPower pop = new PursuitOfPower(utts_, parts_, leader_);
         pop.calPursuitOfPower();
     }
-    
+    //}
+    public void calCommLink(XMLParse xp) {
+        /*
+         * for (int i = 0; i < docs_utts_.size(); i++) { utts_ =
+         * (ArrayList<Utterance>)docs_utts_.get(i); //	utts_ = cl.getUtts();
+         */
+        CommunicationLinkX clx = new CommunicationLinkX(utts_, isEnglish_, isChinese_);
+        //cl.setUtts(utts_);
+        //cl.calCLFts();
+        clx.collectCLFtsX();
+        utts_ = clx.getUtts();
+        //    	WriteXML wlx = new WriteXML(clx.getMap(),utts_);
+        //    	wlx.outputXML();
+
+        //}
+        ArrayList tr_utts = new ArrayList();
+        CommunicationLink cl = new CommunicationLink(all_utts_, tr_utts, wn_, utts_, parts_);
+        cl.setUtts(utts_);
+        cl.callContOf();
+        utts_ = cl.getUtts();
+
+        ArrayList cls = new ArrayList();
+        for (int index = 0; index < utts_.size(); index++) {
+            if (utts_.get(index).getRespTo() == null) {
+                utts_.get(index).setRespTo("all-users");
+                cls.add("all-users");
+            } else {
+                cls.add(utts_.get(index).getRespTo());
+            }
+
+            //System.out.println("Turn no " + (index+1) + " : " + utts_.get(index).getSysRespTo());
+        }
+        xp.setCommActLinks(cls);
+        //	    WriteXML wx = new WriteXML(cl.getMap(),utts_);
+        //	    wx.outputXML();
+    }
+
     public void loadAndParse() {
-	try {
-	    //System.out.println("load files...");
-	    //loadAndParseTraining();
-	    File tp = new File(docs_path_);
-	    ArrayList ps = new ArrayList();
-	    while (tp != null) {
-		File[] fls = tp.listFiles();
-		ArrayList fls1 = new ArrayList(Arrays.asList(fls));
-		Collections.sort(fls1);
-		for (int i = 0; i < fls1.size(); i++) {
-		    File fl = (File)fls1.get(i);
-		    //System.out.println("+++++++++++++++++++++++++++++++++++++++++\nprocessing: " + fl.getName());
-		    if (fl.isDirectory()) {
-			ps.add(fl);
-		    }
-		    else {
+        try {
+            //System.out.println("load files...");
+            //loadAndParseTraining();
+            File tp = new File(docs_path_);
+            ArrayList ps = new ArrayList();
+            while (tp != null) {
+                File[] fls = tp.listFiles();
+                ArrayList fls1 = new ArrayList(Arrays.asList(fls));
+                Collections.sort(fls1);
+                for (int i = 0; i < fls1.size(); i++) {
+                    File fl = (File) fls1.get(i);
+                    System.out.println("+++++++++++++++++++++++++++++++++++++++++\nprocessing: " + fl.getName());
+                    if (fl.isDirectory()) {
+                        ps.add(fl);
+                    } else {
 //			System.out.println("loading " + fl.getName() + "...");
-			doc_names_.add(fl.getName());
-			if (fl.getName().endsWith("xml")) {
-			    Document doc = dsarmdDP_.getDocument(fl.getAbsolutePath());
-			    ArrayList list = dsarmdDP_.parseDAList(doc,
-								   "dsarmd",
-								   false,
-								   null);
+                        doc_names_.add(fl.getName());
+                        if (fl.getName().endsWith("xml")) {
+                            Document doc = dsarmdDP_.getDocument(fl.getAbsolutePath());
+                            ArrayList list = dsarmdDP_.parseDAList(doc,
+                                    "dsarmd",
+                                    false,
+                                    null);
                             //m2w: merge turns has .1 or .0 turns.
                             mergeTurnsWithSameTN(list);
-			    XMLParse xp = new XMLParse(fl.getAbsolutePath(), list);
-			    xmlps_.add(xp);
-			    PhraseCheck phr_ch = new PhraseCheck(fl.getAbsolutePath(), xp.getUtterances());
-			    phr_checks_.add(phr_ch);
-			    docs_.add(doc);
-			    //utts_.addAll(list);
-			    docs_utts_.add(list); //for test agreement between annotators
-			    //all_utts_.addAll(list);
-			    fls_.add(fl.getName());
-			} else {
-			    ArrayList list = DocumentProcessor.parseUtts(fl);
-			    //System.out.println("list: \n" + list);
-			    if (list != null) {
-				XMLParse xp = new XMLParse(fl.getAbsolutePath(), list);
-				xmlps_.add(xp);
-				PhraseCheck phr_ch = new PhraseCheck(fl.getAbsolutePath(), xp.getUtterances());
-				phr_checks_.add(phr_ch);
-				//docs_.add(doc);
-				//utts_.addAll(list);
-				docs_utts_.add(list); //for test agreement between annotators
-				//all_utts_.addAll(list);
-				fls_.add(fl.getName());
-			    }
-			}
-		    }
-		}
-		if (ps.size() > 0) {
-		    tp = (File)ps.get(0);
-		    ps.remove(0);
-		}
-		else {
-		    tp = null;
-		}
-	    }
-	}catch (Exception e) {
-	    e.printStackTrace();
-	}
+                            XMLParse xp = new XMLParse(fl.getAbsolutePath(), list);
+                            xmlps_.add(xp);
+                            PhraseCheck phr_ch = new PhraseCheck(fl.getAbsolutePath(), xp.getUtterances());
+                            phr_checks_.add(phr_ch);
+                            docs_.add(doc);
+                            //utts_.addAll(list);
+                            docs_utts_.add(list); //for test agreement between annotators
+                            //all_utts_.addAll(list);
+                            fls_.add(fl.getName());
+                        } else {
+                            ArrayList list = DocumentProcessor.parseUtts(fl);
+                            //System.out.println("list: \n" + list);
+                            if (list != null) {
+                                XMLParse xp = new XMLParse(fl.getAbsolutePath(), list);
+                                xmlps_.add(xp);
+                                PhraseCheck phr_ch = new PhraseCheck(fl.getAbsolutePath(), xp.getUtterances());
+                                phr_checks_.add(phr_ch);
+                                //docs_.add(doc);
+                                //utts_.addAll(list);
+                                docs_utts_.add(list); //for test agreement between annotators
+                                //all_utts_.addAll(list);
+                                fls_.add(fl.getName());
+                            }
+                        }
+                    }
+                }
+                if (ps.size() > 0) {
+                    tp = (File) ps.get(0);
+                    ps.remove(0);
+                } else {
+                    tp = null;
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     /**
-     *m2w: this method is for parsing through utts and merge 2 turns with same turn numbers.
-     * @param list
-     * @last 5/9/11 12:52 PM
+     * m2w: this method is for parsing through utts and merge 2 turns with same
+     * turn numbers.
+     *
+     * @param list @last 5/9/11 12:52 PM
      */
-    private void mergeTurnsWithSameTN(ArrayList list){
+    private void mergeTurnsWithSameTN(ArrayList list) {
         //test out the utts first
-        for(int i = 0; i < list.size() -1 ; i++){
-            Utterance tempUtt = (Utterance)list.get(i);
+        for (int i = 0; i < list.size() - 1; i++) {
+            Utterance tempUtt = (Utterance) list.get(i);
             String currTurn = tempUtt.getTurn();
-            Utterance nextUtt = (Utterance)list.get(i+1);
+            Utterance nextUtt = (Utterance) list.get(i + 1);
             String nextTurn = nextUtt.getTurn();
-            if(currTurn.equals(nextTurn)){
+            if (currTurn.equals(nextTurn)) {
 //                System.err.println("testing: " + tempUtt.getTurn() + " : " + tempUtt.getContent());
                 tempUtt.getSub_turns().add(nextUtt);
-                list.remove(i+1);
+                list.remove(i + 1);
                 i--;
             }
 //                System.out.println("testing: " + tempUtt.getTurn() + " : " + tempUtt.getContent());
@@ -2559,49 +2662,125 @@ public class Assertions {
         //parse , check turn number contains .0 .1
         //merge into the sub turns list
         //delete 
-        
+
     }
 
-
     public void loadAndParseTraining() {
-	try {
-	    //System.out.println("load files...");
-	    File tp = new File(Settings.getValue(Settings.TRAINING) + "_" + Settings.getValue(Settings.LANGUAGE));
-	    ArrayList ps = new ArrayList();
-	    while (tp != null) {
-		File[] fls = tp.listFiles();
-		ArrayList fls1 = new ArrayList(Arrays.asList(fls));
-		Collections.sort(fls1);
-		for (int i = 0; i < fls1.size(); i++) {
-		    File fl = (File)fls1.get(i);
-		    //System.out.println("+++++++++++++++++++++++++++++++++++++++++\nprocessing: " + fl.getName());
-		    //prxmlp_.setDataUnit(fl.getName().split("\\.")[0], fl.getName().split("\\.")[0]);
-		    if (fl.isDirectory()) {
-			ps.add(fl);
-		    }
-		    else {
-			//System.out.print("loading " + fl.getAbsolutePath() + "...");
-			//doc_names_.add(fl.getName());
-			Document doc = dsarmdDP_.getDocument(fl.getAbsolutePath());
-			ArrayList list = dsarmdDP_.parseDAList(doc,
-							       "dsarmd",
-							       false,
-							       null);
-		        //all_utts_.addAll(list);
-			tr_utts_.addAll(list);
-		    }
-		}
-		if (ps.size() > 0) {
-		    tp = (File)ps.get(0);
-		    ps.remove(0);
-		}
-		else {
-		    tp = null;
-		}
-	    }
-	}catch (Exception e) {
-	    e.printStackTrace();
-	}
+        try {
+            //System.out.println("load files...");
+            File tp = new File(Settings.getValue(Settings.TRAINING) + "_" + Settings.getValue(Settings.LANGUAGE));
+            ArrayList ps = new ArrayList();
+            while (tp != null) {
+                File[] fls = tp.listFiles();
+                ArrayList fls1 = new ArrayList(Arrays.asList(fls));
+                Collections.sort(fls1);
+                for (int i = 0; i < fls1.size(); i++) {
+                    File fl = (File) fls1.get(i);
+                    //System.out.println("+++++++++++++++++++++++++++++++++++++++++\nprocessing: " + fl.getName());
+                    //prxmlp_.setDataUnit(fl.getName().split("\\.")[0], fl.getName().split("\\.")[0]);
+                    if (fl.isDirectory()) {
+                        ps.add(fl);
+                    } else {
+                        //System.out.print("loading " + fl.getAbsolutePath() + "...");
+                        //doc_names_.add(fl.getName());
+                        Document doc = dsarmdDP_.getDocument(fl.getAbsolutePath());
+                        ArrayList list = dsarmdDP_.parseDAList(doc,
+                                "dsarmd",
+                                false,
+                                null);
+                        //all_utts_.addAll(list);
+                        tr_utts_.addAll(list);
+                    }
+                }
+                if (ps.size() > 0) {
+                    tp = (File) ps.get(0);
+                    ps.remove(0);
+                } else {
+                    tp = null;
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void getChinesePhrases() {
+        ArrayList<String> unique_words = new ArrayList<String>();
+        for (int i = 0; i < docs_utts_.size(); i++) {
+            String fn = (String) doc_names_.get(i);
+            System.err.println("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$\nprocessing: " + fn);
+            //utts_ = (ArrayList)docs_utts_.get(i);
+            all_utts_.clear();
+            all_utts_.addAll(tr_utts_);
+            gch_ = new GroupCohesion();
+            if (Settings.getValue(Settings.PROCESS_TYPE).equals("automated")) {
+                PhraseCheck phr_ch = (PhraseCheck) phr_checks_.get(i);
+                XMLParse xp = xmlps_.get(i);
+                utts_ = (ArrayList) docs_utts_.get(i);
+                cal_ = Calendar.getInstance();
+                //System.out.println("before pos tagging: " + df_.format(cal_.getTime()));
+
+                for (int j = 0; j < utts_.size(); j++) {
+                    Utterance utt_ = utts_.get(j);
+                    String utterance = utt_.getUtterance().toString();
+                    String noEmotes = ParseTools.removeEmoticons(utterance);
+                    //noEmotes = noEmotes.replaceAll("，", "");
+                    //noEmotes = noEmotes.replaceAll("？", "questionmark");
+                    //String tmpTagged=StanfordPOSTagger.tagChineseString(noEmotes);
+                    //System.out.println("parsing: " + utterance);
+                    String tmpTagged = "";
+                    if ((Settings.getValue(Settings.LANGUAGE)).equals("english")) {
+                        //tmpTagged=StanfordPOSTagger.tagString(noEmotes);
+                        SentenceSplitter sp = new SentenceSplitter();
+                        ArrayList splitUtterance = null;
+                        if (noEmotes.length() > 200) {
+                            splitUtterance = sp.split(noEmotes);
+                        }
+                        if (splitUtterance == null || splitUtterance.size() == 1) {
+                            tmpTagged = StanfordPOSTagger.tagString(noEmotes);
+                        } else {
+                            String temps = "";
+                            for (int k = 0; k < splitUtterance.size(); k++) {
+                                String toTag = (String) splitUtterance.get(k);
+                                //System.out.println ("toTag: " + toTag);
+                                String temp = StanfordPOSTagger.tagString((String) splitUtterance.get(k));
+                                //System.out.println("tagged: " + temp);
+                                temps = temps + " " + temp;
+
+                            }
+                            tmpTagged = temps.trim();
+                        }
+
+                    } else if ((Settings.getValue(Settings.LANGUAGE)).equals("chinese")) {
+                        tmpTagged = StanfordPOSTagger.tagChineseString(noEmotes);
+                        if (tmpTagged == null) {
+                            continue;
+                        }
+                    }
+                    String tagged = tmpTagged.trim();
+                    String spcTagged = tmpTagged.replaceAll("/" + "([A-Z]+)*" + " ", " ");
+                    utt_.setTaggedContent(tagged);
+                    utt_.setSpaceTaggedContent(spcTagged);
+                    if (spcTagged != null) {
+                        String[] words = spcTagged.split("[ ]+");
+                        for (int ij = 0; ij < words.length; ij++) {
+                            String word = words[ij];
+                            if (!unique_words.contains(word)) {
+                                unique_words.add(word);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        /*
+         * try { BufferedWriter bw = new BufferedWriter(new FileWriter(new
+         * File("Unique_Words_in_Chinese_Corpus.txt"))); for (String
+         * unique_word:unique_words) { bw.write(unique_word + "\n"); }
+         * bw.close(); System.out.println("total unique words in Chinese corpus:
+         * " + unique_words.size()); System.exit(0); }catch (Exception e) {
+         * e.printStackTrace(); }
+         */
     }
 
     public void buildLocalTopicList(PhraseCheck phr_ch, XMLParse xp) {
@@ -2677,61 +2856,68 @@ public class Assertions {
 //		    nls_.setChinese (true);
 //                    StanfordPOSTagger.initializeChinese();
 //		}
-	    nls_.createList(fv);
-	    //nls_.printUniqueNouns();
+            cal_ = Calendar.getInstance();
+            //System.out.println("before create List: " + df_.format(cal_.getTime()));
+            nls_.createList(fv);
+            cal_ = Calendar.getInstance();
+            //System.out.println("after create List: " + df_.format(cal_.getTime()));
+            //nls_.printUniqueNouns();
         }
-	    /*
-	    if ((Settings.getValue (Settings.URDU)).equals("yes") )
-		{
-		    nls_.setUrdu (true);
-		    nls_.setUrduPath (Settings.getValue (Settings.URDU_PATH));
-	}*/
-	//end comment
-	//only for invlovement
-	//if (is_inv_) {
-	    nls_.sortIt();
-	    nls_.countThP();
-	    top10nouns_.clear();
-	    setTop10nouns();
-	    //}
+        /*
+         * if ((Settings.getValue (Settings.URDU)).equals("yes") ) {
+         * nls_.setUrdu (true); nls_.setUrduPath (Settings.getValue
+         * (Settings.URDU_PATH)); }
+         */
+        //end comment
+        //only for invlovement
+        //if (is_inv_) {
+        nls_.sortIt();
+        nls_.countThP();
+        top10nouns_.clear();
+        setTop10nouns();
+        //}
 
-	//end comment
-	/*comment it out for TkC*/
-	if (!is_tskc_) {
-	    ArrayList nouns = nls_.getNouns();
-	    for (int i = 0; i < nouns.size(); i++) {
-		NounToken nt = (NounToken)nouns.get(i);
-		String spk = nt.getSpeaker();
-		LocalTopic lt = lts_.add(nt, spk);
-		Speaker part = parts_.get(spk);
-		if (lt == null || part == null) continue;
-		if (nt.firstMention() ||
-		    spk.equals(lt.getIntroducer())) {
-		    part.addILT(lt);
-		} else {
-		    part.addCLT(lt);
-		}
-		part.addNoun(nt);
-	    }
-	    /*
-	    System.out.println("size of LTs: " + lts_.size());
-	    System.out.println("size of mentions: " + lts_.sizeOfMentions());
-	    */
-	}
+        //end comment
 	/*
-	System.out.println("local topics: " );
-	for (int i = 0; i < lts_.size(); i++) {
-	    LocalTopic lt_ = (LocalTopic)lts_.get(i);
-	    System.out.println("lt" + i + ": " + lt_);
-	}
-	*/
-	for (int k = 0; k < utts_.size(); k++) {
-	    Utterance utt_ = (Utterance)utts_.get(k);
-	    //System.out.println(utt_.getTurn() + " || " + utt_.getSpeaker() + " || " + utt_.getTag() + " || " + utt_.getCommActType()
-	    //		       + " || " + utt_.getRespTo() + ": " + utt_.getTaggedContent());
-	}
-	//prxmlp_.setClaimCount(4 * parts_.size());
-	/*end comment*/
+         * comment it out for TkC
+         */
+        if (!is_tskc_) {
+            ArrayList nouns = nls_.getNouns();
+            for (int i = 0; i < nouns.size(); i++) {
+                NounToken nt = (NounToken) nouns.get(i);
+                String spk = nt.getSpeaker();
+                LocalTopic lt = lts_.add(nt, spk);
+                Speaker part = parts_.get(spk);
+                if (lt == null || part == null) {
+                    continue;
+                }
+                if (nt.firstMention()
+                        || spk.equals(lt.getIntroducer())) {
+                    part.addILT(lt);
+                } else {
+                    part.addCLT(lt);
+                }
+                part.addNoun(nt);
+            }
+            /*
+             * System.out.println("size of LTs: " + lts_.size());
+             * System.out.println("size of mentions: " + lts_.sizeOfMentions());
+             */
+        }
+        /*
+         * System.out.println("local topics: " ); for (int i = 0; i <
+         * lts_.size(); i++) { LocalTopic lt_ = (LocalTopic)lts_.get(i);
+         * System.out.println("lt" + i + ": " + lt_); }
+         */
+        for (int k = 0; k < utts_.size(); k++) {
+            Utterance utt_ = (Utterance) utts_.get(k);
+            //System.out.println(utt_.getTurn() + " || " + utt_.getSpeaker() + " || " + utt_.getTag() + " || " + utt_.getCommActType()
+            //		       + " || " + utt_.getRespTo() + ": " + utt_.getTaggedContent());
+        }
+        //prxmlp_.setClaimCount(4 * parts_.size());
+	/*
+         * end comment
+         */
     }
 
     public void buildALocalTopicList(PhraseCheck phr_ch, XMLParse xp) {
@@ -2811,178 +2997,178 @@ public class Assertions {
         setATop10nouns();
 
         //done for involvement
-	for (int i = 0; i < nouns.size(); i++) {
-	    NounToken nt = (NounToken)nouns.get(i);
-	    String spk = nt.getSpeaker();
-	    LocalTopic lt = lts_.addA(nt, spk.toLowerCase());
-	    Speaker part = parts_.get(spk.toLowerCase());
-	    if (lt == null || part == null) continue;
-	    if (nt.firstAMention() ||
-		spk.equals(lt.getIntroducer())) {
-		part.addAILT(lt);
-	    } else {
-		part.addACLT(lt);
-	    }
-	    part.addNoun(nt);
-	}
-	//prxmlp_.setClaimCount(4 * parts_.size());
+        for (int i = 0; i < nouns.size(); i++) {
+            NounToken nt = (NounToken) nouns.get(i);
+            String spk = nt.getSpeaker();
+            LocalTopic lt = lts_.addA(nt, spk.toLowerCase());
+            Speaker part = parts_.get(spk.toLowerCase());
+            if (lt == null || part == null) {
+                continue;
+            }
+            if (nt.firstAMention()
+                    || spk.equals(lt.getIntroducer())) {
+                part.addAILT(lt);
+            } else {
+                part.addACLT(lt);
+            }
+            part.addNoun(nt);
+        }
+        //prxmlp_.setClaimCount(4 * parts_.size());
 	/*
-	System.out.println("size of LTs: " + lts_.size());
-	System.out.println("size of mentions: " + lts_.sizeOfMentions());
-	*/
+         * System.out.println("size of LTs: " + lts_.size());
+         * System.out.println("size of mentions: " + lts_.sizeOfMentions());
+         */
     }
 
     public void sortNTs(ArrayList nouns) {
-	for (int i = 0; i < nouns.size() - 1; i++) {
-	    NounToken n1 = (NounToken)nouns.get(i);
-	    for (int j = i + 1; j < nouns.size(); j++) {
-		NounToken n2 = (NounToken)nouns.get(j);
-		if (n1.sizeOfSubSM() < n2.sizeOfSubSM()) {
-		    nouns.set(i, n2);
-		    nouns.set(j, n1);
-		    n1 = n2;
-		}
-	    }
-	}
+        for (int i = 0; i < nouns.size() - 1; i++) {
+            NounToken n1 = (NounToken) nouns.get(i);
+            for (int j = i + 1; j < nouns.size(); j++) {
+                NounToken n2 = (NounToken) nouns.get(j);
+                if (n1.sizeOfSubSM() < n2.sizeOfSubSM()) {
+                    nouns.set(i, n2);
+                    nouns.set(j, n1);
+                    n1 = n2;
+                }
+            }
+        }
+        for (int i = 0; i < nouns.size() - 1; i++) {
+            NounToken n1 = (NounToken) nouns.get(i);
+            System.out.println("local topic: " + n1);
+        }
     }
 
     public void setTop10nouns() {
-	ArrayList nouns = nls_.getNouns();
-	ArrayList top10Ids = new ArrayList();
-	for (int i = 0; i < 10 && i < nouns.size(); i++) {
-	    NounToken noun = (NounToken)nouns.get(i);
-	    Integer id = noun.getID();
-	    top10Ids.add(id);
-	}
-	for (int i = 0; i < nouns.size(); i++) {
-	    NounToken noun = (NounToken)nouns.get(i);
-	    Integer noun_id = new Integer(noun.getID());
-	    Integer noun_ref_id;
-	    try {
-		noun_ref_id = new Integer(noun.getRefInt());
-	    }catch (NumberFormatException nfe) {
-		nfe.printStackTrace();
-		continue;
-	    }
-	    if (spks_.contains(noun.getWord().toLowerCase())) continue;
-	    if (top10Ids.contains(noun_id) ||
-		top10Ids.contains(noun_ref_id)) {
-		top10nouns_.add(noun);
-	    }
-	}
-	/*
-	for (int i = 0; i < top10nouns_.size() && i < 10; i++) {
-	    NounToken noun = (NounToken)top10nouns_.get(i);
-	    if (noun.getRefInt() != -1) continue;
-	    System.out.println(noun.toString());
-	}
-	*/
-	//System.out.println("size of top10nouns: " + top10nouns_.size());
+        ArrayList nouns = nls_.getNouns();
+        ArrayList top10Ids = new ArrayList();
+        for (int i = 0; i < 10 && i < nouns.size(); i++) {
+            NounToken noun = (NounToken) nouns.get(i);
+            Integer id = noun.getID();
+            top10Ids.add(id);
+        }
+        for (int i = 0; i < nouns.size(); i++) {
+            NounToken noun = (NounToken) nouns.get(i);
+            Integer noun_id = new Integer(noun.getID());
+            Integer noun_ref_id;
+            try {
+                noun_ref_id = new Integer(noun.getRefInt());
+            } catch (NumberFormatException nfe) {
+                nfe.printStackTrace();
+                continue;
+            }
+            if (spks_.contains(noun.getWord().toLowerCase())) {
+                continue;
+            }
+            if (top10Ids.contains(noun_id)
+                    || top10Ids.contains(noun_ref_id)) {
+                top10nouns_.add(noun);
+            }
+        }
+        /*
+         * for (int i = 0; i < top10nouns_.size() && i < 10; i++) { NounToken
+         * noun = (NounToken)top10nouns_.get(i); if (noun.getRefInt() != -1)
+         * continue; System.out.println(noun.toString()); }
+         */
+        //System.out.println("size of top10nouns: " + top10nouns_.size());
     }
-    public String getTimeStamp ()
-    {
-	String to_return = "";
-	java.util.Calendar cal = java.util.Calendar.getInstance ();
-	to_return = to_return + cal.get (java.util.Calendar.YEAR) + "_"
-	    + cal.get (java.util.Calendar.MONTH) + "_" +
-	    + cal.get (java.util.Calendar.DAY_OF_MONTH) + "_" +
-	    + cal.get (java.util.Calendar.HOUR_OF_DAY) + "_" +
-	    + cal.get (java.util.Calendar.MINUTE) + "_" +
-	    + cal.get (java.util.Calendar.SECOND) + "_";
-	return to_return;
+
+    public String getTimeStamp() {
+        String to_return = "";
+        java.util.Calendar cal = java.util.Calendar.getInstance();
+        to_return = to_return + cal.get(java.util.Calendar.YEAR) + "_"
+                + cal.get(java.util.Calendar.MONTH) + "_"
+                + +cal.get(java.util.Calendar.DAY_OF_MONTH) + "_"
+                + +cal.get(java.util.Calendar.HOUR_OF_DAY) + "_"
+                + +cal.get(java.util.Calendar.MINUTE) + "_"
+                + +cal.get(java.util.Calendar.SECOND) + "_";
+        return to_return;
     }
+
     public void setATop10nouns() {
-	ArrayList nouns = nls1_;
-	ArrayList top10Ids = new ArrayList();
-	int count = 0;
-	for (int i = 0; i < nouns.size(); i++) {
-	    NounToken noun = (NounToken)nouns.get(i);
-	    String id = noun.getId();
-	    if (id == null) {continue;}
-	    top10Ids.add(id);
-	    if (top10Ids.size() == 10) break;
-	}
-	for (int i = 0; i < nouns.size(); i++) {
-	    NounToken noun = (NounToken)nouns.get(i);
-	    String noun_id = noun.getId();
-	    String noun_ref_id = noun.getRef();
-	    if (top10Ids.contains(noun_id) ||
-		top10Ids.contains(noun_ref_id)) {
-		top10nouns_.add(noun);
-	    }
-	}
-	//System.out.println("size of top10nouns: " + top10nouns_.size());
+        ArrayList nouns = nls1_;
+        ArrayList top10Ids = new ArrayList();
+        int count = 0;
+        for (int i = 0; i < nouns.size(); i++) {
+            NounToken noun = (NounToken) nouns.get(i);
+            String id = noun.getId();
+            if (id == null) {
+                continue;
+            }
+            top10Ids.add(id);
+            if (top10Ids.size() == 10) {
+                break;
+            }
+        }
+        for (int i = 0; i < nouns.size(); i++) {
+            NounToken noun = (NounToken) nouns.get(i);
+            String noun_id = noun.getId();
+            String noun_ref_id = noun.getRef();
+            if (top10Ids.contains(noun_id)
+                    || top10Ids.contains(noun_ref_id)) {
+                top10nouns_.add(noun);
+            }
+        }
+        //System.out.println("size of top10nouns: " + top10nouns_.size());
     }
 
     /**
-     * @auther m2w: this method checks the config.txt file see which language was setup in it, then set the instance variables values, and initialize the pos taggers
-     * @date 7/8/11 11:16 AM
+     * @auther m2w: this method checks the config.txt file see which language
+     * was setup in it, then set the instance variables values, and initialize
+     * the pos taggers @date 7/8/11 11:16 AM
      */
-    private void setLanguageAndInitPosTaggers()
-    {
-	if ((Settings.getValue (Settings.WEB_SERVICE)).equals ("no"))
-	    {
-		if ((Settings.getValue (Settings.LANGUAGE)).equals("english") )
-		    {
-			isEnglish_ = true;
-			//		    nls_.setEnglish(true);
-			StanfordPOSTagger.initialize();
-		    }
-		if ((Settings.getValue (Settings.LANGUAGE)).equals("urdu") )
-		    {
-			isUrdu_ = true;
-			//		    nls_.setUrdu (true);
-			//		    nls_.setUrduPath (Settings.getValue (Settings.URDU_PATH));
-		    }
-		//m2w: chinese 5/17/11 1:39 PM
-		if ((Settings.getValue (Settings.LANGUAGE)).equals("chinese") )
-		    {
-			isChinese_ = true;
-			//		    nls_.setChinese (true);
-			StanfordPOSTagger.initializeChinese();
-		    }
-	    }
-	else //is web service. figure out language from the data unit id
-	    {
-		String DIR = "/home/samirashaikh/sshaikh/develop/NLTEST/scil0200/data/webservice/";
-		File dir = new File (DIR);
-		String [] files = dir.list ();
-		if (files.length == 1)
-		    {
-			String filename = files [0];
-			if (filename.startsWith ("ZH"))
-			    {
-				System.err.println ("Setting Chinese");
-				isChinese_ = true;
-				StanfordPOSTagger.initializeChinese ();
-			    }
-			else if (filename.startsWith ("EN"))
-			    {
-				System.err.println ("Setting English");
-				isEnglish_ = true;
-				StanfordPOSTagger.initialize ();
-			    }
-		    }
-		else 
-		    System.err.println ("files in web service directory " + files.length);
-	    }
+    private void setLanguageAndInitPosTaggers() {
+        if ((Settings.getValue(Settings.WEB_SERVICE)).equals("no")) {
+            if ((Settings.getValue(Settings.LANGUAGE)).equals("english")) {
+                isEnglish_ = true;
+                //		    nls_.setEnglish(true);
+                StanfordPOSTagger.initialize();
+            }
+            if ((Settings.getValue(Settings.LANGUAGE)).equals("urdu")) {
+                isUrdu_ = true;
+                //		    nls_.setUrdu (true);
+                //		    nls_.setUrduPath (Settings.getValue (Settings.URDU_PATH));
+            }
+            //m2w: chinese 5/17/11 1:39 PM
+            if ((Settings.getValue(Settings.LANGUAGE)).equals("chinese")) {
+                isChinese_ = true;
+                //		    nls_.setChinese (true);
+                StanfordPOSTagger.initializeChinese();
+            }
+        } else //is web service. figure out language from the data unit id
+        {
+            String DIR = "/home/samirashaikh/sshaikh/develop/NLTEST/scil0200/data/webservice/";
+            File dir = new File(DIR);
+            String[] files = dir.list();
+            if (files.length == 1) {
+                String filename = files[0];
+                if (filename.startsWith("ZH")) {
+                    System.err.println("Setting Chinese");
+                    isChinese_ = true;
+                    StanfordPOSTagger.initializeChinese();
+                } else if (filename.startsWith("EN")) {
+                    System.err.println("Setting English");
+                    isEnglish_ = true;
+                    StanfordPOSTagger.initialize();
+                }
+            } else {
+                System.err.println("files in web service directory " + files.length);
+            }
+        }
     }
-    
-    
 
 //    private void initChineseWordnet(){
 //        CNWN = new ChineseWordnet("mysql", "localhost", "3306", "atur");
 //    }
-
     public void printReport() {
-	prxmlp_.showSystemReport();
+        prxmlp_.showSystemReport();
     }
 
     public void createReport() {
-	prxmlp_.createReport();
+        prxmlp_.createReport();
     }
-
-    /*******************************   Attributes  **************************/
+    /**
+     * ***************************** Attributes *************************
+     */
     private TopicDisagreement tpd_ = null;
     private ExpressiveDisagreement exd_ = null;
     private TaskControl tkc_ = null;
@@ -3024,11 +3210,14 @@ public class Assertions {
     private boolean isEnglish_ = false;
     private boolean isChinese_ = false;
     private boolean isUrdu_ = false;
+    private Calendar cal_ = Calendar.getInstance();
+    private DateFormat df_ = DateFormat.getDateTimeInstance(DateFormat.FULL,
+            DateFormat.MEDIUM);
     
     private String English_stopword="conf/stop-words";
     private String Chinese_stopword="conf/Chinese-stop-words";
-//    private ChineseWordnet CNWN = null;
     private Speaker leader_ = null;
+//    private ChineseWordnet CNWN = null;
 
     /**
      * @return the leader_
@@ -3043,123 +3232,107 @@ public class Assertions {
     public void setLeader_(Speaker leader_) {
         this.leader_ = leader_;
     }
+    
+    private class QueryListener extends Thread {
 
-
-    private class QueryListener extends Thread
-    {
         String QUERY = "";
         String DIR = "/home/samirashaikh/sshaikh/develop/NLTEST/scil0200/data/webservice/";
-	String BACKUP = "/home/samirashaikh/sshaikh/develop/NLTEST/scil0200/data/backup/";
+        String BACKUP = "/home/samirashaikh/sshaikh/develop/NLTEST/scil0200/data/backup/";
         String DIR2 = "/home/samirashaikh/sshaikh/develop/NLTEST/scil0200/output/";
         //String DIR = "/Users/samirashaikh/sshaikh/develop/NLTEST/scil0200/data/webservice/";
-	//String BACKUP = "/Users/samirashaikh/sshaikh/develop/NLTEST/scil0200/data/backup/";
+        //String BACKUP = "/Users/samirashaikh/sshaikh/develop/NLTEST/scil0200/data/backup/";
         //String DIR2 = "/Users/samirashaikh/sshaikh/develop/NLTEST/scil0200/output/";
-
         String QUERY_FILE = "webservice.txt";
         String RESULTS_FILE = "results.txt";
-
         boolean toRun = true;
-
         Assertions assertions;
-        QueryListener (Assertions as) { this.assertions = as; }
-        public void run ()
-        {
-            while (toRun)
-                {
-                    File qFile = new File (DIR, QUERY_FILE);
-                    while (!qFile.exists ())
-                        {
-                            try
 
-                                {
-                                    System.err.println ("Sleeping..");
-                                    sleep (7000);
-                                }
-                            catch (Exception ee)
-                                {
-                                    ee.printStackTrace ();
-                                }
-                        }
+        QueryListener(Assertions as) {
+            this.assertions = as;
+        }
 
-                    try
-                        {
-
-                            System.err.println ("Found file");
-                            loadAndParse ();
-                            makeAssertions ();
-
-
-                            //first move the query file so we are absolutely sure for the thread
-			    String cmd = "mv " + DIR + "/" + QUERY_FILE + " " + BACKUP + "/" + assertions.getTimeStamp () + QUERY_FILE;
-                            Process moveQueryFile = null;
-                            try
-                                {
-                                    moveQueryFile = Runtime.getRuntime ().exec (cmd);
-                                    InputStreamReader myIStreamReader = new InputStreamReader (moveQueryFile.getInputStream ());
-                                    BufferedReader bufferedReader = new BufferedReader (myIStreamReader);
-
-                                    String line;
-                                    while ((line = bufferedReader.readLine ()) != null)
-                                        {
-                                            System.err.println (line);
-                                        }
-                                    InputStreamReader myErrorStreamReader = new InputStreamReader (moveQueryFile.getErrorStream ());
-                                    BufferedReader bufferedErrorReader = new BufferedReader (myErrorStreamReader);
-                                    String eLine;
-                                    while ((eLine = bufferedErrorReader.readLine ()) != null)
-                                        {
-                                            System.err.println (eLine);
-                                        }
-
-                                    if (moveQueryFile.waitFor () != 0)
-                                        System.err.println ("ERROR" + moveQueryFile.exitValue ());
-                                    else System.err.println ("removed query file");
-
-                                    myIStreamReader.close ();
-                                }
-                            catch (IOException ioe )
-                                {
-				    ioe.printStackTrace ();
-                                }
-                            cmd = "cp " + DIR2 + "/webservice.txt " + DIR2 + "/results.txt";
-                            Process renameResultsFile = null;
-                            try
-                                {
-                                    renameResultsFile = Runtime.getRuntime ().exec (cmd);
-                                    InputStreamReader myIStreamReader = new InputStreamReader (renameResultsFile.getInputStream ());
-                                    BufferedReader bufferedReader = new BufferedReader (myIStreamReader);
-                                    String line;
-                                    while ( (line = bufferedReader.readLine ()) != null)
-                                        {
-                                            System.err.println (line);
-                                        }
-                                    InputStreamReader myErrorStreamReader = new InputStreamReader (renameResultsFile.getErrorStream ());
-                                    BufferedReader bufferedErrorReader = new BufferedReader (myErrorStreamReader);
-                                    String eLine;
-                                    while ( (eLine = bufferedErrorReader.readLine ()) != null)
-                                        {
-                                            System.err.println (eLine);
-                                        }
-                                    if (renameResultsFile.waitFor () != 0)
-                                        System.err.println ("ERROR" + renameResultsFile.exitValue ());
-                                    else System.err.println ("copied file");
-                                    myIStreamReader.close ();
-                                    myErrorStreamReader.close ();
-                                }
-                            catch (Exception ee)
-                                {
-                                    ee.printStackTrace ();
-                                }
-                        }
-                    catch (Exception ee)
-                        {
-                            ee.printStackTrace ();
-                        }
+        public void run() {
+            while (toRun) {
+                File qFile = new File(DIR, QUERY_FILE);
+                while (!qFile.exists()) {
+                    try {
+                        System.err.println("Sleeping..");
+                        sleep(7000);
+                    } catch (Exception ee) {
+                        ee.printStackTrace();
+                    }
                 }
+
+                try {
+
+                    System.err.println("Found file");
+                    loadAndParse();
+                    makeAssertions();
+
+
+                    //first move the query file so we are absolutely sure for the thread
+                    String cmd = "mv " + DIR + "/" + QUERY_FILE + " " + BACKUP + "/" + assertions.getTimeStamp() + QUERY_FILE;
+                    Process moveQueryFile = null;
+                    try {
+                        moveQueryFile = Runtime.getRuntime().exec(cmd);
+                        InputStreamReader myIStreamReader = new InputStreamReader(moveQueryFile.getInputStream());
+                        BufferedReader bufferedReader = new BufferedReader(myIStreamReader);
+
+                        String line;
+                        while ((line = bufferedReader.readLine()) != null) {
+                            System.err.println(line);
+                        }
+                        InputStreamReader myErrorStreamReader = new InputStreamReader(moveQueryFile.getErrorStream());
+                        BufferedReader bufferedErrorReader = new BufferedReader(myErrorStreamReader);
+                        String eLine;
+                        while ((eLine = bufferedErrorReader.readLine()) != null) {
+                            System.err.println(eLine);
+                        }
+
+                        if (moveQueryFile.waitFor() != 0) {
+                            System.err.println("ERROR" + moveQueryFile.exitValue());
+                        } else {
+                            System.err.println("removed query file");
+                        }
+
+                        myIStreamReader.close();
+                    } catch (IOException ioe) {
+                        ioe.printStackTrace();
+                    }
+                    cmd = "cp " + DIR2 + "/webservice.txt " + DIR2 + "/results.txt";
+                    Process renameResultsFile = null;
+                    try {
+                        renameResultsFile = Runtime.getRuntime().exec(cmd);
+                        InputStreamReader myIStreamReader = new InputStreamReader(renameResultsFile.getInputStream());
+                        BufferedReader bufferedReader = new BufferedReader(myIStreamReader);
+                        String line;
+                        while ((line = bufferedReader.readLine()) != null) {
+                            System.err.println(line);
+                        }
+                        InputStreamReader myErrorStreamReader = new InputStreamReader(renameResultsFile.getErrorStream());
+                        BufferedReader bufferedErrorReader = new BufferedReader(myErrorStreamReader);
+                        String eLine;
+                        while ((eLine = bufferedErrorReader.readLine()) != null) {
+                            System.err.println(eLine);
+                        }
+                        if (renameResultsFile.waitFor() != 0) {
+                            System.err.println("ERROR" + renameResultsFile.exitValue());
+                        } else {
+                            System.err.println("copied file");
+                        }
+                        myIStreamReader.close();
+                        myErrorStreamReader.close();
+                    } catch (Exception ee) {
+                        ee.printStackTrace();
+                    }
+                } catch (Exception ee) {
+                    ee.printStackTrace();
+                }
+            }
         }
     }
-        public void print(String s)
-    {
+
+    public void print(String s) {
         System.out.println(s);
     }
 }
