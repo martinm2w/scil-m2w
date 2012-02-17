@@ -12,6 +12,7 @@ import java.util.*;
 public class DocDialogueType {
     public DocDialogueType(ArrayList utts) {
 	utts_ = utts;
+        ddt_ = QA;
     }
 
     /***************************get information*********************/
@@ -40,10 +41,13 @@ public class DocDialogueType {
 	    ddt_ = QA;
 	} else { ddt_ = ME; }
     }
+    public void setDDT(String ddt) {
+        ddt_ = ddt;
+    }
     /***********************Attributes*********************/
     private ArrayList<Utterance> utts_ = null;
-    private String ddt_ = null; //either QA or ME
+    private String ddt_ = QA; //either QA or ME
     public final static String QA = "question-like";
     public final static String ME = "meetings";
-    
+    public final static String WK = "wiki";
 }
