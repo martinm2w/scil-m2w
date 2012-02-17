@@ -2,7 +2,6 @@
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-
 package edu.albany.ils.dsarmd0200.cuetag.weka.ds_featuresHash;
 
 import edu.albany.ils.dsarmd0200.evaltag.Utterance;
@@ -10,6 +9,7 @@ import edu.albany.ils.dsarmd0200.lu.Settings;
 import java.io.*;
 import java.util.*;
 import edu.albany.ils.dsarmd0200.cuetag.svm.TagNumber;
+import edu.albany.ils.dsarmd0200.util.Util;
 
 /**
  *
@@ -27,23 +27,23 @@ public class ArffGenerator {
     private HashMap<String, ArrayList> featuresMap = new HashMap<String, ArrayList>(); // key: tag; value: {features}
     private ArrayList<String> allFeatures = new ArrayList<String>(); // all features in the training set
     private static String tagType = Settings.getValue("tagType");
-
-
     //Lin added
     private boolean bNegativeFeatures=false;
 
     private HashMap<String, Integer> term_frequency_ = new HashMap<String, Integer>(); // key: ngram term in training set; value: frequency
     private HashMap<String, int[]> tag_frequency_ = new HashMap<String, int[]>(); // key: ngram term in training set; value: [tag1_frequency][tag2_frequency]...
-
     static int term_frequency_threshold_ = 3;
+    //static double fraction_threshold_ = 0.325; 01/19/2012
     static double fraction_threshold_ = 0.4   ;//0.325;
 
 
 //    private static PNWords pnw = new PNWords();
     private TagRulesPredefined trp;
+    private HashMap<String, double[]> ad_ngrams_ = null;
+    private HashMap<String, double[]> dr_ngrams_ = null;
 
     public ArffGenerator(String tr_fileName, String tr_fileLocation, String te_fileName, String te_fileLocation,
-            ArrayList tr_utts, ArrayList utts, ArrayList tags, HashMap featuresMap, ArrayList allFeatures){
+            ArrayList tr_utts, ArrayList utts, ArrayList tags, HashMap featuresMap, ArrayList allFeatures) {
         arffTrainingFileName = tr_fileName;
         arffTrainingFileLocation = tr_fileLocation;
         arffTestingFileName = te_fileName;
@@ -55,54 +55,56 @@ public class ArffGenerator {
         this.allFeatures = allFeatures;
 
 //         modified by laura, Jul 11, 2011
-        if(Settings.getValue("language").equals("chinese")){
-            System.out.println("Use Chinese Ngram rules ...");
+        if (Settings.getValue("language").equals("chinese")) {
+            //System.out.println("Use Chinese Ngram rules ...");
             trp = new TagRulesPredefinedChinese();
-            //trp = new TagRulesPredefined();
+            //trp = new TagRulesPredefined(); //comment 01/19/2012
         }
         else{
             trp = new TagRulesPredefined();
         }
         term_frequency_.clear();
         tag_frequency_.clear();
-
+        //ad_ngrams_ = (HashMap<String, double[]>) Util.loadFile(Settings.getValue("ad_ngrams"));
     }
 
-    public void writeTrainingArff(){
+    public void writeTrainingArff() {
         calculateTrainingFrequency(tr_utts);
         calculateTrainingTagFrequency(tr_utts);
         writeArffHeading(arffTrainingFileLocation, arffTrainingFileName, tags);
         appendToTrainingArff(arffTrainingFileLocation, tr_utts, featuresMap);
     }
 
-    public void writeTestingArff(Boolean nonBlank){
+    public void writeTestingArff(Boolean nonBlank) {
         writeArffHeading(arffTestingFileLocation, arffTestingFileName, tags);
         appendToTestingArff(arffTestingFileLocation, utts, allFeatures, nonBlank);
     }
 
-
     /**
      * Prepare arff heading
+     *
      * @param tags Arff heading: classes
      */
-    private void writeArffHeading(String arffFileLocation, String arffFileName, ArrayList tags){
+    private void writeArffHeading(String arffFileLocation, String arffFileName, ArrayList tags) {
         BufferedWriter bw = null;
         try {
             bw = new BufferedWriter(new FileWriter(arffFileLocation));
-            /* write the arff heading */
+            /*
+             * write the arff heading
+             */
             bw.write("@RELATION " + arffFileName + "\n");
             bw.write("@ATTRIBUTE tag { ");
-	    String unknown = "unknown";
-	    boolean has_ukn = false;
-            for(int i = 0; i < tags.size(); i++){
+            String unknown = "unknown";
+            boolean has_ukn = false;
+            for (int i = 0; i < tags.size(); i++) {
                 bw.write(tags.get(i) + ", ");
-		if (unknown.equals(tags.get(i))) {
-		    has_ukn = true;
-		}
+                if (unknown.equals(tags.get(i))) {
+                    has_ukn = true;
+                }
             }
-	    if (!has_ukn) {
-		bw.write(unknown + ",");
-	    }
+            if (!has_ukn) {
+                bw.write(unknown + ",");
+            }
             bw.write("}\n");
             bw.write("@ATTRIBUTE utterance string\n");
             bw.write("\n@DATA\n");
@@ -113,11 +115,10 @@ public class ArffGenerator {
         }
     }
 
-
-    private void appendToTrainingArff(String arffFileLocation, ArrayList tr_utts, HashMap featuresMap){
+    private void appendToTrainingArff(String arffFileLocation, ArrayList tr_utts, HashMap featuresMap) {
         BufferedWriter bw = null;
 
-         String adString="";
+        String adString = "";
 
          String outAD="";
          String outDR="";
@@ -132,8 +133,8 @@ public class ArffGenerator {
         try {
             bw = new BufferedWriter(new FileWriter(arffFileLocation, true));
 
-            for(int i = 0; i < tr_utts.size(); i++){ // tr_utts
-                Utterance utterance = (Utterance)tr_utts.get(i);
+            for (int i = 0; i < tr_utts.size(); i++) { // tr_utts
+                Utterance utterance = (Utterance) tr_utts.get(i);
                 String daTag = "";
                 String str = "";
                 daTag = TaggingType.getTag(utterance, tagType);
@@ -148,7 +149,7 @@ public class ArffGenerator {
 //                    System.err.println("unrecognized tag type");
 //                    return;
 //                }
-                ArrayList featuresOfTheTag = (ArrayList)featuresMap.get(daTag);
+                ArrayList featuresOfTheTag = (ArrayList) featuresMap.get(daTag);
 
 
                 // by Laura Nov 30, 2010
@@ -164,8 +165,9 @@ public class ArffGenerator {
 //                content = pnw.replaceSentence(content);
 
 //Lin Added
-                if ((Settings.getValue(Settings.LANGUAGE)).equals("chinese"))
-		{content=utterance.getSpaceTagContent();}
+                if ((Settings.getValue(Settings.LANGUAGE)).equals("chinese")) {
+                    content = utterance.getSpaceTagContent();
+                }
                 content = Ngram.urlNormalize(content);
 
                 //for computing (n-grams+POS) negative features in D-R
@@ -191,7 +193,7 @@ public class ArffGenerator {
                 ArrayList<String> ngrams = Ngram.generateNgramList(content);
 
                 // by Laura Jan 04, 2011
-                if(daTag.toLowerCase().contains(DsarmdDATag.AD)){ // Action-Directive System.err.println("action-directive: " + Arrays.toString(ngrams.toArray()));
+                if (daTag.toLowerCase().contains(DsarmdDATag.AD)) { // Action-Directive System.err.println("action-directive: " + Arrays.toString(ngrams.toArray()));
                     ngrams.add(DsarmdDATag.AD);
 //                    System.err.println("action-directive: " + Arrays.toString(ngrams.toArray()));
                 }
@@ -339,35 +341,35 @@ public class ArffGenerator {
                         Integer.parseInt(Settings.getValue("tagNum"))).trim();
                 int tagNum = tn.tagNumberDialogAct(tag.toLowerCase(), Integer.parseInt(Settings.getValue("tagNum")));
 
-                for(int j = 0; j < ngrams.size(); j++){
+                for (int j = 0; j < ngrams.size(); j++) {
                     String term = ngrams.get(j);
-                    int total_freq = (Integer)term_frequency_.get(term);
+                    int total_freq = (Integer) term_frequency_.get(term);
                     int[] freq = tag_frequency_.get(term);
-                    int tag_freq = freq[tagNum-1];
-                    double fraction = (double)tag_freq/(double)total_freq;
+                    int tag_freq = freq[tagNum - 1];
+                    double fraction = (double) tag_freq / (double) total_freq;
                     String[] wordsInTerm = term.split("\\s+");
                     // by Laura Jan 04, 2011
-                    if(!term.equals(DsarmdDATag.AD) &&
-                            !term.equals(DsarmdDATag.DR) &&
-                            wordsInTerm.length < 2){
+                    if (!term.equals(DsarmdDATag.AD)
+                            && !term.equals(DsarmdDATag.DR)
+                            && wordsInTerm.length < 2) {
                         continue;
                     }
-                    if(featuresOfTheTag != null && featuresOfTheTag.contains(term)){
-                         // use else if to avoid repeatly include the "hastopic" and "notopic"
+                    if (featuresOfTheTag != null && featuresOfTheTag.contains(term)) {
+                        // use else if to avoid repeatly include the "hastopic" and "notopic"
 
                       if(total_freq >= term_frequency_threshold_ &&
                              fraction >= fraction_threshold_)
                       {
-
-                         if (daTag.equalsIgnoreCase("action-directive") &&
-                             fraction >= 0.6 &&
-                             (Settings.getValue(Settings.LANGUAGE)).equals("chinese") ){
-                             str += "|" + "ADM";
-                             ADMSet += "|" + term;
-                             //outAD+="|" + term+","+tag_freq+"; "+total_freq +strSep;
-                             //adString+="|"+term;
-                             continue;
-                         }
+                            if (daTag.equalsIgnoreCase("action-directive")
+                                    && fraction >= 0.6
+                                    && (Settings.getValue(Settings.LANGUAGE)).equals("chinese")
+                                    && !commActType.equalsIgnoreCase("response-to")) {
+                                str += "|" + "ADM";
+                                ADMSet += "|" + term;
+                                //outAD+="|" + term+","+tag_freq+"; "+total_freq +strSep;
+                                //adString+="|"+term;
+                                continue;
+                            }
 
 
                         
@@ -386,7 +388,7 @@ public class ArffGenerator {
                          
                          str += "|" + term;
 
-                      }
+                        }
 
 
 
@@ -905,11 +907,12 @@ public class ArffGenerator {
         try {
             bw = new BufferedWriter(new FileWriter(arffFileLocation, true));
 
-            for(int i = 0; i < utts.size(); i++){ // utts
-                Utterance utterance = (Utterance)utts.get(i);
+            for (int i = 0; i < utts.size(); i++) { // utts
+                Utterance utterance = (Utterance) utts.get(i);
                 String tag = "";
                 String str = "";
                 tag = TaggingType.getTag(utterance, tagType);
+                //String com_act_type = utterance.getCommActType();
 //                if(tagTypeTaggingType.equals("da15")){
 //                    tag = utterance.getTag().toLowerCase().trim();
 //                    tag = tag.replace("--", "");
@@ -1000,15 +1003,26 @@ public class ArffGenerator {
                 for(int j = 0; j < ngrams.size(); j++){
                     String term = ngrams.get(j);
                     String[] wordsInTerm = term.split("\\s+");
-                    // by Laura Jan 04, 2011
-                    if(!term.equals(DsarmdDATag.AD) &&
-		       !term.equals(DsarmdDATag.DR) &&
-                       wordsInTerm.length < 2 )//&&
-                       //!term.contains(DsarmdDATag.DR))
-                        continue;
-
+                    //comment it out for testing 01/18/2012
                     
-                    if(allFeatures.contains(term)){// || term.contains(DsarmdDATag.DR)){
+                if ((Settings.getValue(Settings.LANGUAGE)).equals("chinese") &&
+                        tagGTCAT.equalsIgnoreCase("addressed-to"))
+		{
+                    if (ad_ngrams_.containsKey(term)) {
+                        double[] ad_ngram = ad_ngrams_.get(term);
+                        if (ad_ngram != null && ad_ngram[0] >= 3) {
+                            str = DsarmdDATag.AD;
+                            break;
+                        } //only keep AD feature 01/11/2012 by TL
+                    }
+                }
+                    if (!term.equals(DsarmdDATag.AD)
+                            && !term.equals(DsarmdDATag.DR)
+                            && wordsInTerm.length < 2) {
+                        continue;
+                    }
+
+                    if (allFeatures.contains(term)) {
 
                         //if (tag.equalsIgnoreCase("action-directive"))
                         //     testoutAD+="|" + term+","+strSep;
@@ -1017,7 +1031,6 @@ public class ArffGenerator {
                         //     testoutDR+="|" + term+","+strSep;
 
                         // if term is included in ADMSet, replace it by "ADM" (term.equal(ADMSet[i]))
-
 
                         //CSLin-- D-R-specific testing
 
@@ -1096,9 +1109,9 @@ public class ArffGenerator {
                           bw.write(tag + ", '" + str + "|" + "DRRT" + "'\n");
                        }else*/
                         bw.write(tag + ", '" + str + "|" + commActType + "'\n");
+                    }
 //                        bw.write(tag + ", '" + str + "'\n");
                         testoutAD+=  "|" +commActType +"\n";
-                    }
                 }
                 else{
                     // by Laura Nov 30, 2010
@@ -1152,104 +1165,174 @@ public class ArffGenerator {
            //end of Lin
     }
 
-
-
-        /**
+    /**
      * Set up ngram's term frequency with the training set data
+     *
      * @param tr_utts list of traininig Utterance turn nodes
      */
-    private void calculateTrainingFrequency(ArrayList tr_utts){
-        for(int i = 0; i < tr_utts.size(); i++){
-            Utterance utterance = (Utterance)tr_utts.get(i); // Utterance turn node
+    private void calculateTrainingFrequency(ArrayList tr_utts) {
+        for (int i = 0; i < tr_utts.size(); i++) {
+            Utterance utterance = (Utterance) tr_utts.get(i); // Utterance turn node
             String tag = utterance.getTag(); // utterance dialog_act
-	    String daTag = "";
+            String daTag = "";
             daTag = TaggingType.getTag(utterance, tagType);
             String utt = utterance.getContent(); // utterance content
 
 
-	    
-	    if ((Settings.getValue(Settings.LANGUAGE)).equals("chinese"))
-		utt=utterance.getSpaceTagContent();
+
+            if ((Settings.getValue(Settings.LANGUAGE)).equals("chinese")) {
+                utt = utterance.getSpaceTagContent();
+            }
             utt = Ngram.urlNormalize(utt);
             utt = Ngram.filterUtterance(utt);
             ArrayList<String> ngrams = Ngram.generateNgramList(utt);
 
-            if(daTag.toLowerCase().contains(DsarmdDATag.AD)){ // Action-Directive System.err.println("action-directive: " + Arrays.toString(ngrams.toArray()));
-                    ngrams.add(DsarmdDATag.AD);
+            if (daTag.toLowerCase().contains(DsarmdDATag.AD)) { // Action-Directive System.err.println("action-directive: " + Arrays.toString(ngrams.toArray()));
+                ngrams.add(DsarmdDATag.AD);
 //                    System.err.println("action-directive: " + Arrays.toString(ngrams.toArray()));
             }
-                // by Laura Jan 25, 2011
-            if(daTag.toLowerCase().contains(DsarmdDATag.DR)){ // Disagree-Reject System.err.println("action-directive: " + Arrays.toString(ngrams.toArray()));
-                    ngrams.add(DsarmdDATag.DR);
+            // by Laura Jan 25, 2011
+            if (daTag.toLowerCase().contains(DsarmdDATag.DR)) { // Disagree-Reject System.err.println("action-directive: " + Arrays.toString(ngrams.toArray()));
+                ngrams.add(DsarmdDATag.DR);
             }
 
-            for(int j = 0; j < ngrams.size(); j++){
-                 if(term_frequency_.containsKey(ngrams.get(j))){
-                     int freq = term_frequency_.get(ngrams.get(j));
-                     term_frequency_.put(ngrams.get(j), freq+1);
-                 }
-                 else{
-                     term_frequency_.put(ngrams.get(j), Integer.valueOf(1));
-                 }
+            for (int j = 0; j < ngrams.size(); j++) {
+                if (term_frequency_.containsKey(ngrams.get(j))) {
+                    int freq = term_frequency_.get(ngrams.get(j));
+                    term_frequency_.put(ngrams.get(j), freq + 1);
+                } else {
+                    term_frequency_.put(ngrams.get(j), Integer.valueOf(1));
+                }
             }
 
         }
         //System.out.println("Size of the term_frequency_ = " + term_frequency_.size());
     }
 
-
     /**
      * Set up ngram's tag frequency with the training set data
+     *
      * @param tr_utts list of traininig Utterance turn nodes
      */
-    private void calculateTrainingTagFrequency(ArrayList tr_utts){
+    private void calculateTrainingTagFrequency(ArrayList tr_utts) {
         TagNumber tn = new TagNumber();
-
-        for(int i = 0; i < tr_utts.size(); i++){
-            Utterance utterance = (Utterance)tr_utts.get(i); // Utterance turn node
+        int da_tn = -1;
+        int dr_tn = -1;
+        for (int i = 0; i < tr_utts.size(); i++) {
+            Utterance utterance = (Utterance) tr_utts.get(i); // Utterance turn node
             String tag = utterance.getTag(); // utterance dialog_act tag
             String daTag = "";
             daTag = TaggingType.getTag(utterance, tagType);
 
-	    if (Settings.getValue("tagNum").equals("3")) {
-		tag = utterance.getMTag();
-	    }
-            int tag_num = tn.tagNumberDialogAct(tag.toLowerCase()
-						, Integer.parseInt(Settings.getValue("tagNum")));
+            if (Settings.getValue("tagNum").equals("3")) {
+                tag = utterance.getMTag();
+            }
+            int tag_num = tn.tagNumberDialogAct(tag.toLowerCase(), Integer.parseInt(Settings.getValue("tagNum")));
             String utt = utterance.getContent(); // utterance content
 
-	    if ((Settings.getValue(Settings.LANGUAGE)).equals("chinese"))
-		utt=utterance.getSpaceTagContent();
+            if ((Settings.getValue(Settings.LANGUAGE)).equals("chinese")) {
+                utt = utterance.getSpaceTagContent();
+            }
             utt = Ngram.urlNormalize(utt);
             utt = Ngram.filterUtterance(utt);
             ArrayList<String> ngrams = Ngram.generateNgramList(utt);
 
 
-            if(daTag.toLowerCase().contains(DsarmdDATag.AD)){ // Action-Directive System.err.println("action-directive: " + Arrays.toString(ngrams.toArray()));
-                    ngrams.add(DsarmdDATag.AD);
-//                    System.err.println("action-directive: " + Arrays.toString(ngrams.toArray()));
-            }
-                // by Laura Jan 25, 2011
-            if(daTag.toLowerCase().contains(DsarmdDATag.DR)){ // Disagree-Reject System.err.println("action-directive: " + Arrays.toString(ngrams.toArray()));
-                    ngrams.add(DsarmdDATag.DR);
-            }
-
-
-            for(int j = 0; j < ngrams.size(); j++){
-                if(tag_frequency_.containsKey(ngrams.get(j))){
-                    int[] tag_f_array = tag_frequency_.get(ngrams.get(j));
-                    tag_f_array[tag_num-1] += 1;
-                    tag_frequency_.put(ngrams.get(j), tag_f_array);
+            if (daTag.toLowerCase().contains(DsarmdDATag.AD)) { // Action-Directive System.err.println("action-directive: " + Arrays.toString(ngrams.toArray()));
+                ngrams.add(DsarmdDATag.AD);
+                if (da_tn == -1) {
+                    da_tn = tag_num;
                 }
-                else{
+                //System.out.println("action-directive: " + Arrays.toString(ngrams.toArray()));
+            }
+            // by Laura Jan 25, 2011
+            if (daTag.toLowerCase().contains(DsarmdDATag.DR)) { // Disagree-Reject System.err.println("action-directive: " + Arrays.toString(ngrams.toArray()));
+                ngrams.add(DsarmdDATag.DR);
+                if (dr_tn == -1) {
+                    dr_tn = tag_num;
+                }
+            }
+
+
+            for (int j = 0; j < ngrams.size(); j++) {
+                if (tag_frequency_.containsKey(ngrams.get(j))) {
+                    int[] tag_f_array = tag_frequency_.get(ngrams.get(j));
+                    tag_f_array[tag_num - 1] += 1;
+                    tag_frequency_.put(ngrams.get(j), tag_f_array);
+                } else {
                     int tagNum = Integer.parseInt(Settings.getValue("tagNum"));
-                    int[] tag_f_array = new int[tagNum+1];
-                    tag_f_array[tag_num-1] += 1;
+                    int[] tag_f_array = new int[tagNum + 1];
+                    tag_f_array[tag_num - 1] += 1;
                     tag_frequency_.put(ngrams.get(j), tag_f_array);
                 }
             }
         }
         //System.out.println("Size of the tag_frequency_ = " + tag_frequency_.size());
+        //System.out.println("AD ngrams:");
+        ArrayList<String> ngrams = new ArrayList(Arrays.asList(tag_frequency_.keySet().toArray()));
+        HashMap<String, double[]> ad_ngrams = new HashMap<String, double[]>();
+        for (String ngram : ngrams) {
+            int[] ngram_freq = tag_frequency_.get(ngram);
+            if (ngram_freq[da_tn - 1] > 0) {
+                int i = 0;
+                double ad_freq = 0;
+                int total_freq = 0;
+                for (int freq : ngram_freq) {
+                    if (i == da_tn - 1) {
+                        //System.out.print("*");
+                        ad_freq = freq;
+                    }
+//                    System.out.print(freq + " ");
+                    total_freq += freq;
+                    i++;
+                }
+                if (ad_freq / total_freq >= 0.6
+                        && ad_freq > 1) {
+                    //System.out.print(ngram + ": " + ad_freq + " ");
+                    //System.out.println("---frequency: " + ad_freq / total_freq);
+                    double[] ngram_info = new double[2];
+                    ngram_info[0] = ad_freq;
+                    ngram_info[1] = ad_freq / total_freq;
+                    if (!ad_ngrams.containsKey(ngram)) {
+                        ad_ngrams.put(ngram, ngram_info);
+                    }
+                }
+            }
+        }
+        Util.writeToFile("ad_ngrams", ad_ngrams);
+        ad_ngrams_ = ad_ngrams;
+        //System.out.println("DR ngrams:");
+        ngrams = new ArrayList(Arrays.asList(tag_frequency_.keySet().toArray()));
+        HashMap<String, double[]> dr_ngrams = new HashMap<String, double[]>();
+        for (String ngram : ngrams) {
+            int[] ngram_freq = tag_frequency_.get(ngram);
+            if (ngram_freq[dr_tn - 1] > 0) {
+                int i = 0;
+                double dr_freq = 0;
+                int total_freq = 0;
+                for (int freq : ngram_freq) {
+                    if (i == dr_tn - 1) {
+                        //System.out.print("*");
+                        dr_freq = freq;
+                    }
+//                    System.out.print(freq + " ");
+                    total_freq += freq;
+                    i++;
+                }
+                if (dr_freq / total_freq >= 0.6
+                        && dr_freq > 1) {
+                    //System.out.print(ngram + ": " + dr_freq + " ");
+                    //System.out.println("---frequency: " + dr_freq / total_freq);
+                    double[] ngram_info = new double[2];
+                    ngram_info[0] = dr_freq;
+                    ngram_info[1] = dr_freq / total_freq;
+                    if (!dr_ngrams.containsKey(ngram)) {
+                        dr_ngrams.put(ngram, ngram_info);
+                    }
+                }
+            }
+        }
+        Util.writeToFile("dr_ngrams", dr_ngrams);
     }
 
     private String ADMSet="";
