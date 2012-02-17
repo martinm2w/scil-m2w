@@ -56,10 +56,13 @@ public class PursuitOfPower {
         };
         Collections.sort(PopList, c);
         //print out results.
-        System.out.println("========= Pursuit Of Power=========");
-        for(ArrayList a : PopList){
-            System.out.println( (String)(a.get(0)) + " : " + (Double)(a.get(1)) );
+        if(doFinalPrintOut){
+            System.out.println("========= Pursuit Of Power=========");
+            for(ArrayList a : PopList){
+                System.out.println( (String)(a.get(0)) + " : " + (Double)(a.get(1)) );
+            }
         }
+        
     }
 //    ============================================ top level cal methods =================================================
     private void calPOP(){
@@ -102,6 +105,12 @@ public class PursuitOfPower {
        //4. add to pop.
         this.addingPercentageToPopMap(localMapITCM);
         //5. testing print.
+        if(doFinalPrintOut){
+            System.out.println("----ITCM----");
+            for(String spk : localMapITCM.keySet()){
+                System.out.println(spk + " : " + localMapITCM.get(spk));
+            }
+        }
         if(doAnalysisPrintOut){
             System.out.println("----ITCM----");
             System.out.println("topic ctrl map: " + localMapTPctrl.toString());
@@ -109,6 +118,7 @@ public class PursuitOfPower {
             System.out.println("itcm map before pop: " + localMapITCM.toString());
             System.out.println("pop map:" + PopMap.toString());
         }
+        
     }
     
     /**
@@ -158,6 +168,12 @@ public class PursuitOfPower {
         this.addingPercentageToPopMap(localMapCDM);
         
         //6.testing print.
+        if(doFinalPrintOut){
+            System.out.println("----CDM----");
+            for(String spk : localMapCDM.keySet()){
+                System.out.println(spk + " : " + localMapCDM.get(spk));
+            }
+        }
         if(doAnalysisPrintOut){
             System.out.println("----CDM----");
             System.out.println("topic ctrl map: " + localMapTPctrl.toString());
@@ -211,7 +227,13 @@ public class PursuitOfPower {
 
         //adding
         this.addingPercentageToPopMap(localMapDWL);
-        
+        //output
+        if(doFinalPrintOut){
+            System.out.println("----DWL----");
+            for(String spk : localMapDWL.keySet()){
+                System.out.println(spk + " : " + localMapDWL.get(spk));
+            }
+        }
         if(doAnalysisPrintOut){
             System.out.println("---DWL---");
             System.out.println("total dis: " + totalDis);
@@ -228,10 +250,19 @@ public class PursuitOfPower {
      * //2.Topical Disagreement Target Index (TDT)
      */
     private void calTFM(){
+        HashMap<String, Double> TFM_DRTMap = new HashMap();
         //1.Disagree-Reject Target Index (DRT)
-        this.calTFM_DRT();
+        TFM_DRTMap = this.calTFM_DRT();
         //2.Topical Disagreement Target Index (TDT)
         this.calTFM_TDT();
+        //output
+        if(doFinalPrintOut){
+            System.out.println("----TFM----");
+            for(String spk : TFM_DRTMap.keySet()){ // will build tfm map and output tfm map
+                System.out.println(spk + " : " + TFM_DRTMap.get(spk));
+            }
+        }
+        
         
     }
     
@@ -239,7 +270,7 @@ public class PursuitOfPower {
     /**
      * m2w: TFM 's Disagree-Reject Target Index (DRT)
      */
-    private void calTFM_DRT(){
+    private HashMap<String, Double> calTFM_DRT(){
         int totalConf = 0;
         HashMap<String, Double> localMapDis = new HashMap();
         HashMap<String, Double> localMapConf = new HashMap();
@@ -289,6 +320,7 @@ public class PursuitOfPower {
         //adding to popmap
         this.addingPercentageToPopMap(localTFM_DRTMap);
 
+        //output
         if(doAnalysisPrintOut){
             System.out.println("--- TFM_DRT ---");
             System.out.println("conf count map: " + localMapConf.toString());
@@ -299,7 +331,7 @@ public class PursuitOfPower {
             System.out.println("pop map : " + PopMap.toString());
             System.out.println();
         }
-        
+        return localTFM_DRTMap;
     }
     
     /**
