@@ -73,7 +73,7 @@ public class Speaker {
 	    }
 	    count += ilt.getCited(name_).size();
 	}
-        System.out.println("ilts_ size: " + ilts_.size());
+        //System.out.println("ilts_ size: " + ilts_.size());
 	return count;
     }
     public int sizeofCO() { //size of citing others
@@ -84,7 +84,7 @@ public class Speaker {
 	    count += clt.sizeofCO(name_);
 	}
 	//System.out.println("clts_: " + clts_);
-        System.out.println("size of CO: " + count + "---" + clts_.sizeOfCO());
+        //System.out.println("size of CO: " + count + "---" + clts_.sizeOfCO());
 	//return count;
 	return clts_.sizeOfCO(); //modified by TL 02/07/2012
     }

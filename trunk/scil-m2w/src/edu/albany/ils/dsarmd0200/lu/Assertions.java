@@ -588,7 +588,7 @@ public class Assertions {
             {
                 tmpstr = utterance.get(i).getSpaceTagContent();
             }
-            
+            if(tmpstr == null) continue;
             int spkindex=speakerlist.indexOf(tmpname);
             //print(utterance.get(i).getSpaceTagContent());
             if(tmpstr.length()>1 && spkindex>=0)
@@ -1473,8 +1473,8 @@ public class Assertions {
             String key = (String) keys.get(i);
             Speaker spk = parts_.get(key);
             spk.calTpCtl(lts_, utts_);
-            System.out.println("==========================================");
-            System.out.println(spk.getTC());
+            //System.out.println("==========================================");
+            //System.out.println(spk.getTC());
         }
 
         keys = new ArrayList(parts_.keySet());
