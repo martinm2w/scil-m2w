@@ -219,11 +219,14 @@ public class PursuitOfPower {
         //4. build and add the local map of percent to the pop map.
         HashMap<String, Double> localMapDWL = new HashMap();
         localMapDWL.putAll(NameMap);
-        for(String spk : localMapCount.keySet()){
-            Double tempDisCount = localMapCount.get(spk);
-            Double tempPerc = tempDisCount / totalDis;
-            localMapDWL.put(spk, tempPerc);
+        if(totalDis > 0){
+            for(String spk : localMapCount.keySet()){
+                Double tempDisCount = localMapCount.get(spk);
+                Double tempPerc = tempDisCount / totalDis;
+                localMapDWL.put(spk, tempPerc);
+            }
         }
+        
 
         //adding
         this.addingPercentageToPopMap(localMapDWL);
