@@ -14,7 +14,9 @@ public class DocDialogueType {
 	utts_ = utts;
         ddt_ = QA;
     }
-
+    public DocDialogueType() {
+        ddt_ = QA;
+    }
     /***************************get information*********************/
     public String getType() { 
 	if (ddt_ == null) {
@@ -22,6 +24,7 @@ public class DocDialogueType {
 	}
 	return ddt_; 
     }
+    
     /***************************set information*********************/
     public void decideDDT() {
 	int size_of_ircr = 0;
@@ -44,6 +47,7 @@ public class DocDialogueType {
     public void setDDT(String ddt) {
         ddt_ = ddt;
     }
+    public void setUtts(ArrayList utts) {utts_ = utts;}
     /***********************Attributes*********************/
     private ArrayList<Utterance> utts_ = null;
     private String ddt_ = QA; //either QA or ME
