@@ -34,7 +34,7 @@ public class CumulativeEDisagreementIndex {
         calDis(spks, parts, dris_, false); //calculate outgoing links of expressive disagreement
         genQuintileSc(prxmlp, spks, parts, false);
         calDis(spks, parts, respto_dris_, true);
-        genQuintileSc(prxmlp, spks, parts, true); //calculate ingoing links of expressive disagreement
+        //genQuintileSc(prxmlp, spks, parts, true); //calculate ingoing links of expressive disagreement
         //System.out.println("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%");
         //System.out.println("++++++++++++++++++++++++++++++++\ncalculate Expressive Disagreement - CDXI quintile");
     }
