@@ -24,6 +24,7 @@ public class Assertions {
 
     public Assertions(String data_path) {
         Settings.initialize();
+        ddt_ = new DocDialogueType();
         ParseTools.initialize();
         PronounFormMatching.initialize();
         GenderCheck.initialize();
@@ -339,7 +340,7 @@ public class Assertions {
             ////////////////
             //added by peng
             ///////////////            
-            calEwi(i);
+            //calEwi(i);
             
             
           //  //Vocabulary Rate Index     
@@ -386,13 +387,13 @@ public class Assertions {
 	    //System.out.println("@Agreement");
 	    //calAgr();
 //	    System.err.println("@Task Focus");
-	    System.out.println("@Task Focus");
-	    calTaskFocus(i);
-	    System.out.println("@Sociability Measure...");
-	    calSociability();
+	    //System.out.println("@Task Focus");
+	    //calTaskFocus(i);
+	    //System.out.println("@Sociability Measure...");
+	    //calSociability();
 	    //System.out.println("\n\nProcessing L...");
 //	    System.err.println("\n\nProcessing Sociability Measure...");
-	    calGroupCohesion(i);
+	    //calGroupCohesion(i);
             calPop();// m2w 2/15/12 9:07 AM
      
 	    //System.out.println("\n\nprocessing topic disagreement...");
@@ -663,7 +664,7 @@ public class Assertions {
 
            public void calVri(int k)
     {        
-        print("@@@@@@@@@@@@@@@@@Vocabulary Range Index@@@@@@@@@@@@@@@@@");
+        //print("@@@@@@@@@@@@@@@@@Vocabulary Range Index@@@@@@@@@@@@@@@@@");
         		 print("\n");
         ArrayList spks = new ArrayList(parts_.values());
         ArrayList<String> speakerlist = new ArrayList<String>();
@@ -758,18 +759,19 @@ public class Assertions {
              sumofvri=sumofvri+((Speaker)spks.get(i)).getVri();
         }
          //calculating the raw score for each speaker- without percentages-1/12/2012
-        System.out.println("-----Raw Scores-------");
-        for(int i=0; i<speakerlist.size(); i++)
-        {
+        //System.out.println("-----Raw Scores-------");
+        //for(int i=0; i<speakerlist.size(); i++)
+        //{
            
-           ((Speaker)spks.get(i)).setnewVri(((Speaker)spks.get(i)).getVri());
-           print(speakerlist.get(i)+": "+ ((Speaker)spks.get(i)).getnewVri());
-        }
+	//  ((Speaker)spks.get(i)).setnewVri(((Speaker)spks.get(i)).getVri());
+           //print(speakerlist.get(i)+": "+ ((Speaker)spks.get(i)).getnewVri());
+        //}
         /*normalize the vri's by taking the percentage of speaker's vri to the sum of all vris*/
-         print("\n");
-        System.out.println("-----Percentages-------");
+	//print("\n");
+	 //System.out.println("-----Percentages-------");
+	// System.out.println ("@Vocabulary Range Index");
 //        System.out.println("SUM==="+sumofvri);
-        for(int i=0; i<speakerlist.size(); i++)
+        /*for(int i=0; i<speakerlist.size(); i++)
         {
             if(sumofvri>0){
             ((Speaker)spks.get(i)).setVri(calculatePercentage(((Speaker)spks.get(i)).getVri(), sumofvri));
@@ -779,14 +781,15 @@ public class Assertions {
             System.out.println("All vaues ARE 0");
             }
         }
-             print("\n");   
-        print("@@@@@@@@@@@@@@@@@End of Vocabulary Range Index@@@@@@@@@@@@@@@@@");
+	*/
+	//print("\n");   
+	     //print("@@@@@@@@@@@@@@@@@End of Vocabulary Range Index@@@@@@@@@@@@@@@@@");
 
     }//end of calVri
     
        public void calVim(int k)
     {        
-        print("@@@@@@@@@@@@@@@@@Vocabulary Introduction Measure@@@@@@@@@@@@@@@@@");
+        //print("@@@@@@@@@@@@@@@@@Vocabulary Introduction Measure@@@@@@@@@@@@@@@@@");
         	 print("\n");	
         ArrayList spks = new ArrayList(parts_.values());
         ArrayList<String> speakerlist = new ArrayList<String>();
@@ -905,18 +908,19 @@ public class Assertions {
             }
         }
         //calculating the raw score for each speaker- without percentages-1/12/2012
-         System.out.println("-----Raw Scores-------");
-        for(int i=0; i<speakerlist.size(); i++)
-        {
+        // System.out.println("-----Raw Scores-------");
+        //for(int i=0; i<speakerlist.size(); i++)
+        //{
            
-           ((Speaker)spks.get(i)).setnewVim(((Speaker)spks.get(i)).getVim());
-          print(speakerlist.get(i)+": " +((Speaker)spks.get(i)).getnewVim());
-        }
+        //   ((Speaker)spks.get(i)).setnewVim(((Speaker)spks.get(i)).getVim());
+        //  print(speakerlist.get(i)+": " +((Speaker)spks.get(i)).getnewVim());
+        //}
         /*normalize the vri's by taking the percentage of speaker's vri to the sum of all vris*/
-         print("\n");
-        System.out.println("-----Percentages-------");
+        // print("\n");
+        //System.out.println("-----Percentages-------");
+	// System.out.println ("@Vocabulary Introduction Measure");
 //        System.out.println("SUM==="+sumofvim);
-        for(int i=0; i<speakerlist.size(); i++)
+	/* for(int i=0; i<speakerlist.size(); i++)
         {
             if(sumofvim>0.0){
             ((Speaker)spks.get(i)).setVim(calculatePercentage(((Speaker)spks.get(i)).getVim(), sumofvim));
@@ -926,9 +930,9 @@ public class Assertions {
             System.out.println("All vaues ARE 0");
             }
         }
-         print("\n");
-        print("@@@@@@@@@@@@@@@@@End of Vocabulary Introduction Measure@@@@@@@@@@@@@@@@@");
-
+        // print("\n");
+	// print("@@@@@@@@@@@@@@@@@End of Vocabulary Introduction Measure@@@@@@@@@@@@@@@@@");
+	*/
     }//end of calVim
        
        
@@ -943,9 +947,10 @@ public class Assertions {
        public void calArgDiv(int k)
        {
            
-        print("@@@@@@@@@@@@@@@@@Argument Diversity@@@@@@@@@@@@@@@@@");		
-         print("\n");
-        System.out.println("-----Percentages-------");
+	   // print("@@@@@@@@@@@@@@@@@Argument Diversity@@@@@@@@@@@@@@@@@");		
+	   //  print("\n");
+	   //System.out.println("-----Percentages-------");
+	 System.out.println ("@Argument Diversity");
         ArrayList spks = new ArrayList(parts_.values());
         for (int i = 0; i < spks.size(); i++) {
 		    Speaker part_ = (Speaker)spks.get(i);
@@ -960,8 +965,8 @@ public class Assertions {
 		    print(part_.getName()+ ":"+ ((Speaker)spks.get(i)).getArgDiv() );
         }
           print("\n");
-        print("-------Raw Scores---------");
-        for (int i = 0; i < spks.size(); i++) {
+	  // print("-------Raw Scores---------");
+	  /*for (int i = 0; i < spks.size(); i++) {
 		    Speaker part_ = (Speaker)spks.get(i);
                     LocalTopics lts = part_.getILTs();
                     
@@ -974,7 +979,7 @@ public class Assertions {
 		    print(part_.getName()+ ":"+ ((Speaker)spks.get(i)).getnewArgDiv() );
         } print("\n");
         print("@@@@@@@@@@@@@@@@@End of Argument Diversity@@@@@@@@@@@@@@@@@\n\n\n");
-           
+	  */
        }
     
     /**
@@ -983,8 +988,8 @@ public class Assertions {
      * @param k the index of a document in docs_utts
      */
     public void calClm(int k) {
-        print("@@@@@@@@@@@@@@@@@Communication link measures@@@@@@@@@@@@@@@@@");
-        	 print("\n");	
+        //print("@@@@@@@@@@@@@@@@@Communication link measures@@@@@@@@@@@@@@@@@");
+	// 	 print("\n");	
         ArrayList spks = new ArrayList(parts_.values());
         ArrayList<String> speakerlist = new ArrayList<String>();
         ArrayList<Integer> linkcounts = new ArrayList<Integer>();//counting the utterances that are addressed to or reponse to each speaker, it is parallel to speakerlist.
@@ -1032,15 +1037,15 @@ public class Assertions {
             sumofclm=sumofclm+((Speaker)spks.get(i)).getClm();
         }
         //calculating the raw score for each speaker- without percentages-1/12/2012
-         System.out.println("-----Raw Scores-------");
+	/*  System.out.println("-----Raw Scores-------");
         for(int i=0; i<speakerlist.size(); i++)
         {
            
            ((Speaker)spks.get(i)).setnewClm(((Speaker)spks.get(i)).getClm());
            print(speakerlist.get(i)+": "+ ((Speaker)spks.get(i)).getnewClm());
-        }
+	   }*/
         /*normalize the clms by take the percentage of speaker's clm to the sum of all clms*/
-         print("\n");
+	/*        print("\n");
         System.out.println("-----Percentages-------");
 //        System.out.println("SUM indiv scores==="+sumofclm);
         for(int i=0; i<speakerlist.size(); i++)
@@ -1054,7 +1059,7 @@ public class Assertions {
             }
         }
          print("\n");
-        print(" @@@@@@@@@@@@@@@@@End of Communication Links Measure@@@@@@@@@@@@@@@@@\n");
+	 print(" @@@@@@@@@@@@@@@@@End of Communication Links Measure@@@@@@@@@@@@@@@@@\n");*/
         return;
     }//end of calClm
 
@@ -1063,8 +1068,8 @@ public class Assertions {
      * that the local topics introduced by this speaker are cited by others.
      */
     public void calCri() {
-        print("@@@@@@@@@@@@@@@@@Citation Rate Index@@@@@@@@@@@@@@@@@");
-         print("\n");
+        //print("@@@@@@@@@@@@@@@@@Citation Rate Index@@@@@@@@@@@@@@@@@");
+	//print("\n");
         int numofalltopics=0;		
         ArrayList spks = new ArrayList(parts_.values());
         double sumofcri = 0.0;
@@ -1078,16 +1083,16 @@ public class Assertions {
         }
         
          //calculating the raw score for each speaker- without percentages-1/12/2012
-         System.out.println("-----Raw Scores-------");
+        /* System.out.println("-----Raw Scores-------");
         for(int i=0; i<spks.size(); i++)
         {
            
             ((Speaker)spks.get(i)).setnewCri(((Speaker)spks.get(i)).getCri());
             print(((Speaker)spks.get(i)).getName()+": "+ ((Speaker)spks.get(i)).getnewCri());
         }
-        
+        */
         /*normalize the cri by take the percentage of speaker's cri to the sum of all cri*/
-         print("\n");
+	/*print("\n");
         print("-----Percentages-------");
 //         System.out.println("SUM indiv scores==="+sumofcri);
         for(int i=0; i<spks.size(); i++)
@@ -1099,7 +1104,7 @@ public class Assertions {
             }
         }
         print("\n");
-        print("@@@@@@@@@@@@@@@@@End of Citation Rate Index@@@@@@@@@@@@@@@@@\n\n\n");
+        print("@@@@@@@@@@@@@@@@@End of Citation Rate Index@@@@@@@@@@@@@@@@@\n\n\n");*/
 
     }
 
@@ -1111,8 +1116,8 @@ public class Assertions {
      * @param k the index of a document in docs_utts
      */
     public void calMti(int k) {
-        print("@@@@@@@@@@@@@@@@@Meso Topic Introduction@@@@@@@@@@@@@@@@@");
-         print("\n");
+        //print("@@@@@@@@@@@@@@@@@Meso Topic Introduction@@@@@@@@@@@@@@@@@");
+	//  print("\n");
         int count=0;
         MesoTopic tmp = (MesoTopic)mts_.get(k);
         ArrayList<ArrayList<String>> mt = new ArrayList<ArrayList<String>>();
@@ -1164,7 +1169,7 @@ public class Assertions {
         
         
         /*set mti to speakers and print them out.*/
-        print("-----Percentages-------");
+	/*  print("-----Percentages-------");
         for(int i=0; i<speakerlist.size(); i++)
         {
       if(mt.size()>0)
@@ -1182,7 +1187,7 @@ public class Assertions {
            print(speakerlist.get(i)+": "+ ((Speaker)spks.get(i)).getnewMti());
         }
          print("\n");
-        print("@@@@@@@@@@@@@@@@@End of Meso Topic Introduction@@@@@@@@@@@@@@@@@");
+	 print("@@@@@@@@@@@@@@@@@End of Meso Topic Introduction@@@@@@@@@@@@@@@@@");*/
     }//end of calMti
 
     /**
@@ -1193,10 +1198,11 @@ public class Assertions {
     public void calNetWorkCentrality()    
     {
        
-        print("@@@@@@@@@@@@@@@@@NetWork Centrality@@@@@@@@@@@@@@@@@");		
-         print("\n");
+	// print("@@@@@@@@@@@@@@@@@NetWork Centrality@@@@@@@@@@@@@@@@@");		
+        // print("\n");
         ArrayList spks = new ArrayList(parts_.values());
-         print("-----Percentages-------");
+	//print("-----Percentages-------");
+	 System.out.println ("@Network Centrality");
         for (int i = 0; i < spks.size(); i++) {
              
 		    Speaker part_ = (Speaker)spks.get(i);
@@ -1210,8 +1216,9 @@ public class Assertions {
                     ((Speaker)spks.get(i)).setNetCentr(netcentr);
 		    print(part_.getName()+ ":"+ ((Speaker)spks.get(i)).getNetCentr() );
         }
-        print("\n");
-            print("-----Raw scores-------");
+        //print("\n");
+	//   print("-----Raw scores-------");
+	/*
         for (int i = 0; i < spks.size(); i++) {
           
 		    Speaker part_ = (Speaker)spks.get(i);
@@ -1226,7 +1233,7 @@ public class Assertions {
 		    print(part_.getName()+ ":"+ ((Speaker)spks.get(i)).getnewNetCentr() );
         } print("\n");
         print("@@@@@@@@@@@@@@@@@End of NetWork Centrality@@@@@@@@@@@@@@@@@\n\n\n");
-
+	*/
     }
     //////////////////////////////////
     ////////////end of peng's methods
@@ -1361,7 +1368,7 @@ public class Assertions {
                 leader = part_;
                 ld_score = part_.getLeadershipR();
             }
-            System.out.println(part_.getName() + ":" + part_.getLeadershipRInfo());
+            System.out.println(part_.getName() + ":" + part_.getLeadershipInfo());
         }
         if (leader != null) {
             System.out.println("@Leader");
@@ -1513,7 +1520,7 @@ public class Assertions {
         }
 
 
-        System.out.println("\n\n%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%");
+        //System.out.println("\n\n%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%");
         //process LTI quintile
         ArrayList spks = new ArrayList();
         ArrayList spks_LTI = new ArrayList();
@@ -2595,7 +2602,12 @@ public class Assertions {
                             //all_utts_.addAll(list);
                             fls_.add(fl.getName());
                         } else {
-                            ArrayList list = DocumentProcessor.parseUtts(fl);
+                            ArrayList list = null;
+                            if (ddt_.getType().equals(DocDialogueType.WK)) {
+                                list = DocumentProcessor.parseWikiUtts(fl);
+                            } else {
+                                list = DocumentProcessor.parseUtts(fl);
+                            }
                             //System.out.println("list: \n" + list);
                             if (list != null) {
                                 XMLParse xp = new XMLParse(fl.getAbsolutePath(), list);
@@ -3333,6 +3345,6 @@ public class Assertions {
     }
 
     public void print(String s) {
-        System.out.println(s);
+	System.out.println(s);
     }
 }

@@ -57,7 +57,7 @@ public class PursuitOfPower {
         Collections.sort(PopList, c);
         //print out results.
         if(doFinalPrintOut){
-            System.out.println("========= Pursuit Of Power=========");
+            System.out.println("@Pursuit of Power");
             for(ArrayList a : PopList){
                 System.out.println( (String)(a.get(0)) + " : " + (Double)(a.get(1)) );
             }
@@ -106,13 +106,13 @@ public class PursuitOfPower {
         this.addingPercentageToPopMap(localMapITCM);
         //5. testing print.
         if(doFinalPrintOut){
-            System.out.println("----ITCM----");
+            System.out.println("@ITCM");
             for(String spk : localMapITCM.keySet()){
                 System.out.println(spk + " : " + localMapITCM.get(spk));
             }
         }
         if(doAnalysisPrintOut){
-            System.out.println("----ITCM----");
+            System.out.println("@ITCM");
             System.out.println("topic ctrl map: " + localMapTPctrl.toString());
             System.out.println("involvement map: " + localMapInv.toString());
             System.out.println("itcm map before pop: " + localMapITCM.toString());
@@ -169,13 +169,13 @@ public class PursuitOfPower {
         
         //6.testing print.
         if(doFinalPrintOut){
-            System.out.println("----CDM----");
+            System.out.println("@CDM");
             for(String spk : localMapCDM.keySet()){
                 System.out.println(spk + " : " + localMapCDM.get(spk));
             }
         }
         if(doAnalysisPrintOut){
-            System.out.println("----CDM----");
+            System.out.println("@CDM");
             System.out.println("topic ctrl map: " + localMapTPctrl.toString());
             System.out.println("task ctrl map: " + localMapTKctrl.toString());
             System.out.println("task and topic map: " + localMapTK_TPctrl.toString());
@@ -229,13 +229,13 @@ public class PursuitOfPower {
         this.addingPercentageToPopMap(localMapDWL);
         //output
         if(doFinalPrintOut){
-            System.out.println("----DWL----");
+            System.out.println("@DWL");
             for(String spk : localMapDWL.keySet()){
                 System.out.println(spk + " : " + localMapDWL.get(spk));
             }
         }
         if(doAnalysisPrintOut){
-            System.out.println("---DWL---");
+            System.out.println("@DWL");
             System.out.println("total dis: " + totalDis);
             System.out.println("count map dis: " + localMapCount.toString());
             System.out.println("local DWL map before pop: " + localMapDWL);
@@ -257,7 +257,7 @@ public class PursuitOfPower {
         this.calTFM_TDT();
         //output
         if(doFinalPrintOut){
-            System.out.println("----TFM----");
+            System.out.println("@TFM");
             for(String spk : TFM_DRTMap.keySet()){ // will build tfm map and output tfm map
                 System.out.println(spk + " : " + TFM_DRTMap.get(spk));
             }
