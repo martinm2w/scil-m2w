@@ -3226,8 +3226,8 @@ public class Assertions {
     private DateFormat df_ = DateFormat.getDateTimeInstance(DateFormat.FULL,
             DateFormat.MEDIUM);
     
-    private String English_stopword="conf/stop-words";
-    private String Chinese_stopword="conf/Chinese-stop-words";
+    private String English_stopword="/home/ruobo/develop/scil0200/conf/stop-words";
+    private String Chinese_stopword="/home/ruobo/develop/scil0200/conf/Chinese-stop-words";
     private Speaker leader_ = null;
 //    private ChineseWordnet CNWN = null;
 
