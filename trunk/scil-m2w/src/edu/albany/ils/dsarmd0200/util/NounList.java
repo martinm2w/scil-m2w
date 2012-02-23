@@ -92,7 +92,7 @@ public class NounList {
 	pc = phr_ch;
 	xp = x;
     }
-    
+
     public void countThP() {
         for (int i = 0; i < nouns.size(); i++) {
             NounToken noun = nouns.get(i);
