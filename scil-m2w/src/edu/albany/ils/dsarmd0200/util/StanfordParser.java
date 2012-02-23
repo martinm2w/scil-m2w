@@ -7,12 +7,12 @@ import edu.stanford.nlp.trees.*;
 import edu.stanford.nlp.ling.Label;
 import edu.stanford.nlp.objectbank.TokenizerFactory;
 import edu.stanford.nlp.process.*;
-//import edu.stanford.nlp.parser.lexparser.*;
+import edu.stanford.nlp.parser.lexparser.*;
 
 public class StanfordParser 
 {
     Tree t;
-//    LexicalizedParser lp = new LexicalizedParser("/projects/SHARED/stanford-parser-2010-08-20/englishFactored.ser.gz");
+    LexicalizedParser lp = new LexicalizedParser("/home/ruobo/develop/scil0200/tools/englishFactored.ser.gz");
     TokenizerFactory tf = PTBTokenizer.factory(false, new WordTokenFactory());
     TreePrint tp = new TreePrint("penn,typedDependenciesCollapsed");
     int count = 0;
@@ -35,8 +35,8 @@ public class StanfordParser
 	    // prepare parser, tokenizer and tree printer
 	    System.out.println("Parse sentence: " + sentence);
 	    List tokens = tf.getTokenizer(new StringReader(sentence)).tokenize();
-//	    lp.parse(tokens);
-//	    t = lp.getBestParse();
+	    lp.parse(tokens);
+	    t = lp.getBestParse();
 	    GrammaticalStructure gs = gsf.newGrammaticalStructure(t);
 	    tdl = gs.typedDependenciesCollapsed();
 	    System.out.println("--------- End Parsing --------- " + count);	
