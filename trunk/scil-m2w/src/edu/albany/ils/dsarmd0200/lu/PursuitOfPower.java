@@ -105,10 +105,12 @@ public class PursuitOfPower {
        //4. add to pop.
         this.addingPercentageToPopMap(localMapITCM);
         //5. testing print.
+        ArrayList<ArrayList> ITCMList = new ArrayList();
+        ITCMList = this.sortAndConvertMapToArrayList(localMapITCM);
         if(doFinalPrintOut){
             System.out.println("@ITCM");
-            for(String spk : localMapITCM.keySet()){
-                System.out.println(spk + " : " + localMapITCM.get(spk));
+            for(ArrayList a : ITCMList){
+                System.out.println( (String)(a.get(0)) + " : " + (Double)(a.get(1)) );
             }
         }
         if(doAnalysisPrintOut){
@@ -168,10 +170,12 @@ public class PursuitOfPower {
         this.addingPercentageToPopMap(localMapCDM);
         
         //6.testing print.
+        ArrayList<ArrayList> CDMList = new ArrayList();
+        CDMList = this.sortAndConvertMapToArrayList(localMapCDM);
         if(doFinalPrintOut){
             System.out.println("@CDM");
-            for(String spk : localMapCDM.keySet()){
-                System.out.println(spk + " : " + localMapCDM.get(spk));
+            for(ArrayList a : CDMList){
+                System.out.println( (String)(a.get(0)) + " : " + (Double)(a.get(1)) );
             }
         }
         if(doAnalysisPrintOut){
@@ -209,6 +213,7 @@ public class PursuitOfPower {
             if(DaTag.toLowerCase().contains(DISAGREE_REJECT) && tempCATag.equalsIgnoreCase(RESPONSE_TO)){
                 totalDis++;
                 String lkto_spk = u.getRespToSpk();
+//                System.out.println(lkto_spk);
                 //if it links to the leader and current speaker is not the leader
                 if((lkto_spk != null) && (tempSpk != null) && lkto_spk.equalsIgnoreCase(leaderName) && !tempSpk.equalsIgnoreCase(leaderName)){
                     Double tempCount = localMapCount.get(tempSpk);
@@ -226,15 +231,22 @@ public class PursuitOfPower {
                 localMapDWL.put(spk, tempPerc);
             }
         }
-        
 
         //adding
         this.addingPercentageToPopMap(localMapDWL);
         //output
+//        if(doFinalPrintOut){
+//            System.out.println("@DWL");
+//            for(String spk : localMapDWL.keySet()){
+//                System.out.println(spk + " : " + localMapDWL.get(spk));
+//            }
+//        }
+        ArrayList<ArrayList> DWLList = new ArrayList();
+        DWLList = this.sortAndConvertMapToArrayList(localMapDWL);
         if(doFinalPrintOut){
             System.out.println("@DWL");
-            for(String spk : localMapDWL.keySet()){
-                System.out.println(spk + " : " + localMapDWL.get(spk));
+            for(ArrayList a : DWLList){
+                System.out.println( (String)(a.get(0)) + " : " + (Double)(a.get(1)) );
             }
         }
         if(doAnalysisPrintOut){
@@ -259,12 +271,15 @@ public class PursuitOfPower {
         //2.Topical Disagreement Target Index (TDT)
         this.calTFM_TDT();
         //output
+        ArrayList<ArrayList> TFMList = new ArrayList();
+        TFMList = this.sortAndConvertMapToArrayList(TFM_DRTMap);
         if(doFinalPrintOut){
             System.out.println("@TFM");
-            for(String spk : TFM_DRTMap.keySet()){ // will build tfm map and output tfm map
-                System.out.println(spk + " : " + TFM_DRTMap.get(spk));
+            for(ArrayList a : TFMList){
+                System.out.println( (String)(a.get(0)) + " : " + (Double)(a.get(1)) );
             }
-        }
+        }       
+
         
         
     }
@@ -400,6 +415,35 @@ public class PursuitOfPower {
         }
         return map;
     }
+    
+    /**
+     * m2w: in order to make each 4 methods' output sorted, this methods helps.
+     * @param map
+     * @return 
+     * @date 2/24/12 11:21 AM
+     */
+    private ArrayList<ArrayList> sortAndConvertMapToArrayList(HashMap<String,Double> map){
+        ArrayList<ArrayList> list = new ArrayList();//converting hashmap to arraylist for sorting.
+        for(String spk : map.keySet()){
+            ArrayList subList = new ArrayList();
+            subList.add(spk);
+            subList.add(map.get(spk));
+            list.add(subList);
+        }
+        Comparator c = new Comparator(){
+            @Override
+            public int compare(Object obj1, Object obj2){
+                ArrayList sublist1 = (ArrayList)obj1;
+                ArrayList sublist2 = (ArrayList)obj2;
+                Double pop1 = (Double)sublist1.get(1);
+                Double pop2 = (Double)sublist2.get(1);
+                return pop2.compareTo(pop1);
+            }
+            
+        };
+        Collections.sort(list, c);
+        return list;
+    }
 //    =================================== vars and consts =============================================
     //variables:
     private HashMap<String, Double> PopMap; //where the precentage of each speaker are stored.
@@ -415,6 +459,6 @@ public class PursuitOfPower {
     private final String RESPONSE_TO = "response-to";
     
     //print out control:
-    private boolean doAnalysisPrintOut = false;
+    private boolean doAnalysisPrintOut = true;
     private boolean doFinalPrintOut = true;
 }
