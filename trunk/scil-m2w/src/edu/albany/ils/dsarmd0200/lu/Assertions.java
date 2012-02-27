@@ -217,14 +217,12 @@ public class Assertions {
 
                 all_utts_.addAll(utts_);
                 ddt_ = new DocDialogueType(utts_);
-                
-                if (!ddt_.getType().equals(DocDialogueType.WK)) {
-                    calCommLink(xp); //commented by TL 12/13
-                }
-                
                 //System.out.println("ddt_ type: " + ddt_.getType());
                 if (!ddt_.getType().equals(DocDialogueType.WK)) {
                     tagCommType(); //commented by TL 12/13
+                }
+                if (!ddt_.getType().equals(DocDialogueType.WK)) {
+                    calCommLink(xp); //commented by TL 12/13
                 }
                 //System.exit(0);
                 tagDAct();
