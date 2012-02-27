@@ -23,44 +23,38 @@ public class PursuitOfPower {
         this.Utts = utts_;
         this.parts = parts_;
         this.leader = leader_;
-        //create pop-map for furture calculation.
-        PopMap = new HashMap();
-        NameMap = new HashMap();
+        //init all instance var maps
+        PopMap = new HashMap<String, Double>(); //pop final map
+        NameMap = new HashMap<String, Double>(); // for init
+        ITCMMap = new HashMap<String, Double>(); //4 sub-method maps
+        CDMMap = new HashMap<String, Double>();
+        DWLMap = new HashMap<String, Double>();
+        TFMMap = new HashMap<String, Double>();
         for(Utterance u : Utts){
             String tempSpk = u.getSpeaker();
             NameMap.put(tempSpk, 0.0);
         }
         PopMap.putAll(NameMap);
-//        System.out.println(PopMap.keySet());
+        ITCMMap.putAll(NameMap);
+        CDMMap.putAll(NameMap);
+        DWLMap.putAll(NameMap);
+        TFMMap.putAll(NameMap);
     }
     
     public void calPursuitOfPower(){
         this.calPOP();
         ArrayList<ArrayList> PopList = new ArrayList();//converting hashmap to arraylist for sorting.
-        for(String spk : PopMap.keySet()){
-            ArrayList subList = new ArrayList();
-            subList.add(spk);
-            subList.add(PopMap.get(spk));
-            PopList.add(subList);
-        }
-        Comparator c = new Comparator(){
-            @Override
-            public int compare(Object obj1, Object obj2){
-                ArrayList sublist1 = (ArrayList)obj1;
-                ArrayList sublist2 = (ArrayList)obj2;
-                Double pop1 = (Double)sublist1.get(1);
-                Double pop2 = (Double)sublist2.get(1);
-                return pop2.compareTo(pop1);
-            }
-            
-        };
-        Collections.sort(PopList, c);
-        //print out results.
+        PopList = this.sortAndConvertMapToArrayList(PopMap);
         if(doFinalPrintOut){
             System.out.println("@Pursuit of Power");
             for(ArrayList a : PopList){
-                System.out.println( (String)(a.get(0)) + " : " + (Double)(a.get(1)) );
+                String tmpSpk = (String)a.get(0);
+                Double popScore = (Double)(a.get(1));
+                if(!tmpSpk.equalsIgnoreCase("ilspersonnel")){
+                    System.out.println(tmpSpk + " : " + popScore );
+                }
             }
+            System.out.println("person pursuing power: " + (String)PopList.get(0).get(0));
         }
         
     }
@@ -68,14 +62,25 @@ public class PursuitOfPower {
     private void calPOP(){
         //calculate pop
         //1.Involved Topic COntrol Measure (ITCM)
-        this.calITCM();
+        ITCMMap = this.calITCM();
         //2.Cumulative Disagreement Measure (CDM)
-        this.calCDM();
+        CDMMap = this.calCDM();
         //3.Disagreement with Leader (DWL)
-        this.calDWL();
+        DWLMap = this.calDWL();
         //4.Tension Focus Measure (TFM)
-        this.calTFM();
-        
+        TFMMap = this.calTFM();
+        //5.average.
+        for(String spk : PopMap.keySet()){
+            Double tmpITCM = ITCMMap.get(spk);
+            Double tmpCDM = CDMMap.get(spk);
+            Double tmpDWL = DWLMap.get(spk);
+            Double tmpTFM = TFMMap.get(spk);
+            Double avgPop = 0.0;
+            if(tmpITCM!=null && tmpCDM!=null && tmpDWL!=null && tmpTFM!=null){    
+                avgPop = (tmpITCM + tmpCDM + tmpDWL + tmpTFM) / 4.0 ;
+            }
+            PopMap.put(spk, avgPop);
+        }
     }
     
     /**
@@ -85,7 +90,7 @@ public class PursuitOfPower {
      *  //3. add the 2 maps and average
      *  //4. add to pop.
      */
-    private void calITCM(){
+    private HashMap<String, Double> calITCM(){
        //1. init all maps, topic ctrl, involvement, local itcm, 
         HashMap<String, Double> localMapTPctrl = new HashMap();
         HashMap<String, Double> localMapInv = new HashMap();
@@ -102,8 +107,6 @@ public class PursuitOfPower {
         }
        //3. add the 2 maps and average
         localMapITCM = this.adding2MapsAndAverageIt(localMapTPctrl, localMapInv) ;
-       //4. add to pop.
-        this.addingPercentageToPopMap(localMapITCM);
         //5. testing print.
         ArrayList<ArrayList> ITCMList = new ArrayList();
         ITCMList = this.sortAndConvertMapToArrayList(localMapITCM);
@@ -120,7 +123,7 @@ public class PursuitOfPower {
             System.out.println("itcm map before pop: " + localMapITCM.toString());
             System.out.println("pop map:" + PopMap.toString());
         }
-        
+        return localMapITCM;
     }
     
     /**
@@ -133,7 +136,7 @@ public class PursuitOfPower {
      * 6. add local map to pop map.
      * 7. leader should be 0.0
      */
-    private void calCDM(){
+    private HashMap<String, Double> calCDM(){
 //       1. initialize all maps
         HashMap<String, Double> localMapTPctrl = new HashMap();
         HashMap<String, Double> localMapTKctrl = new HashMap();
@@ -166,8 +169,6 @@ public class PursuitOfPower {
         }
         //4. add disagreement to local map. average
         localMapCDM = this.adding2MapsAndAverageIt(localMapTK_TPctrl, localMapDis);
-        //5. add local map to pop map.
-        this.addingPercentageToPopMap(localMapCDM);
         
         //6.testing print.
         ArrayList<ArrayList> CDMList = new ArrayList();
@@ -187,7 +188,7 @@ public class PursuitOfPower {
             System.out.println("cmd map before pop: " + localMapCDM.toString());
             System.out.println("pop map:" + PopMap.toString());
         }
-        
+        return localMapCDM;
     }
     
     /**
@@ -197,7 +198,7 @@ public class PursuitOfPower {
      *   //3. get count of dis towards the leader, assign to each key in the local map.
      *   //4. build and add the local map of percent to the pop map.
      */
-    private void calDWL(){
+    private HashMap<String, Double> calDWL(){
         
         Double totalDis = 0.0;
         //1. get the leader of the dialogue
@@ -232,15 +233,7 @@ public class PursuitOfPower {
             }
         }
 
-        //adding
-        this.addingPercentageToPopMap(localMapDWL);
         //output
-//        if(doFinalPrintOut){
-//            System.out.println("@DWL");
-//            for(String spk : localMapDWL.keySet()){
-//                System.out.println(spk + " : " + localMapDWL.get(spk));
-//            }
-//        }
         ArrayList<ArrayList> DWLList = new ArrayList();
         DWLList = this.sortAndConvertMapToArrayList(localMapDWL);
         if(doFinalPrintOut){
@@ -257,6 +250,7 @@ public class PursuitOfPower {
             System.out.println(" pop map: " + PopMap.toString());
             System.out.println();
         }
+        return localMapDWL;
     }
     
     /**
@@ -264,24 +258,26 @@ public class PursuitOfPower {
      * //1.Disagree-Reject Target Index (DRT)
      * //2.Topical Disagreement Target Index (TDT)
      */
-    private void calTFM(){
-        HashMap<String, Double> TFM_DRTMap = new HashMap();
+    private HashMap<String, Double> calTFM(){
+        HashMap<String, Double> TFM_DRTMap = new HashMap<String, Double>();
+        HashMap<String, Double> TFM_TDTMap = new HashMap<String, Double>();
+        HashMap<String, Double> localTFMMap = new HashMap<String, Double>();
         //1.Disagree-Reject Target Index (DRT)
         TFM_DRTMap = this.calTFM_DRT();
         //2.Topical Disagreement Target Index (TDT)
-        this.calTFM_TDT();
+        TFM_TDTMap = this.calTFM_TDT();
+        //3. calculate TFM from 2 sub-maps.
+        localTFMMap = TFM_DRTMap;
         //output
         ArrayList<ArrayList> TFMList = new ArrayList();
-        TFMList = this.sortAndConvertMapToArrayList(TFM_DRTMap);
+        TFMList = this.sortAndConvertMapToArrayList(localTFMMap);
         if(doFinalPrintOut){
             System.out.println("@TFM");
             for(ArrayList a : TFMList){
                 System.out.println( (String)(a.get(0)) + " : " + (Double)(a.get(1)) );
             }
         }       
-
-        
-        
+        return localTFMMap;
     }
     
     
@@ -320,7 +316,6 @@ public class PursuitOfPower {
                 localMapPercent.put(spk, percentage);
             }
         }
-            
         
         //3. getting dis percentage from the part object that has passed in.
         for(String spk : parts.keySet()){
@@ -334,9 +329,6 @@ public class PursuitOfPower {
         //4. adding up disagreement percentage to the local percentage list with confirmation-request percentage in it. seperated for furture improvements.
         HashMap<String,Double> localTFM_DRTMap = new HashMap<String,Double> ();
         localTFM_DRTMap = this.adding2MapsAndAverageIt(localMapPercent, localMapDis); 
-        
-        //adding to popmap
-        this.addingPercentageToPopMap(localTFM_DRTMap);
 
         //output
         if(doAnalysisPrintOut){
@@ -355,47 +347,48 @@ public class PursuitOfPower {
     /**
      * m2w: TFM 's Topical Disagreement Target Index (TDT)
      */
-    private void calTFM_TDT(){
-    
+    private HashMap<String, Double> calTFM_TDT(){
+        HashMap<String, Double> localTFM_TDTMap = new HashMap<String, Double>();
+        return localTFM_TDTMap;
     }
     
     //    ======================================== sub level util methods =================================================
     
-    
-    /**
-     * m2w: this util method is for adding local percentage onto the pop-map total percentage.
-     * @param localMap 
-     */
-    private void addingPercentageToPopMap(HashMap<String,Double> localMap){
-//        System.out.println("times: " + timesAddedToPopMap);
-        if(!localMap.isEmpty()){
-            if(timesAddedToPopMap==0){//if first time adding , do not average.
-                    for(String spk : localMap.keySet()){
-                    Double popPerc = PopMap.get(spk);
-                    Double localPerc = localMap.get(spk);
-                    Double sum = (popPerc+localPerc);
-                    PopMap.put(spk, sum);
-//                    System.out.println("pop:" + popPerc);
-//                    System.out.println("local:" + localPerc);
-//                    System.out.println("sum:" + sum);
-                }
-            }else{//if not, average.
-                for(String spk : localMap.keySet()){
-                    Double popPerc = PopMap.get(spk);
-                    Double localPerc = localMap.get(spk);
-                    Double Average = (popPerc+localPerc)/2;
-//                    System.out.println("pop:" + popPerc);
-//                    System.out.println("local:" + localPerc);
-//                    System.out.println("Average:" + Average);
-                    PopMap.put(spk, Average);
-                }
-            }
-            timesAddedToPopMap ++;
-        }else{
-            System.err.println("error adding to pop map: localmap is empty");
-        }
-        
-    }
+//    
+//    /**
+//     * m2w: this util method is for adding local percentage onto the pop-map total percentage.
+//     * @param localMap 
+//     */
+//    private void addingPercentageToPopMap(HashMap<String,Double> localMap){
+////        System.out.println("times: " + timesAddedToPopMap);
+//        if(!localMap.isEmpty()){
+//            if(timesAddedToPopMap==0){//if first time adding , do not average.
+//                    for(String spk : localMap.keySet()){
+//                    Double popPerc = PopMap.get(spk);
+//                    Double localPerc = localMap.get(spk);
+//                    Double sum = (popPerc+localPerc);
+//                    PopMap.put(spk, sum);
+////                    System.out.println("pop:" + popPerc);
+////                    System.out.println("local:" + localPerc);
+////                    System.out.println("sum:" + sum);
+//                }
+//            }else{//if not, average.
+//                for(String spk : localMap.keySet()){
+//                    Double popPerc = PopMap.get(spk);
+//                    Double localPerc = localMap.get(spk);
+//                    Double Average = (popPerc+localPerc)/2;
+////                    System.out.println("pop:" + popPerc);
+////                    System.out.println("local:" + localPerc);
+////                    System.out.println("Average:" + Average);
+//                    PopMap.put(spk, Average);
+//                }
+//            }
+//            timesAddedToPopMap ++;
+//        }else{
+//            System.err.println("error adding to pop map: localmap is empty");
+//        }
+//        
+//    }
     
     /**
      * m2w: for adding 2 maps together and calculate their average percentage.
@@ -452,6 +445,10 @@ public class PursuitOfPower {
     private Speaker leader;
     private HashMap<String, Double> NameMap; // an empty map, used for each local map initialization. 
     private int timesAddedToPopMap = 0;
+    private HashMap<String, Double> ITCMMap; // stroing itcm score, for average pop.
+    private HashMap<String, Double> CDMMap; // stroing cdm score, for average pop.
+    private HashMap<String, Double> DWLMap; // stroing dwl score, for average pop.
+    private HashMap<String, Double> TFMMap; // stroing tfm score, for average pop.
     
     //constants:
     private final String DISAGREE_REJECT = "disagree-reject";
@@ -459,6 +456,6 @@ public class PursuitOfPower {
     private final String RESPONSE_TO = "response-to";
     
     //print out control:
-    private boolean doAnalysisPrintOut = true;
+    private boolean doAnalysisPrintOut = false;
     private boolean doFinalPrintOut = true;
 }
