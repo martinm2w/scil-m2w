@@ -41,8 +41,10 @@ public class CommunicationLinkXChinese{
     	for(int index=0; index<utts.size(); index++){
             Utterance u_content = utts.get(index);
 //            System.out.println("turn_no: " + u_content.getTurn() + " index: " + index);
-            String DATag = u_content.getTag();
-            if(u_content.getCommActType().equals(RESPONSE_TO) || DATag.contains(DISAGREE_REJECT) || DATag.contains(RESPONSE_ANSWER)){
+//            String DATag = u_content.getTag();
+            if(u_content.getCommActType().equals(RESPONSE_TO)
+//                    || DATag.contains(DISAGREE_REJECT) || DATag.contains(RESPONSE_ANSWER)
+                    ){
 //            if(u_content.getCommActType().equals(RESPONSE_TO)){
                     response_to_count++;
                     String content = contentExtraction(u_content).toLowerCase();
@@ -233,8 +235,12 @@ public class CommunicationLinkXChinese{
                     if(!preSpkName.equalsIgnoreCase(curr_speaker)){
                         
                         //added conventional-opening , hi some one case. 4/18/11 1:09 PM
-                        if (curr_utt.getTag().toLowerCase().contains("opening") || cur_raw_content.contains("hi ")){
-                            if((this.lengthCal(prev_utt) > 1) && preSpkName.equals(name) && this.lengthCal(prev_utt) > 1 && prev_utt.getTag().toLowerCase().contains("opening") ){
+                        if (
+//                                curr_utt.getTag().toLowerCase().contains("opening") || 
+                                cur_raw_content.contains("hi ")){
+                            if((this.lengthCal(prev_utt) > 1) && preSpkName.equals(name) && this.lengthCal(prev_utt) > 1 
+//                                    && prev_utt.getTag().toLowerCase().contains("opening") 
+                                    ){
                                 //Score + 6
                                 this.increaseScore(list.get(i), 6, "FindName_opening[6]");
 //                                iScore += 6;
@@ -372,7 +378,8 @@ public class CommunicationLinkXChinese{
 //                      ===== m2w : current utt contains matching cases. 4/4/11 2:41 PM ======
                         //m2w: yes and D[agree-accept] && prev is C[addressed-to]D[Information-Request] and contains ? , then set.4/18/11 9:07 AM
                         if((cur_content.startsWith("yes")  || cur_content.startsWith("对")  || cur_content.startsWith("恩")  || cur_content.startsWith("好")  || cur_content.startsWith("是")  || cur_content.startsWith("没错"))
-                                && this.lengthCal(utt) < 2 && utt.getTag().contains("agree-accept")
+                                && this.lengthCal(utt) < 2 
+//                                && utt.getTag().contains("agree-accept")
                                 && pre_raw_content.contains("?") 
 //                                && prev_utt.getTag().toLowerCase().contains("information-request")
                                 ){
@@ -463,13 +470,14 @@ public class CommunicationLinkXChinese{
                         //m2w : code 36, agree on some one's denying about something, look for don't. 3/24/11 11:17 AM
                         if(((cur_raw_content.contains("nt") || cur_raw_content.contains("n't")) && cur_raw_content.contains("either"))
 //                                ||  ((cur_raw_content.contains("没") || cur_raw_content.contains("不")|| cur_raw_content.contains("赞")|| cur_raw_content.contains("反对")) && cur_raw_content.contains("也")) 
-                                || (cur_content.contains("我也") || utt.getTag().toLowerCase().contains("agree"))
-                                ){
+                                || (cur_content.contains("我也") 
+//                                || utt.getTag().toLowerCase().contains("agree")
+                                )){
                             if (pre_content.contains("dont") || 
 //                                    (cur_raw_content.contains("没") || cur_raw_content.contains("不")|| cur_raw_content.contains("赞")|| cur_raw_content.contains("反对"))
                                     (pre_content.contains("我不赞")
                                     || pre_content.contains("我反对")
-                                    || prev_utt.getTag().toLowerCase().contains("disagree")
+//                                    || prev_utt.getTag().toLowerCase().contains("disagree")
                                     )){
                                 //Score + 2
                                 this.increaseScore(list.get(i), 2, "agree on pre denying[2]");
@@ -683,7 +691,9 @@ public class CommunicationLinkXChinese{
                                     || pre_content.equals("是") || pre_content.equals("就是") || pre_content.matches(".*对") || pre_content.matches(".*好") || pre_content.contains("没错") || pre_content.contains("恩") 
                                     //excluded "because" put into opinion. 4/5/11 11:54 AM
                                     //edcluded prev_utt 's dialog act is agree-accept. 4/16/11 3:00 PM
-                                    ) && !prev_utt.getTag().toLowerCase().contains("agree-accept")){
+                                    ) 
+//                                    && !prev_utt.getTag().toLowerCase().contains("agree-accept")
+                                    ){
 
                                 //Score + 1
                                 this.increaseScore(list.get(i), 1, "pre:cnd[1]");
@@ -994,9 +1004,9 @@ public class CommunicationLinkXChinese{
             if(doHitorMissReport){
 //                System.out.println("in gen");
                 System.out.println(hitOrNot + "!!!   " + " -- " + which_case);
-		System.out.println("turn: "+ curr_turn_no + "(" + cUtt.getSpeaker() + "): " + cUtt.getContent() + "  |  C["+ cUtt.getCommActType() +"]D["+ cUtt.getTag() +"]");
-		System.out.println("Syst: "+ auto_turn_no + "(" + sUtt.getSpeaker() + "): " + sUtt.getContent() + "  |  C["+ sUtt.getCommActType() +"]D["+ sUtt.getTag() +"]");
-		System.out.println("Anno: "+ anno_turn_no + "(" + aUtt.getSpeaker() + "): " + aUtt.getContent() + "  |  C["+ aUtt.getCommActType() +"]D["+ aUtt.getTag() +"]");
+		System.out.println("turn: "+ curr_turn_no + "(" + cUtt.getSpeaker() + "): " + cUtt.getContent() + "  |  C["+ cUtt.getCommActType() +"]");
+		System.out.println("Syst: "+ auto_turn_no + "(" + sUtt.getSpeaker() + "): " + sUtt.getContent() + "  |  C["+ sUtt.getCommActType() +"]");
+		System.out.println("Anno: "+ anno_turn_no + "(" + aUtt.getSpeaker() + "): " + aUtt.getContent() + "  |  C["+ aUtt.getCommActType() +"]");
 		System.out.println();
                 //generating
             }
@@ -1108,7 +1118,7 @@ public class CommunicationLinkXChinese{
         public static void checkResInCMDLine(ArrayList<Utterance> utts){
 
             for(int i = 0; i < utts.size(); i ++){
-                System.out.println("turn No: " + utts.get(i).getTurn() + "R["+ utts.get(i).getTag() +"] = content: " + utts.get(i).getContent());
+//                System.out.println("turn No: " + utts.get(i).getTurn() + "R["+ utts.get(i).getTag() +"] = content: " + utts.get(i).getContent());
             }
         }
 

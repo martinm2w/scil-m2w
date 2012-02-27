@@ -69,8 +69,10 @@ public class CommunicationLinkX
     	for(int index=0; index<utts.size(); index++)
     	{
     		Utterance u_content = utts.get(index);
-                String DATag = u_content.getTag();
-    		if(u_content.getCommActType().equals(RESPONSE_TO) || DATag.contains(DISAGREE_REJECT) || DATag.contains(RESPONSE_ANSWER))
+//                String DATag = u_content.getTag();
+    		if(u_content.getCommActType().equals(RESPONSE_TO) 
+//                        || DATag.contains(DISAGREE_REJECT) || DATag.contains(RESPONSE_ANSWER)
+                        )
     		{
     			response_to_count++;
     			String content = contentExtraction(u_content, isEnglish_, isChinese_);
@@ -426,29 +428,29 @@ public class CommunicationLinkX
     }
     
     // extract all nouns in each utterance content and save in arraylist
-    private ArrayList<String> getNouns(String content)
-    {
-    	String noEmotes = ParseTools.removeEmoticons(content);
-		String tagged = StanfordPOSTagger.tagString(noEmotes).trim();
-		String [] tagsplit = tagged.split("\\s+");
-		ArrayList <String> tokens = getTokens(tagsplit);
-    	return tokens; 	
-    }
+//    private ArrayList<String> getNouns(String content)
+//    {
+//    	String noEmotes = ParseTools.removeEmoticons(content);
+//		String tagged = StanfordPOSTagger.tagString(noEmotes).trim();
+//		String [] tagsplit = tagged.split("\\s+");
+//		ArrayList <String> tokens = getTokens(tagsplit);
+//    	return tokens; 	
+//    }
 	
-    private ArrayList<String> getTokens(String[] tokens)
-    {
-    	ArrayList<String> retval = new ArrayList<String>();
-    	for(int i=0; i<tokens.length; i++)
-    	{
-    		String tag = ParseTools.getTag(tokens[i]);
-    		String word = ParseTools.getWord(tokens[i]);
-    		boolean is_noun = ParseTools.isNoun(tag);
-    		if(is_noun)
-    			retval.add(word);
-    	}
-    	return retval;
-    }
-    
+//    private ArrayList<String> getTokens(String[] tokens)
+//    {
+//    	ArrayList<String> retval = new ArrayList<String>();
+//    	for(int i=0; i<tokens.length; i++)
+//    	{
+//    		String tag = ParseTools.getTag(tokens[i]);
+//    		String word = ParseTools.getWord(tokens[i]);
+//    		boolean is_noun = ParseTools.isNoun(tag);
+//    		if(is_noun)
+//    			retval.add(word);
+//    	}
+//    	return retval;
+//    }
+//    
     public TreeMap<Integer,String> getMap()
     {
     	return map;
