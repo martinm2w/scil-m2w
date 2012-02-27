@@ -217,6 +217,11 @@ public class Assertions {
 
                 all_utts_.addAll(utts_);
                 ddt_ = new DocDialogueType(utts_);
+                
+                if (!ddt_.getType().equals(DocDialogueType.WK)) {
+                    calCommLink(xp); //commented by TL 12/13
+                }
+                
                 //System.out.println("ddt_ type: " + ddt_.getType());
                 if (!ddt_.getType().equals(DocDialogueType.WK)) {
                     tagCommType(); //commented by TL 12/13
@@ -230,9 +235,7 @@ public class Assertions {
                  * System.out.println ("utt tagged: " +
                  * utts_.get(ii).getTaggedContent()); }
                  */
-                if (!ddt_.getType().equals(DocDialogueType.WK)) {
-                    calCommLink(xp); //commented by TL 12/13
-                }
+                
                 cal_ = Calendar.getInstance();
                 //System.out.println("after comm link: " + df_.format(cal_.getTime()));
                 buildLocalTopicList(phr_ch, xp);
@@ -1251,8 +1254,8 @@ public class Assertions {
             tagCommType();
             //System.exit(0);
             //System.out.println("go into tagDAct...");
-            tagDAct();
             calCommLink(xp);
+            tagDAct();
             //System.out.println("------------Generate Meso-topics of " + (String)doc_names_.get(i));
             //MesoTopic mt = new MesoTopic();
             //mt.callMesoTopic((String)doc_names_.get(i), utts_, xp, phr_ch, wn_);
