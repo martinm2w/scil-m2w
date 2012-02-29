@@ -328,7 +328,9 @@ public class PursuitOfPower {
         
         //4. adding up disagreement percentage to the local percentage list with confirmation-request percentage in it. seperated for furture improvements.
         HashMap<String,Double> localTFM_DRTMap = new HashMap<String,Double> ();
-        localTFM_DRTMap = this.adding2MapsAndAverageIt(localMapPercent, localMapDis); 
+//        localTFM_DRTMap = this.adding2MapsAndAverageIt(localMapPercent, localMapDis); 
+        //4.1 testing only dis, no conf-re and re-to.
+        localTFM_DRTMap = localMapDis;
 
         //output
         if(doAnalysisPrintOut){
