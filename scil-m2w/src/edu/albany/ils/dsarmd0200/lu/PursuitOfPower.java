@@ -30,6 +30,7 @@ public class PursuitOfPower {
         CDMMap = new HashMap<String, Double>();
         DWLMap = new HashMap<String, Double>();
         TFMMap = new HashMap<String, Double>();
+        POMMap = new HashMap<String, Double>();
         for(Utterance u : Utts){
             String tempSpk = u.getSpeaker();
             NameMap.put(tempSpk, 0.0);
@@ -39,6 +40,7 @@ public class PursuitOfPower {
         CDMMap.putAll(NameMap);
         DWLMap.putAll(NameMap);
         TFMMap.putAll(NameMap);
+        POMMap.putAll(NameMap);
     }
     
     public void calPursuitOfPower(){
@@ -54,7 +56,7 @@ public class PursuitOfPower {
                     System.out.println(tmpSpk + " : " + popScore );
                 }
             }
-            System.out.println("person pursuing power: " + (String)PopList.get(0).get(0));
+            System.out.println("person pursuing power: 1." + (String)PopList.get(0).get(0) + " and 2." + (String)PopList.get(1).get(0));
         }
         
     }
@@ -69,15 +71,18 @@ public class PursuitOfPower {
         DWLMap = this.calDWL();
         //4.Tension Focus Measure (TFM)
         TFMMap = this.calTFM();
+        //5.Positioning Measure (POM)
+        POMMap = this.calPOM();
         //5.average.
         for(String spk : PopMap.keySet()){
             Double tmpITCM = ITCMMap.get(spk);
             Double tmpCDM = CDMMap.get(spk);
             Double tmpDWL = DWLMap.get(spk);
             Double tmpTFM = TFMMap.get(spk);
+            Double tmpPOM = POMMap.get(spk);
             Double avgPop = 0.0;
-            if(tmpITCM!=null && tmpCDM!=null && tmpDWL!=null && tmpTFM!=null){    
-                avgPop = (tmpITCM + tmpCDM + tmpDWL + tmpTFM) / 4.0 ;
+            if(tmpITCM!=null && tmpCDM!=null && tmpDWL!=null && tmpTFM!=null && tmpPOM!=null){    
+                avgPop = (tmpITCM + tmpCDM + tmpDWL + tmpTFM + tmpPOM) / 5.0 ;
             }
             PopMap.put(spk, avgPop);
         }
@@ -280,6 +285,89 @@ public class PursuitOfPower {
         return localTFMMap;
     }
     
+    /**
+     * m2w: this method calculates pop using Positioning Measure.
+     * //1.calcualte conf-re
+     * //2.calcualte offer-commit.
+     */
+    private HashMap<String, Double> calPOM(){
+        int totalConf = 0;
+        int totalComm = 0;
+        HashMap<String, Double> localMapPomConf = new HashMap<String, Double>();
+        HashMap<String, Double> localMapPomComm = new HashMap<String, Double>();
+        HashMap<String, Double> localMapPom = new HashMap<String, Double>();
+        HashMap<String, Double> localMapPomConfCount = new HashMap<String, Double>();
+        HashMap<String, Double> localMapPomCommCount = new HashMap<String, Double>();
+        localMapPomConf.putAll(NameMap);
+        localMapPomComm.putAll(NameMap);
+        localMapPom.putAll(NameMap);
+        localMapPomConfCount.putAll(NameMap);
+        localMapPomCommCount.putAll(NameMap);
+        //1. parse utt list, adding count to local map
+        for(Utterance u : Utts){
+            String tempDaTag = u.getTag();
+            String tempCATag = u.getCommActType();
+            String tempSpk = u.getSpeaker();
+            
+            // adding  confirmation request count & offe-comit. 
+            if(tempDaTag.toLowerCase().contains(CONFIRMATION_REQUEST) && tempCATag.equalsIgnoreCase(RESPONSE_TO)){
+                totalConf++;
+                String lkto_spk = u.getRespToSpk();
+                Double tempCountConf = (Double) localMapPomConfCount.get(tempSpk);
+                localMapPomConfCount.put(lkto_spk, tempCountConf+1);
+            }
+            
+            if(tempDaTag.toLowerCase().contains(OFFER_COMMIT) && tempCATag.equalsIgnoreCase(RESPONSE_TO)) {
+                totalComm++;
+                String lkto_spk = u.getRespToSpk();
+                Double tempCountComm = (Double) localMapPomCommCount.get(tempSpk);
+                localMapPomCommCount.put(lkto_spk, tempCountComm+1);
+            }
+        }
+        
+        //2. transform conf & comm list from count to percentage.
+        if(totalConf > 0.0){ //2/14/12 1:52 PM
+            for(String spk : localMapPomConf.keySet()){
+                Double spkConfCount = localMapPomConfCount.get(spk);
+                Double percentage = (spkConfCount)/ (double) totalConf;
+                localMapPomConf.put(spk, percentage);
+            }
+        }
+        
+        if(totalComm > 0.0){ //2/14/12 1:52 PM
+            for(String spk : localMapPomComm.keySet()){
+                Double spkConfCount = localMapPomCommCount.get(spk);
+                Double percentage = (spkConfCount)/ (double) totalComm;
+                localMapPomComm.put(spk, percentage);
+            }
+        }
+        
+        //3. adding
+        localMapPom = this.adding2MapsAndAverageIt(localMapPomConf, localMapPomComm);
+        
+        ArrayList<ArrayList> POMList = new ArrayList();
+        POMList = this.sortAndConvertMapToArrayList(localMapPom);
+        if(doFinalPrintOut){
+            System.out.println("@POM");
+            for(ArrayList a : POMList){
+                System.out.println( (String)(a.get(0)) + " : " + (Double)(a.get(1)) );
+            }
+        }
+        if(doAnalysisPrintOut){
+            System.out.println("@POM");
+            System.out.println("total conf: " + totalConf);
+            System.out.println("total comm: " + totalComm);
+            System.out.println("count map Conf: " + localMapPomConfCount.toString());
+            System.out.println("count map Comm: " + localMapPomCommCount.toString());
+            System.out.println("local POM conf map: " + localMapPomConf);
+            System.out.println("local POM conf map: " + localMapPomComm);
+            System.out.println("local POM map before pop: " + localMapPom);
+            System.out.println(" pop map: " + PopMap.toString());
+            System.out.println();
+        }
+        
+        return localMapPom;
+    }
     
     /**
      * m2w: TFM 's Disagree-Reject Target Index (DRT)
@@ -451,11 +539,13 @@ public class PursuitOfPower {
     private HashMap<String, Double> CDMMap; // stroing cdm score, for average pop.
     private HashMap<String, Double> DWLMap; // stroing dwl score, for average pop.
     private HashMap<String, Double> TFMMap; // stroing tfm score, for average pop.
+    private HashMap<String, Double> POMMap; // stroing pom score, for average pop.
     
     //constants:
     private final String DISAGREE_REJECT = "disagree-reject";
     private final String CONFIRMATION_REQUEST = "confirmation-request";
     private final String RESPONSE_TO = "response-to";
+    private final String OFFER_COMMIT = "offer-commit";
     
     //print out control:
     private boolean doAnalysisPrintOut = false;
