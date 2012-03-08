@@ -26,7 +26,7 @@ public class Speaker {
     public ArrayList<Utterance> getUtterances() {return utts_;}
     public String getUtts() {
         StringBuffer cont = new StringBuffer();
-        cont.append(name_ + " speaked in the discussion:\n");
+        cont.append(name_ /*+ " speaked in the discussion:\n"*/);
         for (Utterance utt:utts_) {
             cont.append(utt.getContent() + "\n");
         }
@@ -187,6 +187,7 @@ public class Speaker {
 			 ArrayList all_utts) {
 	tc_.calTpCtl(lcs_, all_utts);
 	leadership_.setTopicControl(tc_.getPower()); //modi 03/15 by TL
+//        System.out.println("score:"+(double)leadership_.getTopicControl());
 	//System.out.println(name_ + "'s size of turns: " + utts_.size());
     }
 
@@ -489,50 +490,60 @@ public class Speaker {
 	}
     }
     public void incAgreed() { agreed_ += 1; }
-
+     
+    public void setnewVri(double d){this.newvri=d;}
+    public double getnewVri(){return this.newvri;}
+    
+    public void setnewVim(double d){this.newvim=d;}
+    public double getnewVim(){return this.newvim;}
+    
+    public void setnewNetCentr(double d){this.newnet_centr=d;}
+    public double getnewNetCentr(){return this.newnet_centr;}
+    
+    public void setnewArgDiv(double d){this.newarg_div=d;}
+    public double getnewArgDiv(){return this.newarg_div;}
+    
+     public void setnewClm(double d){this.newclm=d;}
+    public double getnewClm(){return this.newclm;}
+    
+     public void setnewCri(double d){this.newcri=d;}
+    public double getnewCri(){return this.newcri;}
+    
+    public void setnewMti(double d){this.newmti=d;}
+    public double getnewMti(){return this.newmti;}
+    
+    
+    public void setnewEwi(double d){this.newewi=d;}
+    public double getnewEwi(){return this.newewi;}
+            //infwts
+    public void setinfwts(double d){this.infwts=d;}
+    public double getinfwts(){return this.infwts;}
+    public void setsq(double d){this.sq=d;}
+    public double getsq(){return this.sq;}
+    
     ///////////////////////Added by Peng 
  
     public void setVri(double d){this.vri=d;}
     public double getVri(){return this.vri;}
     
-     public void setnewVri(double d){this.newvri=d;}
-    public double getnewVri(){return this.newvri;}
-    
     public void setVim(double d){this.vim=d;}
     public double getVim(){return this.vim;}
     
-    public void setnewVim(double d){this.newvim=d;}
-    public double getnewVim(){return this.newvim;}
-    
     public void setArgDiv(double d){this.arg_div=d;}
     public double getArgDiv(){return this.arg_div;}
-    
-     public void setnewArgDiv(double d){this.newarg_div=d;}
-    public double getnewArgDiv(){return this.newarg_div;}
-    
+       
     public void setClm(double d){this.clm=d;}
     public double getClm(){return this.clm;}
     
-    public void setnewClm(double d){this.newclm=d;}
-    public double getnewClm(){return this.newclm;}
-    
     public void setCri(double d){this.cri=d;}
     public double getCri(){return this.cri;}
-    
-     public void setnewCri(double d){this.newcri=d;}
-    public double getnewCri(){return this.newcri;}
-    
+     
     public void setMti(double d){this.mti=d;}
     public double getMti(){return this.mti;}
-    
-      public void setnewMti(double d){this.newmti=d;}
-    public double getnewMti(){return this.newmti;}
-    
+       
     public void setNetCentr(double d){this.net_centr=d;}
     public double getNetCentr(){return this.net_centr;}
-    
-    public void setnewNetCentr(double d){this.newnet_centr=d;}
-    public double getnewNetCentr(){return this.newnet_centr;}
+       
     
     public void setEmotiveWordList(ArrayList<String> ewl)
     {
@@ -546,9 +557,6 @@ public class Speaker {
     public void setEwi(double d){this.ewi=d;}
     public double getEwi(){return this.ewi;}
     
-     public void setnewEwi(double d){this.newewi=d;}
-    public double getnewEwi(){return this.newewi;}
-            
     //////////////////////////////////////////////////////////////
     
     public double getLeadershipConfidence() {
@@ -727,6 +735,10 @@ public class Speaker {
 
     private double DPM = 0;
     private double PRM = 0;
+    
+    //influencer weights
+     private double infwts=0.0;
+     private double sq=0.0;
     //for raw scores1/11/2011----without percentages
     private double newvri;
     private double newvim;
