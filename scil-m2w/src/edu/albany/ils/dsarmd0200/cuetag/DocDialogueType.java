@@ -12,10 +12,10 @@ import java.util.*;
 public class DocDialogueType {
     public DocDialogueType(ArrayList utts) {
 	utts_ = utts;
-        ddt_ = QA;
+        ddt_ = ME;
     }
     public DocDialogueType() {
-        ddt_ = QA;
+        ddt_ = ME;
     }
     /***************************get information*********************/
     public String getType() { 
