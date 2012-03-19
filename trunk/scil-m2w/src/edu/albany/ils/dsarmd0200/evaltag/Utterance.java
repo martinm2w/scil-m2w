@@ -46,10 +46,10 @@ public class Utterance implements DialogAct {
     //m2w: added instance variable of type Utterance containing the .1 and .0 turns.
     private ArrayList<Utterance> sub_turns = new ArrayList<Utterance>();
     // Added by Laura, May 05, 2011
-    private String subSentence = null;
-    private String tagged_subSentence = null;
+    private String subSentence = "";
+    private String tagged_subSentence = "";
 //Lin added
-    private String space_tagged_content=null;
+    private String space_tagged_content="";
     private String groundtruth_comm_act_type = "";
 
     /************************get information***********************************/

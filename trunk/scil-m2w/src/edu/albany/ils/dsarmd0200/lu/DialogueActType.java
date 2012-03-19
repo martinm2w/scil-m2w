@@ -47,7 +47,12 @@ public class DialogueActType extends Opinion{
 	//System.out.println("utts_ size: " + utts_.size());
         this.splitUtts_ = splitUtts_;
         this.turnNoSplitNo = turnNoSplitNo;
-        splitUtterance = true;
+        //Lin modified
+        if ((Settings.getValue(Settings.LANGUAGE)).equals("chinese"))
+            splitUtterance = false;
+        else if ((Settings.getValue(Settings.LANGUAGE)).equals("english"))
+            splitUtterance = true;
+        
 	tagType_ = Settings.getValue("tagType");
 	//System.out.println("go into processFeatures...");
 	if (tagType_.equals("da15")) {

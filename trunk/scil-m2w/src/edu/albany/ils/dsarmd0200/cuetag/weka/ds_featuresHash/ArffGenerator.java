@@ -170,6 +170,23 @@ public class ArffGenerator {
                 }
                 content = Ngram.urlNormalize(content);
 
+                //for computing (n-grams+POS) negative features in D-R
+                /*String[] uttsSentence=null;
+                String[] uttsPOS=null;
+                String[] indPOS=null;
+                if ((Settings.getValue(Settings.LANGUAGE)).equals("chinese")){
+                    uttsSentence = content.split("[\\s]+");
+                    uttsPOS = utterance.getTaggedContent().split("[\\s]+");
+                    indPOS=new String[uttsPOS.length];
+
+                    for (int kk=0; kk<uttsPOS.length; kk++){
+                        String[] combine=uttsPOS[kk].split("/");
+                        if (combine.length>1)
+                          indPOS[kk]=combine[1];
+                    }
+                }*/
+                //end
+
                 content = Ngram.filterUtterance(content);
 
 //end of
@@ -185,6 +202,137 @@ public class ArffGenerator {
                 if(daTag.toLowerCase().contains(DsarmdDATag.DR)){ // Disagree-Reject System.err.println("action-directive: " + Arrays.toString(ngrams.toArray()));
                     ngrams.add(DsarmdDATag.DR);
                 }
+
+                //Lin added--(n-grams+POS) negative features in D-R
+            /*if ((Settings.getValue(Settings.LANGUAGE)).equals("chinese")){
+                for (int kk=0; kk<uttsSentence.length; kk++){
+                    if (uttsSentence[kk].contains("不")){
+                        String strComb="";
+                        int    iComb=0;
+                        // it is a DR
+                        if (daTag.toLowerCase().contains(DsarmdDATag.DR) &&
+                            commActType.toLowerCase().contains("response-to")    ){
+                           //pre bigram
+                           if (kk-1>=0)
+                               strComb= indPOS[kk-1]+" "+uttsSentence[kk];
+                           else
+                               strComb= "<start>"+" "+uttsSentence[kk];
+
+                           if (preDR.containsKey(strComb)){
+                               iComb= preDR.get(strComb)+1;
+                               preDR.put(strComb, iComb);
+                           }
+                           else{
+                               preDR.put(strComb, 1);
+                           }
+
+                           //post bigram
+
+                           if (kk+1<uttsSentence.length)
+                               strComb= uttsSentence[kk]+" "+indPOS[kk+1];
+                           else
+                               strComb= uttsSentence[kk]+" "+"<finish>";
+
+
+                           if (postDR.containsKey(strComb)){
+                               iComb= postDR.get(strComb)+1;
+                               postDR.put(strComb, iComb);
+                           }
+                           else{
+                               postDR.put(strComb, 1);
+                           }
+
+                           //trigram
+
+                           String strFst="", strThird="";
+                           if (kk-1>=0)
+                              strFst=indPOS[kk-1];
+                           else
+                              strFst="<start>";
+
+                           if (kk+1<uttsSentence.length)
+                              strThird=uttsSentence[kk+1];
+                           else
+                              strThird="<finish>";
+
+
+                           strComb= strFst+" "+uttsSentence[kk]+" "+strThird;
+                           if (triDR.containsKey(strComb)){
+                              iComb= triDR.get(strComb)+1;
+                              triDR.put(strComb, iComb);
+                           }
+                           else{
+                              triDR.put(strComb, 1);
+                           }
+
+
+
+                        }
+                        //It is other DA
+                        else if (commActType.toLowerCase().contains("response-to")){
+                            //pre bigram
+
+                              if (kk-1>=0)
+                                 strComb= indPOS[kk-1]+" "+uttsSentence[kk];
+                              else
+                                 strComb= "<start>"+" "+uttsSentence[kk];
+
+                              if (preNonDR.containsKey(strComb)){
+                                 iComb= preNonDR.get(strComb)+1;
+                                 preNonDR.put(strComb, iComb);
+                              }
+                              else{
+                                 preNonDR.put(strComb, 1);
+                              }
+
+                           //post bigram
+
+                              if (kk+1<uttsSentence.length)
+                                  strComb= uttsSentence[kk]+" "+indPOS[kk+1];
+                              else
+                                  strComb= uttsSentence[kk]+" "+"<finish>";
+
+                              if (postNonDR.containsKey(strComb)){
+                                 iComb= postNonDR.get(strComb)+1;
+                                 postNonDR.put(strComb, iComb);
+                              }
+                              else{
+                                 postNonDR.put(strComb, 1);
+                              }
+
+                           //trigram
+
+                              String strFst="", strThird="";
+                               if (kk-1>=0)
+                                  strFst=indPOS[kk-1];
+                               else
+                                  strFst="<start>";
+
+                               if (kk+1<uttsSentence.length)
+                                  strThird=uttsSentence[kk+1];
+                               else
+                                  strThird="<finish>";
+
+
+                               strComb= strFst+" "+uttsSentence[kk]+" "+strThird;
+                              if (triNonDR.containsKey(strComb)){
+                                 iComb= triNonDR.get(strComb)+1;
+                                 triNonDR.put(strComb, iComb);
+                              }
+                              else{
+                                 triNonDR.put(strComb, 1);
+                              }
+
+
+                        }
+
+
+                    }
+                }
+
+            }*/
+                // end of add
+
 
                 //Lin modified
                 TagNumber tn = new TagNumber();
@@ -267,6 +415,297 @@ public class ArffGenerator {
         }
 
 
+
+         //Lin added--(n-grams+POS) negative features in D-R
+         /*if (bNegativeFeatures){
+           writeStat(preDR, "preDR");
+           writeStat(postDR, "postDR");
+           writeStat(preNonDR, "preNonDR");
+           writeStat(postNonDR, "postNonDR");
+           writeStat(triDR, "triDR");
+           writeStat(triNonDR, "triNonDR");
+         }*/
+         //end
+
+            //remove this when testing
+           /*try{
+
+               String strSet="/home/cslin/tmp/dsarmd0200/ADMSet.txt";
+               BufferedWriter bufferedWriterSet = null;
+               bufferedWriterSet = new BufferedWriter(new FileWriter(strSet));
+
+               bufferedWriterSet.write(ADMSet);
+
+               bufferedWriterSet.flush();
+               bufferedWriterSet.close();
+           }
+           catch (Exception ioe )
+	   {
+	   	ioe.printStackTrace ();
+	   }
+
+           try{
+
+               String strSet="/home/cslin/dsarmd0200/trainoutAD.txt";
+               BufferedWriter bufferedWriterSet = null;
+               bufferedWriterSet = new BufferedWriter(new FileWriter(strSet));
+
+               bufferedWriterSet.write(outAD);
+
+               bufferedWriterSet.flush();
+               bufferedWriterSet.close();
+           }
+           catch (Exception ioe )
+	   {
+	   	ioe.printStackTrace ();
+	   }
+
+           try{
+
+               String strSet="/home/cslin/dsarmd0200/trainoutDR.txt";
+               BufferedWriter bufferedWriterSet = null;
+               bufferedWriterSet = new BufferedWriter(new FileWriter(strSet));
+
+               bufferedWriterSet.write(outDR);
+
+               bufferedWriterSet.flush();
+               bufferedWriterSet.close();
+           }
+           catch (Exception ioe )
+	   {
+	   	ioe.printStackTrace ();
+	   }*/
+           //end of Lin
+
+    }
+
+
+    private void writeStat(HashMap<String, Integer> hashMap, String filename){
+        //Lin added-- Write (n-grams+POS) negative features in D-R
+                try{
+
+                       String strSet="/home/cslin/tmp/dsarmd0200/"+filename+".txt";
+                       BufferedWriter bufferedWriterSet = null;
+                       bufferedWriterSet = new BufferedWriter(new FileWriter(strSet));
+
+                       hashMap=sortHashMapByValuesD(hashMap);
+                       for (String grams : hashMap.keySet()){
+                           bufferedWriterSet.write(grams + " " + hashMap.get(grams));
+                           bufferedWriterSet.write("\n");
+                       }
+                       bufferedWriterSet.flush();
+                       bufferedWriterSet.close();
+                }
+                catch (Exception ioe )
+	        {
+	   	       ioe.printStackTrace ();
+	        }
+    }
+    private LinkedHashMap sortHashMapByValuesD(HashMap passedMap) {
+        List mapKeys = new ArrayList(passedMap.keySet());
+        List mapValues = new ArrayList(passedMap.values());
+        Collections.sort(mapValues);
+        Collections.reverse(mapValues);
+        Collections.sort(mapKeys);
+        Collections.reverse(mapKeys);
+
+        LinkedHashMap sortedMap =
+            new LinkedHashMap();
+
+        Iterator valueIt = mapValues.iterator();
+        while (valueIt.hasNext()) {
+            Object val = valueIt.next();
+            Iterator keyIt = mapKeys.iterator();
+
+            while (keyIt.hasNext()) {
+                Object key = keyIt.next();
+                String comp1 = passedMap.get(key).toString();
+                String comp2 = val.toString();
+
+                if (comp1.equals(comp2)){
+                    passedMap.remove(key);
+                    mapKeys.remove(key);
+                    sortedMap.put((String)key, (Integer)val);
+                    break;
+                }
+
+            }
+
+        }
+        return sortedMap;
+    }
+
+
+    private boolean chkNegativeFeatures(Utterance utt, String content){
+        String[] preWords={"不 会/AD", "不 知道/<finish>", "不 会/VV", "不 用/VV",
+        "不 太/VV", "不 重要/PU", "不 好/AS", "不错/<finish>", "不错/PU", "不/P", "不错/DEC"};
+        for (int i=0; i<preWords.length; i++){
+            //for preWords
+            String term="", pos="";
+            String[] preCombine=preWords[i].split("/");
+            term=preCombine[0]; pos=preCombine[1];
+
+            //for testing utterance
+            String[] uttsPOS = utt.getTaggedContent().split("[\\s]+");
+            String[] indPOS=new String[uttsPOS.length];
+
+                //all pos in sentence
+                for (int kk=0; kk<uttsPOS.length; kk++){
+                    String[] combine=uttsPOS[kk].split("/");
+                    if (combine.length>1)
+                      indPOS[kk]=combine[1];
+                    else
+                      indPOS[kk]="";
+                }
+
+                int iStart=0, iEnd=0;
+                if (content.contains(term)){
+                    int iContStart=content.indexOf(term);
+                    int iContEnd=iContStart+term.length();
+
+                    if (iContStart!=0){
+                        String str=(content.substring(iContStart-1, iContStart));
+                        if (!str.equals(" "))
+                            continue;
+                    }
+                    if (iContEnd!=content.length()){
+                        String str=(content.substring(iContEnd, iContEnd+1));
+                        if (!str.equals(" "))
+                            continue;
+                    }
+
+                    int iCont=content.indexOf(term);
+                    for (int kk=0; kk<=iCont; kk++)
+                    {
+                        if (content.subSequence(kk, kk+1).equals(" "))
+                            iStart++;
+                    }
+                    iEnd=iStart;
+                    for (int kk=iCont; kk<=(iCont+term.length()); kk++)
+                    {
+                        if (content.subSequence(kk, kk+1).equals(" "))
+                            iEnd++;
+                    }
+
+
+
+
+
+                    if (iEnd<uttsPOS.length-1){
+                      String postPos=indPOS[iEnd];
+                      if (pos.equalsIgnoreCase(postPos))
+                         return true;
+                    }
+
+                    if (iEnd>=uttsPOS.length-1){
+                      if (pos.contains("<finish>"))
+                        return true;
+                    }
+
+
+
+
+                }
+
+
+
+        }
+
+        String[] postWords={"VC/不 是", "NN/不 是", "<start>/不 会", "<start>/不 用",
+        "<start>/不 知道", "PN/不 知道", "PU/不 知道", "AD/不错", "NR/不", "VA/不", "<start>/不错", "M/不错"};
+
+        for (int i=0; i<postWords.length; i++){
+            //for preWords
+            String term="", pos="";
+            String[] postCombine=postWords[i].split("/");
+            term=postCombine[1]; pos=postCombine[0];
+
+            //for testing utterance
+            String[] uttsPOS = utt.getTaggedContent().split("[\\s]+");
+            String[] indPOS=new String[uttsPOS.length];
+
+                //all pos in sentence
+                for (int kk=0; kk<uttsPOS.length; kk++){
+                    String[] combine=uttsPOS[kk].split("/");
+                    if (combine.length>1)
+                      indPOS[kk]=combine[1];
+                    else
+                      indPOS[kk]="";
+                }
+
+                int iStart=0, ipreStart=0;
+                if (content.contains(term)){
+                    int iContStart=content.indexOf(term);
+                    int iContEnd=iContStart+term.length();
+
+                    if (iContStart!=0){
+                        String str=(content.substring(iContStart-1, iContStart));
+                        if (!str.equals(" "))
+                            continue;
+                    }
+                    if (iContEnd!=content.length()){
+                        String str=(content.substring(iContEnd, iContEnd+1));
+                        if (!str.equals(" "))
+                            continue;
+                    }
+
+                    int iCont=content.indexOf(term);
+                    for (int kk=0; kk<=iCont; kk++)
+                    {
+                        if (content.subSequence(kk, kk+1).equals(" "))
+                            iStart++;
+                    }
+                    ipreStart=iStart-1;
+
+
+
+
+
+                    if (ipreStart>=0){
+                      String prePos=indPOS[ipreStart];
+                      if (pos.equalsIgnoreCase(prePos))
+                         return true;
+                    }
+
+                    if (ipreStart<0){
+                      if (pos.contains("<start>"))
+                        return true;
+                    }
+
+
+
+
+                }
+
+
+
+        }
+
+        return false;
+    }
+    private boolean chkSpecialWords(String strUtterance, ArrayList featuresOfTheTag, String term){
+                         if ( (strUtterance.contains("？") ||
+                            strUtterance.contains("么") ||
+                            strUtterance.contains("吗") ||
+                            strUtterance.contains("可能") ||
+                            strUtterance.contains("88") ||
+                            strUtterance.contains("bye") ||
+                            strUtterance.contains("不客气") ||
+                            strUtterance.contains("嗎") ||
+
+                            strUtterance.contains("会不会") ||
+
+                            strUtterance.contains("差不多") ||
+                            strUtterance.contains("是不是") ||
+                            strUtterance.contains("不清楚") ||
+                            strUtterance.contains("不知道") ||
+                            strUtterance.contains("来不及")
+                            ) &&
+                            featuresOfTheTag.contains(term)
+                            ){
+                            return true;
+                        }
+                        return false;
     }
 
     private String termMatching(ArrayList utts, Utterance utterance, int iCurrent){
@@ -340,10 +779,8 @@ public class ArffGenerator {
               //the replied utterance is found
               if (preUtterance.getTurn().equalsIgnoreCase(preIndex)){
 
-                //String[] preContent=(preUtterance.getSpaceTagContent()).split(" ");
-                //String[] Content=(utterance.getSpaceTagContent()).split(" ");
-                String[] preContent=(preUtterance.getTaggedContent()).split(" ");
-                String[] Content=(utterance.getTaggedContent()).split(" ");
+                String[] preContent=(preUtterance.getSpaceTagContent()).split(" ");
+                String[] Content=(utterance.getSpaceTagContent()).split(" ");
 
                 //check if the preSentence or utterance is a question?
                 //check if the preSentence or utterance is a question?
@@ -610,6 +1047,9 @@ public class ArffGenerator {
                 }
 
                 content = Ngram.urlNormalize(content);
+                boolean negFeatures=false;
+                //if ((Settings.getValue(Settings.LANGUAGE)).equals("chinese"))
+                //{     negFeatures=chkNegativeFeatures(utterance, content);}
                 content = Ngram.filterUtterance(content);
 
                 //trp.allGramsAndDRMSet(AllGramsSet, DRMSet);
@@ -712,6 +1152,12 @@ public class ArffGenerator {
                         {
                             ;
                         }
+                        //else if ( !chkSpecialWords(strUtterance,featuresOfTheTag,term) && trp.getApproved() && iUttLen>=3 && tagGTCAT.equalsIgnoreCase("response-to"))
+                        //{
+                        //    ;
+                        //}
+                        //else if (negFeatures && featuresOfTheTag.contains(term))
+                        //    continue;
                         else if (iUttLen<5 && tagGTCAT.equalsIgnoreCase("response-to") && featuresOfTheTag.contains(term))
                         {
                             continue;
@@ -720,10 +1166,21 @@ public class ArffGenerator {
                         {
                             continue;
                         }
-                        
+                        //else if ( chkSpecialWords(strUtterance,featuresOfTheTag,term)) {
+                        //    continue;
+                        //}
+                        //end
                       }
                       else if((Settings.getValue(Settings.LANGUAGE)).equals("english")){
 
+                          /*if (iUttLen<5 && tagGTCAT.equalsIgnoreCase("response-to") && featuresOfTheTag.contains(term))
+                          {
+                            continue;
+                          }
+                          else if ( !tagGTCAT.equalsIgnoreCase("response-to") && featuresOfTheTag.contains(term))
+                          {
+                            continue;
+                          }*/
                           if ( tagGTCAT.equalsIgnoreCase("addressed-to") && featuresOfTheTag.contains(term))
                           {
                             continue;
@@ -800,7 +1257,38 @@ public class ArffGenerator {
             e.printStackTrace();
         }
 
-         
+         /*try{
+
+               String strSet="/home/cslin/tmp/dsarmd0200/tetsoutAD.txt";
+               BufferedWriter bufferedWriterSet = null;
+               bufferedWriterSet = new BufferedWriter(new FileWriter(strSet));
+
+               bufferedWriterSet.write(testoutAD);
+
+               bufferedWriterSet.flush();
+               bufferedWriterSet.close();
+           }
+           catch (Exception ioe )
+	   {
+	   	ioe.printStackTrace ();
+	   }*/
+
+           /*try{
+
+               String strSet="/home/cslin/dsarmd0200/testoutDR.txt";
+               BufferedWriter bufferedWriterSet = null;
+               bufferedWriterSet = new BufferedWriter(new FileWriter(strSet));
+
+               bufferedWriterSet.write(testoutDR);
+
+               bufferedWriterSet.flush();
+               bufferedWriterSet.close();
+           }
+           catch (Exception ioe )
+	   {
+	   	ioe.printStackTrace ();
+	   }*/
+           //end of Lin
     }
 
     /**

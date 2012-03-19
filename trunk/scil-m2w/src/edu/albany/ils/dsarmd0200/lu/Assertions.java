@@ -37,7 +37,6 @@ public class Assertions {
         loadAndParseTraining();
         loadAndParse();
         this.setLanguageAndInitPosTaggers();
-        getChinesePhrases();
 
         /*
          * if (Settings.getValue(Settings.PROCESS_TYPE).equals("automated")) {
@@ -122,7 +121,7 @@ public class Assertions {
             ((Utterance) tr_utts_.get(j)).setTaggedContent(tagged);
             ((Utterance) tr_utts_.get(j)).setSpaceTaggedContent(spcTagged);
 
-            //System.out.println("sTmp: "+utts_.get(j).getTaggedContent());
+            //System.out.println("sTmp: "+ ((Utterance)tr_utts_.get(j)).getTaggedContent());
         }
         //System.out.println("total ad: " + total_ad);
         //System.out.println("total ad with no noun before verb: " + st_no_noun_ad + "----" + ((double) st_no_noun_ad) / total_ad);
@@ -149,35 +148,26 @@ public class Assertions {
                 // bufferedWriterTagFile = new BufferedWriter(new FileWriter(strTagFile));
                 cal_ = Calendar.getInstance();
                 //System.out.println("before pos tagging: " + df_.format(cal_.getTime()));
-
-          /*      for(int index=0;index<utts_.size();index++){
+                
+                if ((Settings.getValue(Settings.LANGUAGE)).equals("chinese")){              
+                for(int index=0;index<utts_.size();index++){
                     Utterance utt_=utts_.get(index);
                     String utterance=utt_.getUtterance().toString();
-                    String tmpResult="";
+                    String tmpResult=new String();
                     //String nEmotes=ParseTools.removeEmoticons(utterance);
                     //if((Settings.getValue(Settings.LANGUAGE)).equals("chinese")){
-                        Test test=new Test();                   
-                        ArrayList toGbUtterance=null;
-                        String currentS="";
-                          if(utterance.length()>0){
-                            toGbUtterance=test.Big5ToGb(utterance);
-                          //toGbUtterance.
-                          }
-                        String temps = "";
-                            for (int m = 0; m < toGbUtterance.size(); m++) {
-                                String toTag = (String) toGbUtterance.get(m);
-                                //System.out.println ("toTag: " + toTag);
-                                String temp = StanfordPOSTagger.tagString((String) toGbUtterance.get(m));
-                                //System.out.println("tagged: " + temp);
-                                temps = temps + " " + temp;
-
-                            }
-                            tmpResult = temps.trim();
-                    //}
-                    utt_.setTaggedContent(tmpResult);
-                    
+//                        TraditionToSimple tts=new TraditionToSimple();                   
+//                          if(utterance.length()>0){
+//                            tmpResult=tts.Big5ToGb(utterance);
+//                         utt_.setUtterance(tmpResult);
+//                          }
+                       
+                   // this.utts_.remove(index);
+                    // this.utts_.add(index, utt_);
                 }
-                */
+            }
+               
+                
                 for (int j = 0; j < utts_.size(); j++) {
                     Utterance utt_ = utts_.get(j);
                     String utterance = utt_.getUtterance().toString();
@@ -216,6 +206,7 @@ public class Assertions {
                         System.out.println("tagged is null: " + noEmotes);
                         utt_.setTaggedContent("");
                         utt_.setSpaceTaggedContent("");
+                        
                         continue;
                     }
                     String tagged = tmpTagged.trim();
@@ -241,7 +232,7 @@ public class Assertions {
 
                 //end of Lin
                 cal_ = Calendar.getInstance();
-                //System.out.println("after pos: " + df_.format(cal_.getTime()));
+                System.out.println("after pos: " + df_.format(cal_.getTime()));
 
                 all_utts_.addAll(utts_);
                 ddt_ = new DocDialogueType(utts_);
@@ -255,7 +246,7 @@ public class Assertions {
                 //System.exit(0);
                 tagDAct();
                 cal_ = Calendar.getInstance();
-                //System.out.println("after DA tagging: " + df_.format(cal_.getTime()));
+                System.out.println("after DA tagging: " + df_.format(cal_.getTime()));
                 /*
                  * for (int ii = 0; ii < utts_.size(); ii++) {
                  * System.out.println ("utt tagged: " +
@@ -266,7 +257,7 @@ public class Assertions {
                 //System.out.println("after comm link: " + df_.format(cal_.getTime()));
                 buildLocalTopicList(phr_ch, xp);
                 cal_ = Calendar.getInstance();
-                //System.out.println("after build lc: " + df_.format(cal_.getTime()));
+                System.out.println("after build lc: " + df_.format(cal_.getTime()));
                 if (fn.startsWith("Feb27_GroupA")) {
                     Speaker part = parts_.get("tony");
                     System.out.println(part.getUtts());
@@ -581,28 +572,7 @@ public class Assertions {
             speakerlist.add(part_.getName());
             emotiveTable.add(new ArrayList<String>());
         }
-        /*
-        for (int j = 0; j < utterance.size(); j++){
-                                
-            String tmp_utt = utterance.get(j).getUtterance();
-            String noEmotes = ParseTools.removeEmoticons(tmp_utt);
-
-            String tmpTagged="";
-            if (noEmotes == null) continue;
-            if ((Settings.getValue(Settings.LANGUAGE)).equals("english"))
-            { tmpTagged=StanfordPOSTagger.tagString (noEmotes);
-            }
-            else if ((Settings.getValue(Settings.LANGUAGE)).equals("chinese"))
-            {
-                tmpTagged=StanfordPOSTagger.tagChineseString(noEmotes);
-            }
-            if (tmpTagged == null) continue;
-            String tagged = tmpTagged.trim();
-            String spcTagged=tmpTagged.replaceAll("/"+"([A-Z]+)*"+" ", " ");
-            utterance.get(j).setTaggedContent(tagged);
-            utterance.get(j).setSpaceTaggedContent(spcTagged);
-        }
-        */
+        
         
         /*loop through the utterances, save emotive words for each speaker into the emotiveTable 
          * and all emotive words into allEmotiveWords*/
@@ -619,7 +589,7 @@ public class Assertions {
             {
                 tmpstr = utterance.get(i).getSpaceTagContent();
             }
-            if(tmpstr == null) continue;
+            if(tmpstr == null) { utterance.get(i).setSpaceTaggedContent(""); continue; }
             int spkindex=speakerlist.indexOf(tmpname);
             //print(utterance.get(i).getSpaceTagContent());
             if(tmpstr.length()>1 && spkindex>=0)
@@ -760,7 +730,7 @@ public class Assertions {
             
             int spkindex=speakerlist.indexOf(tmpname);
             //print(utterance.get(i).getSpaceTagContent());
-            if(tmpstr.length()>1 && spkindex>=0)
+            if(tmpstr != null && tmpstr.length()>1 && spkindex>=0)
             {
                 String [] tmpstrarr = tmpstr.split("\\s+");
                 
@@ -891,7 +861,7 @@ public class Assertions {
             int spkindex=speakerlist.indexOf(tmpname);
             
             //print(tmpstr);
-            if(tmpstr.length()>1 && spkindex>=0)
+            if(tmpstr != null && tmpstr.length()>1 && spkindex>=0)
             {
                 String [] tmpstrarr = tmpstr.split("\\s+");
                 ArrayList <String> utterancewordlist = new ArrayList<String>();
@@ -1282,7 +1252,7 @@ public class Assertions {
         Infwts_=0.0,avg_=0.0,one_stdev_=0.0,sum1=0.0,sum2=0.0,
         summ=0.0,two_stdev_=0.0,sum_=0.0,conf_score=0.0;
         int num_=0;
-        boolean set=false;
+        boolean set=false,sd2=false;
         ArrayList<Double> MAD=new ArrayList();
         ArrayList<Double> NCM=new ArrayList();
         ArrayList<Double> TCM=new ArrayList();
@@ -1296,14 +1266,24 @@ public class Assertions {
         num_=spks.size();
         Speaker speaker = null;
         for(int i=0;i<spks.size();i++){
+            if (docs_path_.indexOf("wiki") != -1) {
+                ddt_.setDDT(DocDialogueType.WK);
+            }
+//            System.out.println(ddt_.getType());
+        if(ddt_.getType().equals("wiki")){
+//            System.out.println("IT is wiki!");
         
-
+        wt1=0.45;wt2=0.2;wt3=0.3;wt4=0.7;
+        }
+        else{ 
+//            System.out.println("Not wiki");
         if((Settings.getValue(Settings.LANGUAGE)).equals("english")){    
         wt1=0.4;wt2=0.5;wt3=0.75;wt4=0.15;    
         }
         
         else if((Settings.getValue(Settings.LANGUAGE)).equals("chinese")){
          wt1=0.75;wt2=0.35;wt3=0.75;wt4=0.1;
+        }
         }
 //        System.out.println("wt1:"+wt1+"\twt2:"+wt2+"\twt3:"+wt3+"\twt4:"+wt4);
         speaker=(Speaker)spks.get(i);
@@ -1347,20 +1327,37 @@ public class Assertions {
 //        System.out.println("\navg:"+avg_);
 //        System.out.println("stdev"+one_stdev_+two_stdev_);
 //        System.out.println("s1:"+sum1+"s2:"+sum2+"\n");
-//        
+        
         
         for(int i=0;i<spks.size();i++){
          speaker=(Speaker)spks.get(i); 
-        if((((Speaker)spks.get(i)).getinfwts()) >= sum1){
-        set=true;
+        if((((Speaker)spks.get(i)).getinfwts()) >= sum2) {
+         set=true;
+         sd2=true;
         spk.add(((Speaker)spks.get(i)).getName());
-        if(spk.size()<3 && spk.size()>0){
-        System.out.println(((Speaker)spks.get(i)).getName());
         }
         else
-           System.out.println("No influencer");  
-
+            continue;
+        
         }
+         for(int i=0;i<spks.size();i++){
+         if( ((((Speaker)spks.get(i)).getinfwts()) >= sum1 && (((Speaker)spks.get(i)).getinfwts()) < sum2 ) && (sd2!=true) ){
+        set=true;
+        spk.add(((Speaker)spks.get(i)).getName());
+        }
+         else
+             continue;
+}
+
+        for(int i=0;i<spk.size();i++){
+        if( (spk.size()<3 && spk.size()>0)) {
+        System.out.println(spk.get(i));
+        }
+        else{
+           System.out.println("No influencer");  
+        break;
+        }
+        
         }
 //        System.out.println(set);
         if(set==false)
@@ -1485,14 +1482,23 @@ public class Assertions {
             //System.out.println("splitted turns and quantities: " + turnNoSplitNo);
 
             daT = new DialogueActType(all_utts_, tr_utts_, utts_, splittedUtts, turnNoSplitNo);
+             
         } else {
             daT = new DialogueActType(all_utts_, tr_utts_, utts_);
         }
         for (int i = 0; i < utts_.size(); i++) {
+             String tagcontent="",content="",required="";
+             String[] words=null;
 	    Utterance utt_ = (Utterance)utts_.get(i);
-            if(utt_.getTag().trim().equalsIgnoreCase("action-directive")){
-//	    System.out.println("\noriginal utterance\nutt_ DA tag: " + utt_);
-            }
+            content=utt_.getContent();
+          
+           
+        tagcontent=utt_.getTaggedContent();
+//        System.out.println(utt_.getTurn()+"TaggedContent:"+tagcontent);
+       /*  if(utt_.getTag().trim().equalsIgnoreCase("action-directive")){
+	    System.out.println("\noriginal utterance\nutt_ DA tag: " + utt_);
+            
+            }*/
         }
 	daT.tagIt();
 	for (int i = 0; i < utts_.size(); i++) {
@@ -1561,7 +1567,7 @@ public class Assertions {
                 leader = part_;
                 ld_score = part_.getLeadershipR();
             }
-            System.out.println(part_.getName() + ":" + part_.getLeadershipInfo());
+            System.out.println(part_.getName() + ":" + part_.getLeadershipRInfo());
         }
         if (leader != null) {
             System.out.println("@Leader");
@@ -2763,6 +2769,11 @@ public class Assertions {
         try {
             //System.out.println("load files...");
             //loadAndParseTraining();
+            //if this data is from wiki
+//            if (docs_path_.indexOf("wiki") != -1) {
+//                ddt_.setDDT(DocDialogueType.WK);
+//            }
+//            System.out.println(ddt_.getType());
             File tp = new File(docs_path_);
             ArrayList ps = new ArrayList();
             while (tp != null) {
@@ -3062,10 +3073,10 @@ public class Assertions {
 //                    StanfordPOSTagger.initializeChinese();
 //		}
             cal_ = Calendar.getInstance();
-            //System.out.println("before create List: " + df_.format(cal_.getTime()));
+            System.out.println("before create List: " + df_.format(cal_.getTime()));
             nls_.createList(fv);
             cal_ = Calendar.getInstance();
-            //System.out.println("after create List: " + df_.format(cal_.getTime()));
+            System.out.println("after create List: " + df_.format(cal_.getTime()));
             //nls_.printUniqueNouns();
         }
         /*
