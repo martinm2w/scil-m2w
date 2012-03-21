@@ -58,7 +58,10 @@ public class PursuitOfPower {
                     System.out.println(tmpSpk + " : " + popScore );
                 }
             }
-            System.out.println("person pursuing power: 1." + (String)PopList.get(0).get(0) + " and 2." + (String)PopList.get(1).get(0));
+            System.out.println("@Pursuit of Power:");
+            System.out.println((String)PopList.get(0).get(0));
+            System.out.println("Confidence:");
+            System.out.println("0.7" );
         }
         
     }
@@ -571,6 +574,6 @@ public class PursuitOfPower {
     private final String OFFER_COMMIT = "offer-commit";
     
     //print out control:
-    private boolean doAnalysisPrintOut = true;
+    private boolean doAnalysisPrintOut = false;
     private boolean doFinalPrintOut = true;
 }

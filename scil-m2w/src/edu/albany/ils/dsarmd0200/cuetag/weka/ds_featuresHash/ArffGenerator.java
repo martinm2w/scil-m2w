@@ -28,15 +28,12 @@ public class ArffGenerator {
     private ArrayList<String> allFeatures = new ArrayList<String>(); // all features in the training set
     private static String tagType = Settings.getValue("tagType");
     //Lin added
-    private boolean bNegativeFeatures=false;
-
+    private boolean bNegativeFeatures = false;
     private HashMap<String, Integer> term_frequency_ = new HashMap<String, Integer>(); // key: ngram term in training set; value: frequency
     private HashMap<String, int[]> tag_frequency_ = new HashMap<String, int[]>(); // key: ngram term in training set; value: [tag1_frequency][tag2_frequency]...
     static int term_frequency_threshold_ = 3;
     //static double fraction_threshold_ = 0.325; 01/19/2012
-    static double fraction_threshold_ = 0.4   ;//0.325;
-
-
+    static double fraction_threshold_ = 0.4;//0.325;
 //    private static PNWords pnw = new PNWords();
     private TagRulesPredefined trp;
     private HashMap<String, double[]> ad_ngrams_ = null;
@@ -59,8 +56,7 @@ public class ArffGenerator {
             System.out.println("Use Chinese Ngram rules ...");
             trp = new TagRulesPredefinedChinese();
             //trp = new TagRulesPredefined(); //comment 01/19/2012
-        }
-        else{
+        } else {
             trp = new TagRulesPredefined();
         }
         term_frequency_.clear();
@@ -120,15 +116,15 @@ public class ArffGenerator {
 
         String adString = "";
 
-         String outAD="";
-         String outDR="";
-         String strSep=System.getProperty("line.separator");
-         HashMap<String, Integer> preDR = new HashMap<String, Integer>();
-         HashMap<String, Integer> postDR = new HashMap<String, Integer>();
-         HashMap<String, Integer> preNonDR = new HashMap<String, Integer>();
-         HashMap<String, Integer> postNonDR = new HashMap<String, Integer>();
-         HashMap<String, Integer> triDR = new HashMap<String, Integer>();
-         HashMap<String, Integer> triNonDR = new HashMap<String, Integer>();
+        String outAD = "";
+        String outDR = "";
+        String strSep = System.getProperty("line.separator");
+        HashMap<String, Integer> preDR = new HashMap<String, Integer>();
+        HashMap<String, Integer> postDR = new HashMap<String, Integer>();
+        HashMap<String, Integer> preNonDR = new HashMap<String, Integer>();
+        HashMap<String, Integer> postNonDR = new HashMap<String, Integer>();
+        HashMap<String, Integer> triDR = new HashMap<String, Integer>();
+        HashMap<String, Integer> triNonDR = new HashMap<String, Integer>();
 
         try {
             bw = new BufferedWriter(new FileWriter(arffFileLocation, true));
@@ -170,23 +166,6 @@ public class ArffGenerator {
                 }
                 content = Ngram.urlNormalize(content);
 
-                //for computing (n-grams+POS) negative features in D-R
-                /*String[] uttsSentence=null;
-                String[] uttsPOS=null;
-                String[] indPOS=null;
-                if ((Settings.getValue(Settings.LANGUAGE)).equals("chinese")){
-                    uttsSentence = content.split("[\\s]+");
-                    uttsPOS = utterance.getTaggedContent().split("[\\s]+");
-                    indPOS=new String[uttsPOS.length];
-
-                    for (int kk=0; kk<uttsPOS.length; kk++){
-                        String[] combine=uttsPOS[kk].split("/");
-                        if (combine.length>1)
-                          indPOS[kk]=combine[1];
-                    }
-                }*/
-                //end
-
                 content = Ngram.filterUtterance(content);
 
 //end of
@@ -199,140 +178,9 @@ public class ArffGenerator {
                 }
                 // by Laura Jan 25, 2011
                 //Commented out by cslin
-                if(daTag.toLowerCase().contains(DsarmdDATag.DR)){ // Disagree-Reject System.err.println("action-directive: " + Arrays.toString(ngrams.toArray()));
+                if (daTag.toLowerCase().contains(DsarmdDATag.DR)) { // Disagree-Reject System.err.println("action-directive: " + Arrays.toString(ngrams.toArray()));
                     ngrams.add(DsarmdDATag.DR);
                 }
-
-                //Lin added--(n-grams+POS) negative features in D-R
-            /*if ((Settings.getValue(Settings.LANGUAGE)).equals("chinese")){
-                for (int kk=0; kk<uttsSentence.length; kk++){
-                    if (uttsSentence[kk].contains("不")){
-                        String strComb="";
-                        int    iComb=0;
-                        // it is a DR
-                        if (daTag.toLowerCase().contains(DsarmdDATag.DR) &&
-                            commActType.toLowerCase().contains("response-to")    ){
-                           //pre bigram
-                           if (kk-1>=0)
-                               strComb= indPOS[kk-1]+" "+uttsSentence[kk];
-                           else
-                               strComb= "<start>"+" "+uttsSentence[kk];
-
-                           if (preDR.containsKey(strComb)){
-                               iComb= preDR.get(strComb)+1;
-                               preDR.put(strComb, iComb);
-                           }
-                           else{
-                               preDR.put(strComb, 1);
-                           }
-
-                           //post bigram
-
-                           if (kk+1<uttsSentence.length)
-                               strComb= uttsSentence[kk]+" "+indPOS[kk+1];
-                           else
-                               strComb= uttsSentence[kk]+" "+"<finish>";
-
-
-                           if (postDR.containsKey(strComb)){
-                               iComb= postDR.get(strComb)+1;
-                               postDR.put(strComb, iComb);
-                           }
-                           else{
-                               postDR.put(strComb, 1);
-                           }
-
-                           //trigram
-
-                           String strFst="", strThird="";
-                           if (kk-1>=0)
-                              strFst=indPOS[kk-1];
-                           else
-                              strFst="<start>";
-
-                           if (kk+1<uttsSentence.length)
-                              strThird=uttsSentence[kk+1];
-                           else
-                              strThird="<finish>";
-
-
-                           strComb= strFst+" "+uttsSentence[kk]+" "+strThird;
-                           if (triDR.containsKey(strComb)){
-                              iComb= triDR.get(strComb)+1;
-                              triDR.put(strComb, iComb);
-                           }
-                           else{
-                              triDR.put(strComb, 1);
-                           }
-
-
-
-                        }
-                        //It is other DA
-                        else if (commActType.toLowerCase().contains("response-to")){
-                            //pre bigram
-
-                              if (kk-1>=0)
-                                 strComb= indPOS[kk-1]+" "+uttsSentence[kk];
-                              else
-                                 strComb= "<start>"+" "+uttsSentence[kk];
-
-                              if (preNonDR.containsKey(strComb)){
-                                 iComb= preNonDR.get(strComb)+1;
-                                 preNonDR.put(strComb, iComb);
-                              }
-                              else{
-                                 preNonDR.put(strComb, 1);
-                              }
-
-                           //post bigram
-
-                              if (kk+1<uttsSentence.length)
-                                  strComb= uttsSentence[kk]+" "+indPOS[kk+1];
-                              else
-                                  strComb= uttsSentence[kk]+" "+"<finish>";
-
-                              if (postNonDR.containsKey(strComb)){
-                                 iComb= postNonDR.get(strComb)+1;
-                                 postNonDR.put(strComb, iComb);
-                              }
-                              else{
-                                 postNonDR.put(strComb, 1);
-                              }
-
-                           //trigram
-
-                              String strFst="", strThird="";
-                               if (kk-1>=0)
-                                  strFst=indPOS[kk-1];
-                               else
-                                  strFst="<start>";
-
-                               if (kk+1<uttsSentence.length)
-                                  strThird=uttsSentence[kk+1];
-                               else
-                                  strThird="<finish>";
-
-
-                               strComb= strFst+" "+uttsSentence[kk]+" "+strThird;
-                              if (triNonDR.containsKey(strComb)){
-                                 iComb= triNonDR.get(strComb)+1;
-                                 triNonDR.put(strComb, iComb);
-                              }
-                              else{
-                                 triNonDR.put(strComb, 1);
-                              }
-
-
-                        }
-
-
-                    }
-                }
-
-            }*/
-                // end of add
-
 
                 //Lin modified
                 TagNumber tn = new TagNumber();
@@ -357,9 +205,8 @@ public class ArffGenerator {
                     if (featuresOfTheTag != null && featuresOfTheTag.contains(term)) {
                         // use else if to avoid repeatly include the "hastopic" and "notopic"
 
-                      if(total_freq >= term_frequency_threshold_ &&
-                             fraction >= fraction_threshold_)
-                      {
+                        if (total_freq >= term_frequency_threshold_
+                                && fraction >= fraction_threshold_) {
                             if (daTag.equalsIgnoreCase("action-directive")
                                     && fraction >= 0.6
                                     && (Settings.getValue(Settings.LANGUAGE)).equals("chinese")
@@ -375,18 +222,19 @@ public class ArffGenerator {
 
 
 
-                         /*if (daTag.equalsIgnoreCase("disagree-reject") &&
-                             fraction >= 0.5 &&
-                             (Settings.getValue(Settings.LANGUAGE)).equals("chinese") ){
-                             str += "|" + "DRM";
-                             DRMSet += "|" + term;
-                             continue;
-                         }*/
+                            /*
+                             * if (daTag.equalsIgnoreCase("disagree-reject") &&
+                             * fraction >= 0.5 &&
+                             * (Settings.getValue(Settings.LANGUAGE)).equals("chinese")
+                             * ){ str += "|" + "DRM"; DRMSet += "|" + term;
+                             * continue;
+                         }
+                             */
 
-                         AllGramsSet= "|" + term;
+                            AllGramsSet = "|" + term;
 
 
-                         str += "|" + term;
+                            str += "|" + term;
 
                         }
 
@@ -398,12 +246,15 @@ public class ArffGenerator {
                 // end of Lin
 
 
-                if(!str.equals("")){
-                // by Laura Nov 30, 2010
-                   /*if ( str.contains(DsarmdDATag.DR) && commActType.contains("response-to")){
-                       str=str.replace("|"+DsarmdDATag.DR, "");
-                       bw.write(daTag + ", '" + str + "|" + "DRRT" + "'\n");
-                   }else*/
+                if (!str.equals("")) {
+                    // by Laura Nov 30, 2010
+                   /*
+                     * if ( str.contains(DsarmdDATag.DR) &&
+                     * commActType.contains("response-to")){
+                     * str=str.replace("|"+DsarmdDATag.DR, ""); bw.write(daTag +
+                     * ", '" + str + "|" + "DRRT" + "'\n");
+                   }else
+                     */
 
                     bw.write(daTag + ", '" + str + "|" + commActType + "'\n");
 //                    bw.write(tag + ", '" + str + "'\n");
@@ -415,588 +266,323 @@ public class ArffGenerator {
         }
 
 
-
-         //Lin added--(n-grams+POS) negative features in D-R
-         /*if (bNegativeFeatures){
-           writeStat(preDR, "preDR");
-           writeStat(postDR, "postDR");
-           writeStat(preNonDR, "preNonDR");
-           writeStat(postNonDR, "postNonDR");
-           writeStat(triDR, "triDR");
-           writeStat(triNonDR, "triNonDR");
-         }*/
-         //end
-
-            //remove this when testing
-           /*try{
-
-               String strSet="/home/cslin/tmp/dsarmd0200/ADMSet.txt";
-               BufferedWriter bufferedWriterSet = null;
-               bufferedWriterSet = new BufferedWriter(new FileWriter(strSet));
-
-               bufferedWriterSet.write(ADMSet);
-
-               bufferedWriterSet.flush();
-               bufferedWriterSet.close();
-           }
-           catch (Exception ioe )
-	   {
-	   	ioe.printStackTrace ();
-	   }
-
-           try{
-
-               String strSet="/home/cslin/dsarmd0200/trainoutAD.txt";
-               BufferedWriter bufferedWriterSet = null;
-               bufferedWriterSet = new BufferedWriter(new FileWriter(strSet));
-
-               bufferedWriterSet.write(outAD);
-
-               bufferedWriterSet.flush();
-               bufferedWriterSet.close();
-           }
-           catch (Exception ioe )
-	   {
-	   	ioe.printStackTrace ();
-	   }
-
-           try{
-
-               String strSet="/home/cslin/dsarmd0200/trainoutDR.txt";
-               BufferedWriter bufferedWriterSet = null;
-               bufferedWriterSet = new BufferedWriter(new FileWriter(strSet));
-
-               bufferedWriterSet.write(outDR);
-
-               bufferedWriterSet.flush();
-               bufferedWriterSet.close();
-           }
-           catch (Exception ioe )
-	   {
-	   	ioe.printStackTrace ();
-	   }*/
-           //end of Lin
-
     }
 
-
-    private void writeStat(HashMap<String, Integer> hashMap, String filename){
-        //Lin added-- Write (n-grams+POS) negative features in D-R
-                try{
-
-                       String strSet="/home/cslin/tmp/dsarmd0200/"+filename+".txt";
-                       BufferedWriter bufferedWriterSet = null;
-                       bufferedWriterSet = new BufferedWriter(new FileWriter(strSet));
-
-                       hashMap=sortHashMapByValuesD(hashMap);
-                       for (String grams : hashMap.keySet()){
-                           bufferedWriterSet.write(grams + " " + hashMap.get(grams));
-                           bufferedWriterSet.write("\n");
-                       }
-                       bufferedWriterSet.flush();
-                       bufferedWriterSet.close();
-                }
-                catch (Exception ioe )
-	        {
-	   	       ioe.printStackTrace ();
-	        }
-    }
-    private LinkedHashMap sortHashMapByValuesD(HashMap passedMap) {
-        List mapKeys = new ArrayList(passedMap.keySet());
-        List mapValues = new ArrayList(passedMap.values());
-        Collections.sort(mapValues);
-        Collections.reverse(mapValues);
-        Collections.sort(mapKeys);
-        Collections.reverse(mapKeys);
-
-        LinkedHashMap sortedMap =
-            new LinkedHashMap();
-
-        Iterator valueIt = mapValues.iterator();
-        while (valueIt.hasNext()) {
-            Object val = valueIt.next();
-            Iterator keyIt = mapKeys.iterator();
-
-            while (keyIt.hasNext()) {
-                Object key = keyIt.next();
-                String comp1 = passedMap.get(key).toString();
-                String comp2 = val.toString();
-
-                if (comp1.equals(comp2)){
-                    passedMap.remove(key);
-                    mapKeys.remove(key);
-                    sortedMap.put((String)key, (Integer)val);
-                    break;
-                }
-
-            }
-
-        }
-        return sortedMap;
-    }
-
-
-    private boolean chkNegativeFeatures(Utterance utt, String content){
-        String[] preWords={"不 会/AD", "不 知道/<finish>", "不 会/VV", "不 用/VV",
-        "不 太/VV", "不 重要/PU", "不 好/AS", "不错/<finish>", "不错/PU", "不/P", "不错/DEC"};
-        for (int i=0; i<preWords.length; i++){
-            //for preWords
-            String term="", pos="";
-            String[] preCombine=preWords[i].split("/");
-            term=preCombine[0]; pos=preCombine[1];
-
-            //for testing utterance
-            String[] uttsPOS = utt.getTaggedContent().split("[\\s]+");
-            String[] indPOS=new String[uttsPOS.length];
-
-                //all pos in sentence
-                for (int kk=0; kk<uttsPOS.length; kk++){
-                    String[] combine=uttsPOS[kk].split("/");
-                    if (combine.length>1)
-                      indPOS[kk]=combine[1];
-                    else
-                      indPOS[kk]="";
-                }
-
-                int iStart=0, iEnd=0;
-                if (content.contains(term)){
-                    int iContStart=content.indexOf(term);
-                    int iContEnd=iContStart+term.length();
-
-                    if (iContStart!=0){
-                        String str=(content.substring(iContStart-1, iContStart));
-                        if (!str.equals(" "))
-                            continue;
-                    }
-                    if (iContEnd!=content.length()){
-                        String str=(content.substring(iContEnd, iContEnd+1));
-                        if (!str.equals(" "))
-                            continue;
-                    }
-
-                    int iCont=content.indexOf(term);
-                    for (int kk=0; kk<=iCont; kk++)
-                    {
-                        if (content.subSequence(kk, kk+1).equals(" "))
-                            iStart++;
-                    }
-                    iEnd=iStart;
-                    for (int kk=iCont; kk<=(iCont+term.length()); kk++)
-                    {
-                        if (content.subSequence(kk, kk+1).equals(" "))
-                            iEnd++;
-                    }
-
-
-
-
-
-                    if (iEnd<uttsPOS.length-1){
-                      String postPos=indPOS[iEnd];
-                      if (pos.equalsIgnoreCase(postPos))
-                         return true;
-                    }
-
-                    if (iEnd>=uttsPOS.length-1){
-                      if (pos.contains("<finish>"))
-                        return true;
-                    }
-
-
-
-
-                }
-
-
-
-        }
-
-        String[] postWords={"VC/不 是", "NN/不 是", "<start>/不 会", "<start>/不 用",
-        "<start>/不 知道", "PN/不 知道", "PU/不 知道", "AD/不错", "NR/不", "VA/不", "<start>/不错", "M/不错"};
-
-        for (int i=0; i<postWords.length; i++){
-            //for preWords
-            String term="", pos="";
-            String[] postCombine=postWords[i].split("/");
-            term=postCombine[1]; pos=postCombine[0];
-
-            //for testing utterance
-            String[] uttsPOS = utt.getTaggedContent().split("[\\s]+");
-            String[] indPOS=new String[uttsPOS.length];
-
-                //all pos in sentence
-                for (int kk=0; kk<uttsPOS.length; kk++){
-                    String[] combine=uttsPOS[kk].split("/");
-                    if (combine.length>1)
-                      indPOS[kk]=combine[1];
-                    else
-                      indPOS[kk]="";
-                }
-
-                int iStart=0, ipreStart=0;
-                if (content.contains(term)){
-                    int iContStart=content.indexOf(term);
-                    int iContEnd=iContStart+term.length();
-
-                    if (iContStart!=0){
-                        String str=(content.substring(iContStart-1, iContStart));
-                        if (!str.equals(" "))
-                            continue;
-                    }
-                    if (iContEnd!=content.length()){
-                        String str=(content.substring(iContEnd, iContEnd+1));
-                        if (!str.equals(" "))
-                            continue;
-                    }
-
-                    int iCont=content.indexOf(term);
-                    for (int kk=0; kk<=iCont; kk++)
-                    {
-                        if (content.subSequence(kk, kk+1).equals(" "))
-                            iStart++;
-                    }
-                    ipreStart=iStart-1;
-
-
-
-
-
-                    if (ipreStart>=0){
-                      String prePos=indPOS[ipreStart];
-                      if (pos.equalsIgnoreCase(prePos))
-                         return true;
-                    }
-
-                    if (ipreStart<0){
-                      if (pos.contains("<start>"))
-                        return true;
-                    }
-
-
-
-
-                }
-
-
-
-        }
-
-        return false;
-    }
-    private boolean chkSpecialWords(String strUtterance, ArrayList featuresOfTheTag, String term){
-                         if ( (strUtterance.contains("？") ||
-                            strUtterance.contains("么") ||
-                            strUtterance.contains("吗") ||
-                            strUtterance.contains("可能") ||
-                            strUtterance.contains("88") ||
-                            strUtterance.contains("bye") ||
-                            strUtterance.contains("不客气") ||
-                            strUtterance.contains("嗎") ||
-
-                            strUtterance.contains("会不会") ||
-
-                            strUtterance.contains("差不多") ||
-                            strUtterance.contains("是不是") ||
-                            strUtterance.contains("不清楚") ||
-                            strUtterance.contains("不知道") ||
-                            strUtterance.contains("来不及")
-                            ) &&
-                            featuresOfTheTag.contains(term)
-                            ){
-                            return true;
-                        }
-                        return false;
-    }
-
-    private String termMatching(ArrayList utts, Utterance utterance, int iCurrent){
-        String retString="";
+    private String termMatching(ArrayList utts, Utterance utterance, int iCurrent) {
+        String retString = "";
 
         String[] resps = utterance.getRespTo().split(":");
-        Utterance preUtterance=null;
+        Utterance preUtterance = null;
 
-	if (resps.length > 1) {
-            String preIndex=resps[1].toLowerCase();
+        if (resps.length > 1) {
+            String preIndex = resps[1].toLowerCase();
 
-           for(int kk = 0; kk < utts.size(); kk++){ // utts
-              preUtterance =(Utterance)utts.get(kk);
-              if (preUtterance.getTurn().equalsIgnoreCase(preIndex)){
+            for (int kk = 0; kk < utts.size(); kk++) { // utts
+                preUtterance = (Utterance) utts.get(kk);
+                if (preUtterance.getTurn().equalsIgnoreCase(preIndex)) {
 
-                String[] preContent=(preUtterance.getSpaceTagContent()).split(" ");
-                String[] Content=(utterance.getSpaceTagContent()).split(" ");
-                for (int i=0; i<Content.length; i++){
-                    for(int j=0; j<preContent.length; j++){
+                    String[] preContent = (preUtterance.getSpaceTagContent()).split(" ");
+                    String[] Content = (utterance.getSpaceTagContent()).split(" ");
+                    for (int i = 0; i < Content.length; i++) {
+                        for (int j = 0; j < preContent.length; j++) {
 
-                       if (Content[i].equalsIgnoreCase(preContent[j])){
-                         retString+=Content[i]+" ";
-                       }
+                            if (Content[i].equalsIgnoreCase(preContent[j])) {
+                                retString += Content[i] + " ";
+                            }
 
+                        }
                     }
+                    break;
                 }
-                break;
-              }
             }
-	}
+        }
         String tag = TaggingType.getTag(utterance, tagType);
         //System.out.println(tag+"; Utt "+utterance.getTurn()+" Rep Term:"+retString);
         return retString;
 
     }
 
-    private int pairComparisonEng(ArrayList utts, Utterance utterance){
+    private int pairComparisonEng(ArrayList utts, Utterance utterance) {
         //return 1 for Dis-Rej and 2 for NonDis-Rej
 
-        String[] negWords={"though", "tho", "not", "no", "but", "can\'t",
-                           "disagree", "disagrees", "disagreed",
-                           "doesn\'t", "doesnt",
-                           "don\'t", "dont",
-                           "didn\'t", "didnt"};
+        String[] negWords = {"though", "tho", "not", "no", "but", "can\'t",
+            "disagree", "disagrees", "disagreed",
+            "doesn\'t", "doesnt",
+            "don\'t", "dont",
+            "didn\'t", "didnt"};
 
-        String[] questionMarks={"?"};
+        String[] questionMarks = {"?"};
 
-        String[] posWords={"i agree", "yeah", "yea", "yes", "not sure", "not bad"};
+        String[] posWords = {"i agree", "yeah", "yea", "yes", "not sure", "not bad"};
 
         String[] resps = utterance.getRespTo().split(":");
-        Utterance preUtterance=null;
+        Utterance preUtterance = null;
 
-        String sRepeatedConcept="";
-        boolean bRepeatedConcept=false;
-        boolean bPosInPre=false;
-        boolean bNegInPre=false;
-        boolean bPos=false;
-        boolean bNeg=false;
-        boolean bStart=false;
-        int iNegInPre=0;
-        int iPosInPre=0;
-        int iNeg=0;
-        int iPos=0;
+        String sRepeatedConcept = "";
+        boolean bRepeatedConcept = false;
+        boolean bPosInPre = false;
+        boolean bNegInPre = false;
+        boolean bPos = false;
+        boolean bNeg = false;
+        boolean bStart = false;
+        int iNegInPre = 0;
+        int iPosInPre = 0;
+        int iNeg = 0;
+        int iPos = 0;
 
         if (resps.length > 1) {
-            String preIndex=resps[1].toLowerCase();
+            String preIndex = resps[1].toLowerCase();
 
-           for(int kk = 0; kk < utts.size(); kk++){ // utts
-              preUtterance =(Utterance)utts.get(kk);
+            for (int kk = 0; kk < utts.size(); kk++) { // utts
+                preUtterance = (Utterance) utts.get(kk);
 
-              //the replied utterance is found
-              if (preUtterance.getTurn().equalsIgnoreCase(preIndex)){
+                //the replied utterance is found
+                if (preUtterance.getTurn().equalsIgnoreCase(preIndex)) {
 
-                String[] preContent=(preUtterance.getSpaceTagContent()).split(" ");
-                String[] Content=(utterance.getSpaceTagContent()).split(" ");
+                //String[] preContent=(preUtterance.getSpaceTagContent()).split(" ");
+                //String[] Content=(utterance.getSpaceTagContent()).split(" ");
+                String[] preContent=(preUtterance.getTaggedContent()).split(" ");
+                String[] Content=(utterance.getTaggedContent()).split(" ");
 
-                //check if the preSentence or utterance is a question?
-                //check if the preSentence or utterance is a question?
-                for (int i=0; i<questionMarks.length; i++){
-                    /*if ( preContent[preContent.length-1].contains(questionMarks[i]) ||
-                         (preContent.length-2>=0 && preContent[preContent.length-2].contains(questionMarks[i]))
-                       )*/
-                    if ( preContent[preContent.length-1].contains(questionMarks[i]) )
-                    return 2;
+                    for (int i = 0; i < questionMarks.length; i++) {
+                        /*
+                         * if (
+                         * Content[Content.length-1].contains(questionMarks[i])
+                         * || (Content.length-2>=0 &&
+                         * Content[Content.length-2].contains(questionMarks[i]))
+                       )
+                         */
+                        if (Content[Content.length - 1].contains(questionMarks[i])) {
+                            return 2;
+                        }
+                    }
 
-                    /*if ( Content[Content.length-1].contains(questionMarks[i]) ||
-                         (Content.length-2>=0 && Content[Content.length-2].contains(questionMarks[i]))
-                       )*/
-                    if ( Content[Content.length-1].contains(questionMarks[i]) )
-                    return 2;
+                    //check the number of positive words
+                /*
+                     * for (int i=0; i<posWords.length; i++){
+                     *
+                     * if
+                     * (preUtterance.getContent().toLowerCase().contains(posWords[i])){
+                     *
+                     * iPosInPre++; }
+                     *
+                     * if
+                     * (utterance.getContent().toLowerCase().contains(posWords[i])){
+                     * iPos++; }
                 }
+                     */
 
-                //check the number of positive words
-                /*for (int i=0; i<posWords.length; i++){
+                    //Check the Neg words in utterance
+                    if (iPos > 0) {
+                        return 2;
+                    }
 
-                     if (preUtterance.getContent().toLowerCase().contains(posWords[i])){
+                    //check the number of negative words
+                    for (int i = 0; i < negWords.length; i++) {
 
-                         iPosInPre++;
-                     }
+                        if (preUtterance.getContent().toLowerCase().contains(negWords[i])) {
 
-                     if (utterance.getContent().toLowerCase().contains(posWords[i])){
-                         iPos++;
-                     }
-                }*/
+                            iNegInPre++;
+                        }
 
-                //Check the Neg words in utterance
-                if (iPos>0)
-                    return 2;
+                        if (utterance.getContent().toLowerCase().contains(negWords[i])) {
+                            iNeg++;
+                        }
+                    }
 
-                //check the number of negative words
-                for (int i=0; i<negWords.length; i++){
-
-                     if (preUtterance.getContent().toLowerCase().contains(negWords[i])){
-
-                         iNegInPre++;
-                     }
-
-                     if (utterance.getContent().toLowerCase().contains(negWords[i])){
-                         iNeg++;
-                     }
+                    //Check the Neg words in utterance
+                    if (iNeg > 0) {
+                        return 1;
+                    }
                 }
-
-                //Check the Neg words in utterance
-                if (iNeg>0)
-                    return 1;
-              }
-           }
+            }
         }
         return 0;
     }
-    private int pairComparison(ArrayList utts, Utterance utterance){
+
+    private int pairComparison(ArrayList utts, Utterance utterance) {
         //String[] posWords={"支持","看重","可以","有的","不错","有用","好","有","对"};
-        String[] posWords={"支持","看重","可以","不错","没错","好","有","对"};
+        String[] posWords = {"支持", "看重", "可以", "不错", "没错", "好", "有", "对"};
         //String[] negWords={"不是","但是","不过","并不","没用","不同","没有","没什么","但","不","难"};
-        String[] negWords={"可是","恩","没","但","不","难"};
+        String[] negWords = {"可是", "恩", "没", "但", "不", "难"};
 
-        String[] startWords={"可是","但是","不是"};
-        String[] agreeWords={"嗯","恩","对","没错","不错"};
+        String[] startWords = {"可是", "但是", "不是"};
+        String[] agreeWords = {"嗯", "恩", "对", "没错", "不错"};
 
-        String[] questionMarks={"？","嗎","?","啥","吗","么"};
+        String[] questionMarks = {"？", "嗎", "?", "啥", "吗", "么"};
 
         String[] resps = utterance.getRespTo().split(":");
-        Utterance preUtterance=null;
+        Utterance preUtterance = null;
 
-        String sRepeatedConcept="";
-        boolean bRepeatedConcept=false;
-        boolean bPosInPre=false;
-        boolean bNegInPre=false;
-        boolean bPos=false;
-        boolean bNeg=false;
-        boolean bStart=false;
-        int iNegInPre=0;
-        int iPosInPre=0;
-        int iNeg=0;
-        int iPos=0;
+        String sRepeatedConcept = "";
+        boolean bRepeatedConcept = false;
+        boolean bPosInPre = false;
+        boolean bNegInPre = false;
+        boolean bPos = false;
+        boolean bNeg = false;
+        boolean bStart = false;
+        int iNegInPre = 0;
+        int iPosInPre = 0;
+        int iNeg = 0;
+        int iPos = 0;
 
 
         if (resps.length > 1) {
-            String preIndex=resps[1].toLowerCase();
+            String preIndex = resps[1].toLowerCase();
 
-           for(int kk = 0; kk < utts.size(); kk++){ // utts
-              preUtterance =(Utterance)utts.get(kk);
+            for (int kk = 0; kk < utts.size(); kk++) { // utts
+                preUtterance = (Utterance) utts.get(kk);
 
-              //the replied utterance is found
-              if (preUtterance.getTurn().equalsIgnoreCase(preIndex)){
+                //the replied utterance is found
+                if (preUtterance.getTurn().equalsIgnoreCase(preIndex)
+                        && preUtterance.getSpaceTagContent() != null) {
 
-                String[] preContent=(preUtterance.getSpaceTagContent()).split(" ");
-                String[] Content=(utterance.getSpaceTagContent()).split(" ");
+                    String[] preContent = (preUtterance.getSpaceTagContent()).split(" ");
+                    String[] Content = (utterance.getSpaceTagContent()).split(" ");
 
-                //check if the preSentence or utterance is a question?
-                for (int i=0; i<questionMarks.length; i++){
-                    /*if ( preContent[preContent.length-1].contains(questionMarks[i]) ||
-                         (preContent.length-2>=0 && preContent[preContent.length-2].contains(questionMarks[i]))
-                       )*/
-                    if ( preContent[preContent.length-1].contains(questionMarks[i]) )
-                    return 2;
+                    //check if the preSentence or utterance is a question?
+                    for (int i = 0; i < questionMarks.length; i++) {
+                        /*
+                         * if (
+                         * preContent[preContent.length-1].contains(questionMarks[i])
+                         * || (preContent.length-2>=0 &&
+                         * preContent[preContent.length-2].contains(questionMarks[i]))
+                       )
+                         */
+                        if (preContent[preContent.length - 1].contains(questionMarks[i])) {
+                            return 2;
+                        }
 
-                    /*if ( Content[Content.length-1].contains(questionMarks[i]) ||
-                         (Content.length-2>=0 && Content[Content.length-2].contains(questionMarks[i]))
-                       )*/
-                    if ( Content[Content.length-1].contains(questionMarks[i]) )
-                    return 2;
-                }
-
-                //check if the utterance is a agreed sentence
-                for (int i=0; i<agreeWords.length; i++){
-                     if (Content[0].contains(agreeWords[i]))
-                         return 2;
-                }
-
-
-                //check the repeated concept
-                for (int i=0; i<Content.length; i++){
-                    for(int j=0; j<preContent.length; j++){
-
-                       if (Content[i].equalsIgnoreCase(preContent[j])){
-                          if (Content[i].length()>=2)
-                            bRepeatedConcept=true;
-                       }
-
+                        /*
+                         * if (
+                         * Content[Content.length-1].contains(questionMarks[i])
+                         * || (Content.length-2>=0 &&
+                         * Content[Content.length-2].contains(questionMarks[i]))
+                       )
+                         */
+                        if (Content[Content.length - 1].contains(questionMarks[i])) {
+                            return 2;
+                        }
                     }
+
+                    //check if the utterance is a agreed sentence
+                    for (int i = 0; i < agreeWords.length; i++) {
+                        if (Content[0].contains(agreeWords[i])) {
+                            return 2;
+                        }
+                    }
+
+
+                    //check the repeated concept
+                    for (int i = 0; i < Content.length; i++) {
+                        for (int j = 0; j < preContent.length; j++) {
+
+                            if (Content[i].equalsIgnoreCase(preContent[j])) {
+                                if (Content[i].length() >= 2) {
+                                    bRepeatedConcept = true;
+                                }
+                            }
+
+                        }
+                    }
+
+                    //check the number of positive words
+                    for (int i = 0; i < posWords.length; i++) {
+                        if (preUtterance.getContent().contains(posWords[i])) {
+                            iPosInPre++;
+                        }
+
+                        if (utterance.getContent().contains(posWords[i])) {
+                            iPos++;
+                        }
+                    }
+
+
+
+
+
+                    //check the number of negative words
+
+
+                    for (int i = 0; i < negWords.length; i++) {
+
+                        if (preUtterance.getContent().contains(negWords[i])) {
+                            iNegInPre++;
+                        }
+
+                        if (utterance.getContent().contains(negWords[i])) {
+                            iNeg++;
+                        }
+                    }
+
+                    //if content or precontent contains agreeWords, and the other one doesn't
+                    //have negative word, it is not Dis-Rej.
+                    for (int i = 0; i < agreeWords.length; i++) {
+                        if (agreeWords[i].length() > 1 && preUtterance.getContent().contains(agreeWords[i])) {
+                            if (iNeg == 0) {
+                                return 2;
+                            }
+                        }
+                        if (agreeWords[i].length() > 1 && utterance.getContent().contains(agreeWords[i])) {
+                            if (iNegInPre == 0) {
+                                return 2;
+                            }
+                        }
+                    }
+
+
+
+
+
+                    //check the begining word
+                    for (int i = 0; i < startWords.length; i++) {
+                        if (Content[0].contains(startWords[i])) {
+                            return 1;
+                        }
+                    }
+
+                    //Check all conditions of Dis-Rej
+                    if (Content.length >= 3) {
+                        if (bRepeatedConcept && iNeg > 0) {
+                            return 1;
+                        }
+
+                        if (iNegInPre > 0 && iPos > 0) {
+                            return 1;
+                        }
+
+                        if (iPosInPre > 0 && iNeg > 0) {
+                            return 1;
+                        }
+
+                        if (iNegInPre > 0 && iNeg > 1) {
+                            return 1;
+                        }
+
+                        if (bRepeatedConcept && iNegInPre > 0 && iNeg == 0) {
+                            return 1;
+                        }
+                    }
+
+
+
+
+
+                    break;
                 }
-
-                //check the number of positive words
-                for (int i=0; i<posWords.length; i++){
-                     if (preUtterance.getContent().contains(posWords[i])){
-                         iPosInPre++;
-                     }
-
-                     if (utterance.getContent().contains(posWords[i])){
-                         iPos++;
-                     }
-                }
-
-
-
-
-
-                //check the number of negative words
-
-
-                for (int i=0; i<negWords.length; i++){
-
-                     if (preUtterance.getContent().contains(negWords[i])){
-                         iNegInPre++;
-                     }
-
-                     if (utterance.getContent().contains(negWords[i])){
-                         iNeg++;
-                     }
-                }
-
-                //if content or precontent contains agreeWords, and the other one doesn't
-                //have negative word, it is not Dis-Rej.
-                for (int i=0; i<agreeWords.length; i++){
-                     if (agreeWords[i].length()>1 && preUtterance.getContent().contains(agreeWords[i])){
-                        if (iNeg==0)
-                          return 2;
-                     }
-                     if (agreeWords[i].length()>1 && utterance.getContent().contains(agreeWords[i])){
-                        if (iNegInPre==0)
-                          return 2;
-                     }
-                }
-
-
-
-
-
-                //check the begining word
-                for (int i=0; i<startWords.length; i++){
-                   if (Content[0].contains(startWords[i]))
-                       return 1;
-                }
-
-                //Check all conditions of Dis-Rej
-               if (Content.length>=3){
-                if (bRepeatedConcept && iNeg>0)
-                    return 1;
-
-                if (iNegInPre>0 && iPos>0)
-                    return 1;
-
-                if (iPosInPre>0 && iNeg>0)
-                    return 1;
-
-                if (iNegInPre>0 && iNeg>1)
-                    return 1;
-
-                if (bRepeatedConcept && iNegInPre>0 && iNeg==0)
-                    return 1;
-               }
-
-
-
-
-
-                break;
-              }
             }
-	}
+        }
         return 0;
     }
-    private void appendToTestingArff(String arffFileLocation, ArrayList utts, Collection allFeatures, Boolean nonBlank){
-         String testoutAD="";
-         String testoutDR="";
-         String tagGTCAT="";
-         String strSep=System.getProperty("line.separator");
 
-         ArrayList featuresOfTheTag = (ArrayList)featuresMap.get(DsarmdDATag.DR);
-         BufferedWriter bw = null;
+    private void appendToTestingArff(String arffFileLocation, ArrayList utts, Collection allFeatures, Boolean nonBlank) {
+        String testoutAD = "";
+        String testoutDR = "";
+        String tagGTCAT = "";
+        String strSep = System.getProperty("line.separator");
+
+        ArrayList featuresOfTheTag = (ArrayList) featuresMap.get(DsarmdDATag.DR);
+        BufferedWriter bw = null;
         try {
             bw = new BufferedWriter(new FileWriter(arffFileLocation, true));
 
@@ -1038,33 +624,30 @@ public class ArffGenerator {
 //                // by Laura Dec 07, 2010
 //                content = pnw.replaceSentence(content);
 //Lin Added
-                int iUttLen=content.length();
-                String strUtterance=content;
-                if ((Settings.getValue(Settings.LANGUAGE)).equals("chinese"))
-		{
-                    content=utterance.getSpaceTagContent();
+                int iUttLen = content.length();
+                String strUtterance = content;
+                if ((Settings.getValue(Settings.LANGUAGE)).equals("chinese")) {
+                    content = utterance.getSpaceTagContent();
 
                 }
-
+                if (content == null) {
+                    content = "";
+                }
                 content = Ngram.urlNormalize(content);
-                boolean negFeatures=false;
-                //if ((Settings.getValue(Settings.LANGUAGE)).equals("chinese"))
-                //{     negFeatures=chkNegativeFeatures(utterance, content);}
                 content = Ngram.filterUtterance(content);
 
                 //trp.allGramsAndDRMSet(AllGramsSet, DRMSet);
                 //content = "<start> " + content.toLowerCase().trim() + " <finish>";
 
                 //CSLin added--retrieve the ground truth for Comm Act type
-                if ((Settings.getValue(Settings.LANGUAGE)).equals("chinese")){
-                   //tagGTCAT=utterance.getGroundTruthCommActType();
-                   tagGTCAT=utterance.getCommActType();
-                   trp.setApproved(false);
-                   trp.setTag(tagGTCAT);
-                }
-                else if ((Settings.getValue(Settings.LANGUAGE)).equals("english")){
-                   //tagGTCAT=utterance.getGroundTruthCommActType();
-                    tagGTCAT=utterance.getCommActType();
+                if ((Settings.getValue(Settings.LANGUAGE)).equals("chinese")) {
+                    //tagGTCAT=utterance.getGroundTruthCommActType();
+                    tagGTCAT = utterance.getCommActType();
+                    trp.setApproved(false);
+                    trp.setTag(tagGTCAT);
+                } else if ((Settings.getValue(Settings.LANGUAGE)).equals("english")) {
+                    //tagGTCAT=utterance.getGroundTruthCommActType();
+                    tagGTCAT = utterance.getCommActType();
                 }
 
                 //end
@@ -1072,60 +655,62 @@ public class ArffGenerator {
                 content = trp.rules_filtered(content);
 
                 ArrayList<String> ngrams = Ngram.generateNgramList(content);
-
+                //System.out.println("tagGTCAT: " + tagGTCAT);
                 //CSLin added--check the Dis-Rej conditions
-                int bDisRej=0;
-                if ((Settings.getValue(Settings.LANGUAGE)).equals("chinese") &&
-                        tagGTCAT.equalsIgnoreCase("response-to")){
-                   bDisRej=pairComparison(utts, utterance);
+                int bDisRej = 0;
+                if ((Settings.getValue(Settings.LANGUAGE)).equals("chinese")
+                        && tagGTCAT.equalsIgnoreCase("response-to")) {
+                    //System.out.println("check pair of utts for dis-rej: ");
+                    bDisRej = pairComparison(utts, utterance);
 
-                   if (bDisRej==1){
-                     ngrams.clear();
-                     ngrams.add(DsarmdDATag.DR);
-                   }
-                   else if (bDisRej==2){
-                     for(int k=0; k<ngrams.size(); k++){
-                       if (ngrams.get(k).equalsIgnoreCase(DsarmdDATag.DR))
-                           ngrams.set(k, "")  ;
-                     }
-                   }
-                }
-                else if ((Settings.getValue(Settings.LANGUAGE)).equals("english") &&
-                        !tagGTCAT.equalsIgnoreCase("addressed-to")){
-                //else if ((Settings.getValue(Settings.LANGUAGE)).equals("english") &&
-                //        tagGTCAT.equalsIgnoreCase("response-to")){
+                    if (bDisRej == 1) {
+                        ngrams.clear();
+                        ngrams.add(DsarmdDATag.DR);
+                    } else if (bDisRej == 2) {
+                        for (int k = 0; k < ngrams.size(); k++) {
+                            if (ngrams.get(k).equalsIgnoreCase(DsarmdDATag.DR)) {
+                                ngrams.set(k, "");
+                            }
+                        }
+                    }
+                } else if ((Settings.getValue(Settings.LANGUAGE)).equals("english")
+                        && !tagGTCAT.equalsIgnoreCase("addressed-to")) {
+                    //else if ((Settings.getValue(Settings.LANGUAGE)).equals("english") &&
+                    //        tagGTCAT.equalsIgnoreCase("response-to")){
 
-                   bDisRej=pairComparisonEng(utts, utterance);
+                    bDisRej = pairComparisonEng(utts, utterance);
 
-                   if (bDisRej==1){
-                     ngrams.clear();
-                     ngrams.add(DsarmdDATag.DR);
-                   }
-                   else if (bDisRej==2){
-                     for(int k=0; k<ngrams.size(); k++){
-                       if (ngrams.get(k).equalsIgnoreCase(DsarmdDATag.DR))
-                           ngrams.set(k, "")  ;
-                     }
-                   }
+                    if (bDisRej == 1) {
+                        ngrams.clear();
+                        ngrams.add(DsarmdDATag.DR);
+                    } else if (bDisRej == 2) {
+                        for (int k = 0; k < ngrams.size(); k++) {
+                            if (ngrams.get(k).equalsIgnoreCase(DsarmdDATag.DR)) {
+                                ngrams.set(k, "");
+                            }
+                        }
+                    }
                 }
                 //end
 
-                for(int j = 0; j < ngrams.size(); j++){
+                for (int j = 0; j < ngrams.size(); j++) {
                     String term = ngrams.get(j);
                     String[] wordsInTerm = term.split("\\s+");
                     //comment it out for testing 01/18/2012
 
-                if ((Settings.getValue(Settings.LANGUAGE)).equals("chinese") &&
-                        tagGTCAT.equalsIgnoreCase("addressed-to"))
-		{
-                    if (ad_ngrams_.containsKey(term)) {
-                        double[] ad_ngram = ad_ngrams_.get(term);
-                        if (ad_ngram != null && ad_ngram[0] >= 3) {
-                            str = DsarmdDATag.AD;
-                            break;
-                        } //only keep AD feature 01/11/2012 by TL
+                    if ((Settings.getValue(Settings.LANGUAGE)).equals("chinese") /*
+                             * &&
+                        tagGTCAT.equalsIgnoreCase("addressed-to")
+                             */) {
+                        if (ad_ngrams_.containsKey(term)) {
+                            double[] ad_ngram = ad_ngrams_.get(term);
+                            if (ad_ngram != null && ad_ngram[0] >= 3) {
+                                System.out.println("find one ad utt: " + content);
+                                str = DsarmdDATag.AD;
+                                break;
+                            } //only keep AD feature 01/11/2012 by TL
+                        }
                     }
-                }
                     if (!term.equals(DsarmdDATag.AD)
                             && !term.equals(DsarmdDATag.DR)
                             && wordsInTerm.length < 2) {
@@ -1145,19 +730,13 @@ public class ArffGenerator {
                         //CSLin-- D-R-specific testing
 
 
-                      //Dis-Rej conditions
-                      if((Settings.getValue(Settings.LANGUAGE)).equals("chinese")){
+                        //Dis-Rej conditions
+                        if ((Settings.getValue(Settings.LANGUAGE)).equals("chinese")) {
 
                         if (bDisRej==1)
                         {
                             ;
                         }
-                        //else if ( !chkSpecialWords(strUtterance,featuresOfTheTag,term) && trp.getApproved() && iUttLen>=3 && tagGTCAT.equalsIgnoreCase("response-to"))
-                        //{
-                        //    ;
-                        //}
-                        //else if (negFeatures && featuresOfTheTag.contains(term))
-                        //    continue;
                         else if (iUttLen<5 && tagGTCAT.equalsIgnoreCase("response-to") && featuresOfTheTag.contains(term))
                         {
                             continue;
@@ -1166,60 +745,41 @@ public class ArffGenerator {
                         {
                             continue;
                         }
-                        //else if ( chkSpecialWords(strUtterance,featuresOfTheTag,term)) {
-                        //    continue;
-                        //}
-                        //end
+                        
                       }
                       else if((Settings.getValue(Settings.LANGUAGE)).equals("english")){
 
-                          /*if (iUttLen<5 && tagGTCAT.equalsIgnoreCase("response-to") && featuresOfTheTag.contains(term))
-                          {
-                            continue;
-                          }
-                          else if ( !tagGTCAT.equalsIgnoreCase("response-to") && featuresOfTheTag.contains(term))
-                          {
-                            continue;
-                          }*/
                           if ( tagGTCAT.equalsIgnoreCase("addressed-to") && featuresOfTheTag.contains(term))
                           {
                             continue;
                           }
-
-                      }
-
-                        String admOriginal="";
-                        if ((Settings.getValue(Settings.LANGUAGE)).equals("chinese") && !ADMSet.equals("")){
-                          String[] ADMgram = ADMSet.split("\\|");
-                          for (int k=0; k<ADMgram.length; k++)
-                          {
-                              if (term.equalsIgnoreCase(ADMgram[k]))
-                              {
-                                  admOriginal=term;
-                                  term="ADM";
-                              }
-                          }
                         }
 
-                       /*String drmOriginal="";
-                        if (!DRMSet.equals("")){
-                         String[] DRMgram = DRMSet.split("\\|");
-                         for (int k=0; k<DRMgram.length; k++)
-                         {
-                             if (term.equalsIgnoreCase(DRMgram[k]))
-                             {
-                                 term="DRM";
-                             }
-                         }
-                       }*/
+                        String admOriginal = "";
+                        if ((Settings.getValue(Settings.LANGUAGE)).equals("chinese") && !ADMSet.equals("")) {
+                            String[] ADMgram = ADMSet.split("\\|");
+                            for (int k = 0; k < ADMgram.length; k++) {
+                                if (term.equalsIgnoreCase(ADMgram[k])) {
+                                    admOriginal = term;
+                                    term = "ADM";
+                                }
+                            }
+                        }
+
+                        /*
+                         * String drmOriginal=""; if (!DRMSet.equals("")){
+                         * String[] DRMgram = DRMSet.split("\\|"); for (int k=0;
+                         * k<DRMgram.length; k++) { if
+                         * (term.equalsIgnoreCase(DRMgram[k])) { term="DRM"; } }
+                       }
+                         */
 
 
                         //for testing output
-                        if (term.equals("ADM")){
-                            testoutAD+="|"+ term+"("+admOriginal+")";
-                        }
-                        else{
-                            testoutAD+="|"+ term;
+                        if (term.equals("ADM")) {
+                            testoutAD += "|" + term + "(" + admOriginal + ")";
+                        } else {
+                            testoutAD += "|" + term;
                         }
                         //end
 
@@ -1227,27 +787,32 @@ public class ArffGenerator {
                         str += "|" + term;
                     }
                 }
-                if(nonBlank == true){
-                    if(!str.equals("")){
+                if (nonBlank == true) {
+                    if (!str.equals("")) {
                         // by Laura Nov 30, 2010
-                       /*if ( str.contains(DsarmdDATag.DR) && commActType.contains("response-to")){
-                          str=str.replace("|"+DsarmdDATag.DR, "");
-                          bw.write(tag + ", '" + str + "|" + "DRRT" + "'\n");
-                       }else*/
+                       /*
+                         * if ( str.contains(DsarmdDATag.DR) &&
+                         * commActType.contains("response-to")){
+                         * str=str.replace("|"+DsarmdDATag.DR, ""); bw.write(tag
+                         * + ", '" + str + "|" + "DRRT" + "'\n");
+                       }else
+                         */
                         bw.write(tag + ", '" + str + "|" + commActType + "'\n");
                     }
 //                        bw.write(tag + ", '" + str + "'\n");
-                        testoutAD+=  "|" +commActType +"\n";
-                }
-                else{
+                    testoutAD += "|" + commActType + "\n";
+                } else {
                     // by Laura Nov 30, 2010
-                    /*if ( str.contains(DsarmdDATag.DR) && commActType.contains("response-to")){
-                          str=str.replace("|"+DsarmdDATag.DR, "");
-                          bw.write(tag + ", '" + str + "|" + "DRRT" + "'\n");
-                       }else*/
+                    /*
+                     * if ( str.contains(DsarmdDATag.DR) &&
+                     * commActType.contains("response-to")){
+                     * str=str.replace("|"+DsarmdDATag.DR, ""); bw.write(tag +
+                     * ", '" + str + "|" + "DRRT" + "'\n");
+                       }else
+                     */
                     bw.write(tag + ", '" + str + "|" + commActType + "'\n");
 
-                    testoutAD+=  "|" +commActType +"\n";
+                    testoutAD += "|" + commActType + "\n";
 //                    bw.write(tag + ", '" + str + "'\n");
                 }
             }
@@ -1257,38 +822,6 @@ public class ArffGenerator {
             e.printStackTrace();
         }
 
-         /*try{
-
-               String strSet="/home/cslin/tmp/dsarmd0200/tetsoutAD.txt";
-               BufferedWriter bufferedWriterSet = null;
-               bufferedWriterSet = new BufferedWriter(new FileWriter(strSet));
-
-               bufferedWriterSet.write(testoutAD);
-
-               bufferedWriterSet.flush();
-               bufferedWriterSet.close();
-           }
-           catch (Exception ioe )
-	   {
-	   	ioe.printStackTrace ();
-	   }*/
-
-           /*try{
-
-               String strSet="/home/cslin/dsarmd0200/testoutDR.txt";
-               BufferedWriter bufferedWriterSet = null;
-               bufferedWriterSet = new BufferedWriter(new FileWriter(strSet));
-
-               bufferedWriterSet.write(testoutDR);
-
-               bufferedWriterSet.flush();
-               bufferedWriterSet.close();
-           }
-           catch (Exception ioe )
-	   {
-	   	ioe.printStackTrace ();
-	   }*/
-           //end of Lin
     }
 
     /**
@@ -1394,7 +927,7 @@ public class ArffGenerator {
             }
         }
         //System.out.println("Size of the tag_frequency_ = " + tag_frequency_.size());
-        System.out.println("AD ngrams:");
+        //System.out.println("AD ngrams:");
         ArrayList<String> ngrams = new ArrayList(Arrays.asList(tag_frequency_.keySet().toArray()));
         HashMap<String, double[]> ad_ngrams = new HashMap<String, double[]>();
         for (String ngram : ngrams) {
@@ -1414,8 +947,8 @@ public class ArffGenerator {
                 }
                 if (ad_freq / total_freq >= 0.6
                         && ad_freq > 1) {
-                    System.out.print(ngram + ": " + ad_freq + " ");
-                    System.out.println("---frequency: " + ad_freq / total_freq);
+                    //System.out.print(ngram + ": " + ad_freq + " ");
+                    //System.out.println("---frequency: " + ad_freq / total_freq);
                     double[] ngram_info = new double[2];
                     ngram_info[0] = ad_freq;
                     ngram_info[1] = ad_freq / total_freq;
@@ -1427,7 +960,7 @@ public class ArffGenerator {
         }
         Util.writeToFile("ad_ngrams", ad_ngrams);
         ad_ngrams_ = ad_ngrams;
-        System.out.println("DR ngrams:");
+        //System.out.println("DR ngrams:");
         ngrams = new ArrayList(Arrays.asList(tag_frequency_.keySet().toArray()));
         HashMap<String, double[]> dr_ngrams = new HashMap<String, double[]>();
         for (String ngram : ngrams) {
@@ -1447,8 +980,8 @@ public class ArffGenerator {
                 }
                 if (dr_freq / total_freq >= 0.6
                         && dr_freq > 1) {
-                    System.out.print(ngram + ": " + dr_freq + " ");
-                    System.out.println("---frequency: " + dr_freq / total_freq);
+                    //System.out.print(ngram + ": " + dr_freq + " ");
+                    //System.out.println("---frequency: " + dr_freq / total_freq);
                     double[] ngram_info = new double[2];
                     ngram_info[0] = dr_freq;
                     ngram_info[1] = dr_freq / total_freq;
@@ -1460,9 +993,7 @@ public class ArffGenerator {
         }
         Util.writeToFile("dr_ngrams", dr_ngrams);
     }
-
-    private String ADMSet="";
-    private String DRMSet="";
-    private String AllGramsSet="";
-
+    private String ADMSet = "";
+    private String DRMSet = "";
+    private String AllGramsSet = "";
 }
