@@ -103,7 +103,7 @@ public class PursuitOfPower {
     
     /**
      * m2w: this method calculates pop using Involved Topic COntrol Measure.
-     * //1. init all maps, topic ctrl, involvement, local itcm, 
+       * //1. init all maps, tension focus measure, involvement, net work cenrality, confirmation request.
      *  //2. get and set these maps.
      *  //3. add the 2 maps and average
      *  //4. add to pop.
