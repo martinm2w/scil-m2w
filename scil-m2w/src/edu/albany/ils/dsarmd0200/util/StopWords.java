@@ -18,7 +18,7 @@ public class StopWords {
 
     public void readStopWords(File file){
         if( !file.exists() ) {
-	    System.out.println("the stop-words file cannot be found!");
+//	    System.out.println("the stop-words file cannot be found!");
 	    return ;
         }
         try{
