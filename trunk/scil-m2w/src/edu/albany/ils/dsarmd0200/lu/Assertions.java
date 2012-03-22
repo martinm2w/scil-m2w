@@ -156,11 +156,11 @@ public class Assertions {
                     String tmpResult=new String();
                     //String nEmotes=ParseTools.removeEmoticons(utterance);
                     //if((Settings.getValue(Settings.LANGUAGE)).equals("chinese")){
-//                        TraditionToSimple tts=new TraditionToSimple();                   
-//                          if(utterance.length()>0){
-//                            tmpResult=tts.Big5ToGb(utterance);
-//                         utt_.setUtterance(tmpResult);
-//                          }
+                        TraditionToSimple tts=new TraditionToSimple();                   
+                          if(utterance.length()>0){
+                            tmpResult=tts.Big5ToGb(utterance);
+                         utt_.setUtterance(tmpResult);
+                          }
                        
                    // this.utts_.remove(index);
                     // this.utts_.add(index, utt_);
@@ -231,8 +231,8 @@ public class Assertions {
                 //}
 
                 //end of Lin
-                cal_ = Calendar.getInstance();
-                System.out.println("after pos: " + df_.format(cal_.getTime()));
+//                cal_ = Calendar.getInstance();
+//                System.out.println("after pos: " + df_.format(cal_.getTime()));
 
                 all_utts_.addAll(utts_);
                 ddt_ = new DocDialogueType(utts_);
@@ -245,19 +245,19 @@ public class Assertions {
                 }
                 //System.exit(0);
                 tagDAct();
-                cal_ = Calendar.getInstance();
-                System.out.println("after DA tagging: " + df_.format(cal_.getTime()));
+//                cal_ = Calendar.getInstance();
+//                System.out.println("after DA tagging: " + df_.format(cal_.getTime()));
                 /*
                  * for (int ii = 0; ii < utts_.size(); ii++) {
                  * System.out.println ("utt tagged: " +
                  * utts_.get(ii).getTaggedContent()); }
                  */
                 
-                cal_ = Calendar.getInstance();
+//                cal_ = Calendar.getInstance();
                 //System.out.println("after comm link: " + df_.format(cal_.getTime()));
                 buildLocalTopicList(phr_ch, xp);
-                cal_ = Calendar.getInstance();
-                System.out.println("after build lc: " + df_.format(cal_.getTime()));
+//                cal_ = Calendar.getInstance();
+//                System.out.println("after build lc: " + df_.format(cal_.getTime()));
                 if (fn.startsWith("Feb27_GroupA")) {
                     Speaker part = parts_.get("tony");
                     System.out.println(part.getUtts());
@@ -488,7 +488,7 @@ public class Assertions {
     {
         if(total==0)
         {
-            System.out.println("Error: trying to divide a number by 0");
+            System.err.println("Error: trying to divide a number by 0");
             //System.exit(0);
             return 0;
         }
@@ -1203,7 +1203,7 @@ public class Assertions {
         // print("\n");
         ArrayList spks = new ArrayList(parts_.values());
 	//print("-----Percentages-------");
-	 System.out.println ("@Network Centrality\n");
+	 System.out.println ("@Network Centrality");
         for (int i = 0; i < spks.size(); i++) {
              
 		    Speaker part_ = (Speaker)spks.get(i);
@@ -1259,7 +1259,7 @@ public class Assertions {
         ArrayList<Double> CDM=new ArrayList();
         ArrayList<String> spk=new ArrayList();
         
-        String spkmad1="",spkncm1="",spktcm1="",spkcdm1="";
+        String spkmad1="",spkncm1="",spktcm1="",spkcdm1="",stinf="";
 
         System.out.println("\n@Influencer");
         
@@ -1347,25 +1347,29 @@ public class Assertions {
         }
          else
              continue;
-}
+        }
 
         for(int i=0;i<spk.size();i++){
         if( (spk.size()<3 && spk.size()>0)) {
         System.out.println(spk.get(i));
         }
         else{
-           System.out.println("No influencer");  
+            stinf="No Influencer";
+           System.out.println(stinf);  
         break;
         }
         
         }
 //        System.out.println(set);
-        if(set==false)
-            System.out.println("No influencer");
-
+        if(set==false){
+            stinf="No Influencer";
+            System.out.println(stinf);
+        }
         //Influencer Confidence Scores
         
         System.out.println("\n@Influencer_Confidence");
+        if(!stinf.equals("No Influencer")){
+            
         
         Comparator c=Collections.reverseOrder();
         Collections.sort(MAD, c);
@@ -1422,7 +1426,11 @@ public class Assertions {
             conf_score=0.25;
         System.out.println(conf_score);
         }
-        
+        }
+        else{
+        conf_score=1.0;
+        System.out.println(conf_score);
+        }
     }
     
     
@@ -3072,11 +3080,11 @@ public class Assertions {
 //		    nls_.setChinese (true);
 //                    StanfordPOSTagger.initializeChinese();
 //		}
-            cal_ = Calendar.getInstance();
-            System.out.println("before create List: " + df_.format(cal_.getTime()));
+//            cal_ = Calendar.getInstance();
+//            System.out.println("before create List: " + df_.format(cal_.getTime()));
             nls_.createList(fv);
-            cal_ = Calendar.getInstance();
-            System.out.println("after create List: " + df_.format(cal_.getTime()));
+//            cal_ = Calendar.getInstance();
+//            System.out.println("after create List: " + df_.format(cal_.getTime()));
             //nls_.printUniqueNouns();
         }
         /*
