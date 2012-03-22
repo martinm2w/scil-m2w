@@ -53,7 +53,7 @@ public class ArffGenerator {
 
 //         modified by laura, Jul 11, 2011
         if (Settings.getValue("language").equals("chinese")) {
-            System.out.println("Use Chinese Ngram rules ...");
+//            System.out.println("Use Chinese Ngram rules ...");
             trp = new TagRulesPredefinedChinese();
             //trp = new TagRulesPredefined(); //comment 01/19/2012
         } else {
@@ -705,7 +705,7 @@ public class ArffGenerator {
                         if (ad_ngrams_.containsKey(term)) {
                             double[] ad_ngram = ad_ngrams_.get(term);
                             if (ad_ngram != null && ad_ngram[0] >= 3) {
-                                System.out.println("find one ad utt: " + content);
+//                                System.out.println("find one ad utt: " + content);
                                 str = DsarmdDATag.AD;
                                 break;
                             } //only keep AD feature 01/11/2012 by TL
