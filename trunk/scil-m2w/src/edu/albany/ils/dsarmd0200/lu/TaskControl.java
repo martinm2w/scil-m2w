@@ -478,7 +478,7 @@ public class TaskControl {
             evaluate(dis, dis_count, spks, over_thr, over_str_thr, prxmlp, ordered_spks);
             return true;
         }
-        System.out.println("only Action Directive is not enough!!!");
+//        System.out.println("only Action Directive is not enough!!!");
         return false;
     }
 

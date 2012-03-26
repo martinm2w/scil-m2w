@@ -28,10 +28,11 @@ public class PursuitOfPower {
         NameMap = new HashMap<String, Double>(); // for init
         ITCMMap = new HashMap<String, Double>(); //4 sub-method maps
         CDMMap = new HashMap<String, Double>();
-        DWLMap = new HashMap<String, Double>();
+//        DWLMap = new HashMap<String, Double>();
         TFMMap = new HashMap<String, Double>();
         POMMap = new HashMap<String, Double>();
         ConfMap = new HashMap<String, Double>();
+        NCMMap = new HashMap<String, Double>();
         for(Utterance u : Utts){
             String tempSpk = u.getSpeaker();
             NameMap.put(tempSpk, 0.0);
@@ -39,10 +40,11 @@ public class PursuitOfPower {
         PopMap.putAll(NameMap);
         ITCMMap.putAll(NameMap);
         CDMMap.putAll(NameMap);
-        DWLMap.putAll(NameMap);
+//        DWLMap.putAll(NameMap);
         TFMMap.putAll(NameMap);
         POMMap.putAll(NameMap);
         ConfMap.putAll(NameMap);
+        NCMMap.putAll(NameMap);
     }
     
     public void calPursuitOfPower(){
@@ -75,55 +77,41 @@ public class PursuitOfPower {
         //3.Cumulative Disagreement Measure (CDM)
         CDMMap = this.calCDM();
         //4.Disagreement with Leader (DWL)
-        DWLMap = this.calDWL();
+//        DWLMap = this.calDWL();
         //5.Positioning Measure (POM)
         POMMap = this.calPOM();
         //6.calculate confirmation request.(Conf)
         ConfMap = this.calConfRequestScore();
+        //7.get network centrality map (NCM)
+        NCMMap = this.calNCM();
         
-        //7.average.
-//        for(String spk : PopMap.keySet()){
-//            Double tmpITCM = ITCMMap.get(spk);
-//            Double tmpCDM = CDMMap.get(spk);
-//            Double tmpDWL = DWLMap.get(spk);
-//            Double tmpTFM = TFMMap.get(spk);
-//            Double tmpPOM = POMMap.get(spk);
-//            Double avgPop = 0.0;
-//            if(tmpITCM!=null && tmpCDM!=null && tmpDWL!=null && tmpTFM!=null && tmpPOM!=null){    
-//                avgPop = (tmpITCM + tmpCDM + tmpDWL + tmpTFM + tmpPOM) / 5.0 ;
-//            }
-//            PopMap.put(spk, avgPop);
-//        }
-        
+        //8.average.
         ArrayList<HashMap<String, Double>> averageList = new  ArrayList<HashMap<String, Double>>();
         averageList.add(TFMMap);
         averageList.add(ITCMMap);
         averageList.add(CDMMap);
-        averageList.add(DWLMap);
+//        averageList.add(DWLMap);
         averageList.add(POMMap);
+        averageList.add(NCMMap);
+        
         PopMap = this.addingMapsAndAverageIt(averageList);
     }
     
     /**
      * m2w: this method calculates pop using Involved Topic COntrol Measure.
-       * //1. init all maps, tension focus measure, involvement, net work cenrality, confirmation request.
+       * //1. init all maps,  involvement, localitcm;
      *  //2. get and set these maps.
      *  //3. add the 2 maps and average
      *  //4. add to pop.
+     *  @date 3/22/12 1:07 PM
      */
     private HashMap<String, Double> calITCM(){
        //1. init all maps, topic ctrl, involvement, local itcm, 
 //        HashMap<String, Double> localMapTPctrl = new HashMap(); // commented on 3/6/12 2:33 PM
         HashMap<String, Double> localMapInv = new HashMap<String, Double>();
-        HashMap<String, Double> localMapNCM= new HashMap<String, Double>(); //added network centrality for testing.
-        HashMap<String, Double> localMapTF = new HashMap<String, Double>();//tension focus
-        HashMap<String, Double> localMapConf = new HashMap<String, Double>();//confrequest.
         HashMap<String, Double> localMapITCM = new HashMap<String, Double>();
-        localMapNCM.putAll(NameMap);//added network centrality for testing.
 //        localMapTPctrl.putAll(NameMap);
         localMapInv.putAll(NameMap);
-        localMapTF.putAll(NameMap);
-        localMapConf.putAll(NameMap);
         localMapITCM.putAll(NameMap);
         
        //2. get and set these maps.
@@ -131,26 +119,17 @@ public class PursuitOfPower {
             Speaker tmpSpk = parts.get(spk);
 //            Double tpctrl = tmpSpk.getTC().getPower();// topic control 
             Double inv = tmpSpk.getInv().getPower();
-            Double ncm = tmpSpk.getNetCentr();//added network centrality for testing.
 //            localMapTPctrl.put(spk, tpctrl);
             localMapInv.put(spk, inv);
-            localMapNCM.put(spk, ncm);//added network centrality for testing.
         }
         
-        localMapConf = ConfMap;
-        localMapTF = TFMMap;
         
        //3. add the maps and average
 //        localMapITCM = this.adding2MapsAndAverageIt(localMapTPctrl, localMapInv) ;
-        ArrayList<HashMap<String, Double>> averageList = new ArrayList<HashMap<String, Double>>();
-        averageList.add(localMapInv);
-        averageList.add(localMapTF);
-        averageList.add(localMapConf);
-        averageList.add(localMapNCM);
-        localMapITCM = this.addingMapsAndAverageIt(averageList);
+        localMapITCM = localMapInv;
         
         
-        //5.  print.
+        //4.  print.
         ArrayList<ArrayList> ITCMList = new ArrayList();
         ITCMList = this.sortAndConvertMapToArrayList(localMapITCM);
         if(doFinalPrintOut){
@@ -162,10 +141,7 @@ public class PursuitOfPower {
         if(doAnalysisPrintOut){
             System.out.println("@ITCM");
 //            System.out.println("topic ctrl map: " + localMapTPctrl.toString());
-            System.out.println("confirmation request map: " + localMapConf.toString());
             System.out.println("involvement map: " + localMapInv.toString());
-            System.out.println("tension focus map: " + localMapTF.toString());
-            System.out.println("network centriality map: " + localMapNCM.toString());
             System.out.println("itcm map before pop: " + localMapITCM.toString());
             System.out.println("pop map:" + PopMap.toString());
         }
@@ -236,68 +212,43 @@ public class PursuitOfPower {
         }
         return localMapCDM;
     }
-    
+  
     /**
-     * m2w: this method calculates pop using Disagreement with Leader Measure.
-     *   //1. get the leader of the dialogue
-     *   //2. build local map of count.
-     *   //3. get count of dis towards the leader, assign to each key in the local map.
-     *   //4. build and add the local map of percent to the pop map.
+     * m2w: added network centrality into pop. 
+     * @return  ncm map
+     * @date 3/22/12 1:08 PM
      */
-    private HashMap<String, Double> calDWL(){
+    private HashMap<String, Double> calNCM(){
+        //1. init
+        HashMap<String, Double> localMapNCM = new HashMap<String, Double>();
+        localMapNCM.putAll(NameMap);//added network centrality for testing.
         
-        Double totalDis = 0.0;
-        //1. get the leader of the dialogue
-        String leaderName = leader.getName();
-        //2. build local map of count.
-        HashMap<String, Double> localMapCount = new HashMap();
-        localMapCount.putAll(NameMap);
-        //3. get count of dis towards the leader, assign to each key in the local map.
-        for(Utterance u : Utts){
-            String DaTag = u.getTag();
-            String tempSpk = u.getSpeaker();
-            String tempCATag = u.getCommActType();
-            if(DaTag.toLowerCase().contains(DISAGREE_REJECT) && tempCATag.equalsIgnoreCase(RESPONSE_TO)){
-                totalDis++;
-                String lkto_spk = u.getRespToSpk();
-//                System.out.println(lkto_spk);
-                //if it links to the leader and current speaker is not the leader
-                if((lkto_spk != null) && (tempSpk != null) && lkto_spk.equalsIgnoreCase(leaderName) && !tempSpk.equalsIgnoreCase(leaderName)){
-                    Double tempCount = localMapCount.get(tempSpk);
-                    localMapCount.put(tempSpk, tempCount + 1); // count + 1
-                }
-            }
+        //2. get and set these maps.
+        for(String spk : parts.keySet()){
+            Speaker tmpSpk = parts.get(spk);
+            Double ncm = tmpSpk.getNetCentr();//added network centrality for testing.
+            localMapNCM.put(spk, ncm);//added network centrality for testing.
         }
-        //4. build and add the local map of percent to the pop map.
-        HashMap<String, Double> localMapDWL = new HashMap();
-        localMapDWL.putAll(NameMap);
-        if(totalDis > 0){
-            for(String spk : localMapCount.keySet()){
-                Double tempDisCount = localMapCount.get(spk);
-                Double tempPerc = tempDisCount / totalDis;
-                localMapDWL.put(spk, tempPerc);
-            }
-        }
-
-        //output
-        ArrayList<ArrayList> DWLList = new ArrayList();
-        DWLList = this.sortAndConvertMapToArrayList(localMapDWL);
+        
+        //3.  print.
+        ArrayList<ArrayList> NCMList = new ArrayList();
+        NCMList = this.sortAndConvertMapToArrayList(localMapNCM);
         if(doFinalPrintOut){
-            System.out.println("@DWL");
-            for(ArrayList a : DWLList){
+            System.out.println("@NCM");
+            for(ArrayList a : NCMList){
                 System.out.println( (String)(a.get(0)) + " : " + (Double)(a.get(1)) );
             }
         }
         if(doAnalysisPrintOut){
-            System.out.println("@DWL");
-            System.out.println("total dis: " + totalDis);
-            System.out.println("count map dis: " + localMapCount.toString());
-            System.out.println("local DWL map before pop: " + localMapDWL);
-            System.out.println(" pop map: " + PopMap.toString());
-            System.out.println();
+            System.out.println("@NCM");
+//            System.out.println("topic ctrl map: " + localMapTPctrl.toString());
+            System.out.println("network centriality map: " + localMapNCM.toString());
+            System.out.println("pop map:" + PopMap.toString());
         }
-        return localMapDWL;
+        
+        return localMapNCM;
     }
+    
     
     /**
      * m2w: this method calculates pop using Tension Focus Measure.
@@ -432,6 +383,69 @@ public class PursuitOfPower {
         return localTFM_TDTMap;
     }
     
+        /**
+//     * m2w: this method calculates pop using Disagreement with Leader Measure.
+//     *   //1. get the leader of the dialogue
+//     *   //2. build local map of count.
+//     *   //3. get count of dis towards the leader, assign to each key in the local map.
+//     *   //4. build and add the local map of percent to the pop map.
+//     */
+//    private HashMap<String, Double> calDWL(){
+//        
+//        Double totalDis = 0.0;
+//        //1. get the leader of the dialogue
+//        String leaderName = leader.getName();
+//        //2. build local map of count.
+//        HashMap<String, Double> localMapCount = new HashMap();
+//        localMapCount.putAll(NameMap);
+//        //3. get count of dis towards the leader, assign to each key in the local map.
+//        for(Utterance u : Utts){
+//            String DaTag = u.getTag();
+//            String tempSpk = u.getSpeaker();
+//            String tempCATag = u.getCommActType();
+//            if(DaTag.toLowerCase().contains(DISAGREE_REJECT) && tempCATag.equalsIgnoreCase(RESPONSE_TO)){
+//                totalDis++;
+//                String lkto_spk = u.getRespToSpk();
+////                System.out.println(lkto_spk);
+//                //if it links to the leader and current speaker is not the leader
+//                if((lkto_spk != null) && (tempSpk != null) && lkto_spk.equalsIgnoreCase(leaderName) && !tempSpk.equalsIgnoreCase(leaderName)){
+//                    Double tempCount = localMapCount.get(tempSpk);
+//                    localMapCount.put(tempSpk, tempCount + 1); // count + 1
+//                }
+//            }
+//        }
+//        //4. build and add the local map of percent to the pop map.
+//        HashMap<String, Double> localMapDWL = new HashMap();
+//        localMapDWL.putAll(NameMap);
+//        if(totalDis > 0){
+//            for(String spk : localMapCount.keySet()){
+//                Double tempDisCount = localMapCount.get(spk);
+//                Double tempPerc = tempDisCount / totalDis;
+//                localMapDWL.put(spk, tempPerc);
+//            }
+//        }
+//
+//        //output
+//        ArrayList<ArrayList> DWLList = new ArrayList();
+//        DWLList = this.sortAndConvertMapToArrayList(localMapDWL);
+//        if(doFinalPrintOut){
+//            System.out.println("@DWL");
+//            for(ArrayList a : DWLList){
+//                System.out.println( (String)(a.get(0)) + " : " + (Double)(a.get(1)) );
+//            }
+//        }
+//        if(doAnalysisPrintOut){
+//            System.out.println("@DWL");
+//            System.out.println("total dis: " + totalDis);
+//            System.out.println("count map dis: " + localMapCount.toString());
+//            System.out.println("local DWL map before pop: " + localMapDWL);
+//            System.out.println(" pop map: " + PopMap.toString());
+//            System.out.println();
+//        }
+//        return localMapDWL;
+//    }
+    
+    
     //    ======================================== sub level util methods =================================================
     
     /**
@@ -552,6 +566,8 @@ public class PursuitOfPower {
         Collections.sort(list, c);
         return list;
     }
+    
+    
 //    =================================== vars and consts =============================================
     //variables:
     private HashMap<String, Double> PopMap; //where the precentage of each speaker are stored.
@@ -562,10 +578,11 @@ public class PursuitOfPower {
     private int timesAddedToPopMap = 0;
     private HashMap<String, Double> ITCMMap; // stroing itcm score, for average pop.
     private HashMap<String, Double> CDMMap; // stroing cdm score, for average pop.
-    private HashMap<String, Double> DWLMap; // stroing dwl score, for average pop.
+//    private HashMap<String, Double> DWLMap; // stroing dwl score, for average pop.
     private HashMap<String, Double> TFMMap; // stroing tfm score, for average pop.
     private HashMap<String, Double> POMMap; // stroing pom score, for average pop.
     private HashMap<String, Double> ConfMap; // stroing Confirmation request score.
+    private HashMap<String, Double> NCMMap; // stroing net work centrality score.
     
     //constants:
     private final String DISAGREE_REJECT = "disagree-reject";
