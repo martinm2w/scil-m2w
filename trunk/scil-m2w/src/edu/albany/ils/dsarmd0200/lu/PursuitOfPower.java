@@ -87,14 +87,17 @@ public class PursuitOfPower {
         
         //8.average.
         ArrayList<HashMap<String, Double>> averageList = new  ArrayList<HashMap<String, Double>>();
-        averageList.add(TFMMap);
-        averageList.add(ITCMMap);
-        averageList.add(CDMMap);
+        averageList.add(this.weightingMap(TFMMap, TFMMapWeight));
+        averageList.add(this.weightingMap(ITCMMap, ITCMMapWeight));
+        averageList.add(this.weightingMap(CDMMap, CDMMapWeight));
 //        averageList.add(DWLMap);
-        averageList.add(POMMap);
-        averageList.add(NCMMap);
+        averageList.add(this.weightingMap(PopMap, POMMapWeight));
+        averageList.add(this.weightingMap(NCMMap, NCMMapWeight));
         
         PopMap = this.addingMapsAndAverageIt(averageList);
+        
+        //normalizing 3/26/12 1:10 PM
+        PopMap = this.normalizingMap(PopMap);
     }
     
     /**
@@ -128,8 +131,10 @@ public class PursuitOfPower {
 //        localMapITCM = this.adding2MapsAndAverageIt(localMapTPctrl, localMapInv) ;
         localMapITCM = localMapInv;
         
+        //4: normalizing 3/26/12 12:27 PM
+        localMapITCM = this.normalizingMap(localMapITCM) ;
         
-        //4.  print.
+        //5.  print.
         ArrayList<ArrayList> ITCMList = new ArrayList();
         ITCMList = this.sortAndConvertMapToArrayList(localMapITCM);
         if(doFinalPrintOut){
@@ -192,6 +197,9 @@ public class PursuitOfPower {
         //4. add disagreement to local map. average
         localMapCDM = this.adding2MapsAndAverageIt(localMapTK_TPctrl, localMapDis);
         
+        //5. normalizing 3/26/12 12:28 PM
+        localMapCDM = this.normalizingMap(localMapCDM) ;
+        
         //6.testing print.
         ArrayList<ArrayList> CDMList = new ArrayList();
         CDMList = this.sortAndConvertMapToArrayList(localMapCDM);
@@ -230,7 +238,12 @@ public class PursuitOfPower {
             localMapNCM.put(spk, ncm);//added network centrality for testing.
         }
         
-        //3.  print.
+        //3. normalizing 3/26/12 12:33 PM
+        localMapNCM = this.normalizingMap(localMapNCM); 
+        
+        
+        
+        //4.  print.
         ArrayList<ArrayList> NCMList = new ArrayList();
         NCMList = this.sortAndConvertMapToArrayList(localMapNCM);
         if(doFinalPrintOut){
@@ -265,6 +278,9 @@ public class PursuitOfPower {
         TFM_TDTMap = this.calTFM_TDT();
         //3. calculate TFM from 2 sub-maps.
         localTFMMap = TFM_DRTMap;
+        //4. normalizing; 3/26/12 12:34 PM
+        localTFMMap = this.normalizingMap(localTFMMap); 
+        
         //output
         ArrayList<ArrayList> TFMList = new ArrayList();
         TFMList = this.sortAndConvertMapToArrayList(localTFMMap);
@@ -316,6 +332,9 @@ public class PursuitOfPower {
         
         //3. adding
         localMapPom = this.adding2MapsAndAverageIt(ConfMap, localMapPomComm);
+        
+        //4. normalizing 
+        localMapPom = this.normalizingMap(PopMap);
         
         ArrayList<ArrayList> POMList = new ArrayList();
         POMList = this.sortAndConvertMapToArrayList(localMapPom);
@@ -567,6 +586,41 @@ public class PursuitOfPower {
         return list;
     }
     
+    /**
+     * m2w: normalize sum != 1 maps to sum = 1, i.e, make the input map's result equals to real percentage.
+     * @param map
+     * @return 
+     */
+    private HashMap<String, Double> normalizingMap(HashMap<String, Double> map){
+        Double sum = 0.0;
+        for(String spk : map.keySet()){
+            Double score = map.get(spk);
+            sum = sum + score;
+        }
+        
+        if(sum != 0.0){
+            for(String spk : map.keySet()){
+                Double score = map.get(spk);
+                score = score / sum;
+            }
+        }
+        
+        return map;
+    }
+    
+    /**
+     * m2w: adding weight to input map.
+     * @param map
+     * @return 
+     */
+    private HashMap<String, Double> weightingMap(HashMap<String, Double> map, Double weight){
+        for(String spk : map.keySet()){
+            Double score = map.get(spk);
+            score = score * weight;
+        }
+        return map;
+    }
+    
     
 //    =================================== vars and consts =============================================
     //variables:
@@ -589,6 +643,11 @@ public class PursuitOfPower {
     private final String CONFIRMATION_REQUEST = "confirmation-request";
     private final String RESPONSE_TO = "response-to";
     private final String OFFER_COMMIT = "offer-commit";
+    private final Double ITCMMapWeight = 0.32;
+    private final Double CDMMapWeight = 0.19;
+    private final Double TFMMapWeight = 0.06;
+    private final Double POMMapWeight = 0.06;
+    private final Double NCMMapWeight = 0.21;
     
     //print out control:
     private boolean doAnalysisPrintOut = false;
