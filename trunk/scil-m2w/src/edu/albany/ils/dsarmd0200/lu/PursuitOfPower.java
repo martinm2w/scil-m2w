@@ -55,7 +55,7 @@ public class PursuitOfPower {
         if(doFinalPrintOut){
             System.out.println("@Pursuit of Power");
             for(ArrayList a : PopList){
-                String tmpSpk = (String)a.get(0);
+                String tmpSpk = parts.get((String)(a.get(0))).getOriName();
                 Double popScore = (Double)(a.get(1));
                 if(!tmpSpk.equalsIgnoreCase("ilspersonnel")){
                     System.out.println(tmpSpk + " : " + popScore );
@@ -165,7 +165,7 @@ public class PursuitOfPower {
         if(doFinalPrintOut){
             System.out.println("@ITCM");
             for(ArrayList a : ITCMList){
-                System.out.println( (String)(a.get(0)) + " : " + (Double)(a.get(1)) );
+                System.out.println( parts.get((String)(a.get(0))).getOriName() + " : " + (Double)(a.get(1)) );
             }
         }
         if(doAnalysisPrintOut){
@@ -231,7 +231,7 @@ public class PursuitOfPower {
         if(doFinalPrintOut){
             System.out.println("@CDM");
             for(ArrayList a : CDMList){
-                System.out.println( (String)(a.get(0)) + " : " + (Double)(a.get(1)) );
+                System.out.println( parts.get((String)(a.get(0))).getOriName() + " : " + (Double)(a.get(1)) );
             }
         }
         if(doAnalysisPrintOut){
@@ -274,7 +274,7 @@ public class PursuitOfPower {
         if(doFinalPrintOut){
             System.out.println("@NCM");
             for(ArrayList a : NCMList){
-                System.out.println( (String)(a.get(0)) + " : " + (Double)(a.get(1)) );
+                System.out.println( parts.get((String)(a.get(0))).getOriName() + " : " + (Double)(a.get(1)) );
             }
         }
         
@@ -306,7 +306,7 @@ public class PursuitOfPower {
         if(doFinalPrintOut){
             System.out.println("@TFM");
             for(ArrayList a : TFMList){
-                System.out.println( (String)(a.get(0)) + " : " + (Double)(a.get(1)) );
+                System.out.println( parts.get((String)(a.get(0))).getOriName() + " : " + (Double)(a.get(1)) );
             }
         }       
         return localTFMMap;
@@ -360,7 +360,7 @@ public class PursuitOfPower {
         if(doFinalPrintOut){
             System.out.println("@POM");
             for(ArrayList a : POMList){
-                System.out.println( (String)(a.get(0)) + " : " + (Double)(a.get(1)) );
+                System.out.println( parts.get((String)(a.get(0))).getOriName() + " : " + (Double)(a.get(1)) );
             }
         }
         if(doAnalysisPrintOut){
@@ -689,7 +689,7 @@ public class PursuitOfPower {
                 if(i < 6){
                     gapsum = gapsum + gap;
                     howMany = (double)i;
-                }
+            }
             }
             
             Double gapMean = gapsum / howMany;
@@ -833,7 +833,7 @@ public class PursuitOfPower {
     private final Double NCMWGT_CN = 0.15;
     
     private final Double ONE_OR_TWO_POP_GAP = 0.20;
-
+    
     //mode control
 //    private final String MODE = "simple";//standard deviation
     private final String MODE = "std";//standard deviation
