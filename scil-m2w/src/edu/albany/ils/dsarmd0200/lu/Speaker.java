@@ -17,12 +17,15 @@ import org.w3c.dom.*;
 import org.xml.sax.*;
 
 public class Speaker {
-    public Speaker(String name) {
+    public Speaker(String name, String ori_name) {
 	name_ = name;
+        ori_name_ = ori_name;
+        //System.out.println("ori_name: " + ori_name_);
     }
 
     /*******************************get information**************************/
     public String getName() { return name_; }
+    public String getOriName() { return ori_name_; }
     public ArrayList<Utterance> getUtterances() {return utts_;}
     public String getUtts() {
         StringBuffer cont = new StringBuffer();
@@ -44,6 +47,7 @@ public class Speaker {
 		if (Util.filterIt(name_, nt)){
 		    continue;
 		}
+                if (ilt.getMentions().size() <= 1) continue; //added by TL 03/28/12
 		//}
 	    size++;
 	}
@@ -703,6 +707,7 @@ public class Speaker {
 
     /*******************************   Attributes  **************************/
     private String name_ = null;
+    private String ori_name_ = null;
     private ArrayList<Utterance> utts_ = new ArrayList<Utterance>(); //list of Utterances by this speaker
     private ArrayList<Utterance> lnk_utts_ = new ArrayList<Utterance>(); //list of Utterances linked to this speaker
     private ArrayList<Utterance> all_utts_ = new ArrayList<Utterance>(); //list of Utterances of the whole chat
