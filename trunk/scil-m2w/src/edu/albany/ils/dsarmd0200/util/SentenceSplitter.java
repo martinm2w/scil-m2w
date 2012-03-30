@@ -268,6 +268,11 @@ public class SentenceSplitter implements Serializable
     	return sentences;
     }
     
+    public ArrayList splitChinese(String content) {
+        String[] items = content.split("[。]+");
+        return new ArrayList(Arrays.asList(items));
+    }
+    
     
     public static void main(String[] args) 
     {
