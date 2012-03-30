@@ -69,6 +69,7 @@ public class Assertions {
         int total_ad = 0;
         int st_no_noun_ad = 0;
         int st_no_noun = 0;
+        SentenceSplitter sp = new SentenceSplitter();
         for (int j = 0; j < tr_utts_.size(); j++) {
             Utterance tr_utt_ = (Utterance) tr_utts_.get(j);
             String utterance = ((Utterance) tr_utts_.get(j)).getUtterance();
@@ -103,8 +104,8 @@ public class Assertions {
                 }
             }
             if (tr_utt_.getCommActType().equalsIgnoreCase("addressed-to")) {
-                if (tagged.split(" ").length > 3 &&
-                        tagged.split(" ").length < 6) {
+                if (tagged.split(" ").length > 3
+                        && tagged.split(" ").length < 6) {
                     if (tr_utt_.getTag().equalsIgnoreCase(DsarmdDATag.AD)) {
                         total_ad++;
                         if (!has_noun_before_v) {
@@ -130,10 +131,10 @@ public class Assertions {
 
 
         for (int i = 0; i < docs_utts_.size(); i++) {
-	    String fn = (String)doc_names_.get(i);
-	    System.out.println("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$\nprocessing: " + fn);
-	    //utts_ = (ArrayList)docs_utts_.get(i);
-	    all_utts_.clear();
+            String fn = (String) doc_names_.get(i);
+            System.out.println("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$\nprocessing: " + fn);
+            //utts_ = (ArrayList)docs_utts_.get(i);
+            all_utts_.clear();
             all_utts_.addAll(tr_utts_);
             gch_ = new GroupCohesion();
             if (Settings.getValue(Settings.PROCESS_TYPE).equals("automated")) {
@@ -148,26 +149,26 @@ public class Assertions {
                 // bufferedWriterTagFile = new BufferedWriter(new FileWriter(strTagFile));
                 cal_ = Calendar.getInstance();
                 //System.out.println("before pos tagging: " + df_.format(cal_.getTime()));
-                
-                if ((Settings.getValue(Settings.LANGUAGE)).equals("chinese")){              
-                for(int index=0;index<utts_.size();index++){
-                    Utterance utt_=utts_.get(index);
-                    String utterance=utt_.getUtterance().toString();
-                    String tmpResult=new String();
-                    //String nEmotes=ParseTools.removeEmoticons(utterance);
-                    //if((Settings.getValue(Settings.LANGUAGE)).equals("chinese")){
-                        TraditionToSimple tts=new TraditionToSimple();                   
-                          if(utterance.length()>0){
-                            tmpResult=tts.Big5ToGb(utterance);
-                         utt_.setUtterance(tmpResult);
-                          }
-                       
-                   // this.utts_.remove(index);
-                    // this.utts_.add(index, utt_);
+
+                if ((Settings.getValue(Settings.LANGUAGE)).equals("chinese")) {
+                    for (int index = 0; index < utts_.size(); index++) {
+                        Utterance utt_ = utts_.get(index);
+                        String utterance = utt_.getUtterance().toString();
+                        String tmpResult = new String();
+                        //String nEmotes=ParseTools.removeEmoticons(utterance);
+                        //if((Settings.getValue(Settings.LANGUAGE)).equals("chinese")){
+                        TraditionToSimple tts = new TraditionToSimple();
+                        if (utterance.length() > 0) {
+                            tmpResult = tts.Big5ToGb(utterance);
+                            utt_.setUtterance(tmpResult);
+                        }
+
+                        // this.utts_.remove(index);
+                        // this.utts_.add(index, utt_);
+                    }
                 }
-            }
-               
-                
+
+
                 for (int j = 0; j < utts_.size(); j++) {
                     Utterance utt_ = utts_.get(j);
                     String utterance = utt_.getUtterance().toString();
@@ -179,7 +180,6 @@ public class Assertions {
                     String tmpTagged = "";
                     if ((Settings.getValue(Settings.LANGUAGE)).equals("english")) {
                         //tmpTagged=StanfordPOSTagger.tagString(noEmotes);
-                        SentenceSplitter sp = new SentenceSplitter();
                         ArrayList splitUtterance = null;
                         if (noEmotes.length() > 200) {
                             splitUtterance = sp.split(noEmotes);
@@ -200,13 +200,34 @@ public class Assertions {
                         }
 
                     } else if ((Settings.getValue(Settings.LANGUAGE)).equals("chinese")) {
-                        tmpTagged = StanfordPOSTagger.tagChineseString(noEmotes);
+                        //add Chiense sentence splitter 03/26/2012 by TL
+                        ArrayList splitUtterance = null;
+                        /*
+                        if (noEmotes.length() > 200) {
+                            splitUtterance = sp.splitChinese(noEmotes);
+                        }
+                        * 
+                        */
+                        if (splitUtterance == null || splitUtterance.size() == 1) {
+                            tmpTagged = StanfordPOSTagger.tagChineseString(noEmotes);
+                        } else {
+                            String temps = "";
+                            for (int k = 0; k < splitUtterance.size(); k++) {
+                                String toTag = (String) splitUtterance.get(k);
+                                //System.out.println ("toTag: " + toTag);
+                                String temp = StanfordPOSTagger.tagChineseString(toTag);
+                                //System.out.println("tagged: " + temp);
+                                temps = temps + " " + temp;
+
+                            }
+                            tmpTagged = temps.trim();
+                        }
                     }
                     if (tmpTagged == null) {
-                        System.out.println("tagged is null: " + noEmotes);
+                        //System.out.println("tagged is null: " + noEmotes);
                         utt_.setTaggedContent("");
                         utt_.setSpaceTaggedContent("");
-                        
+
                         continue;
                     }
                     String tagged = tmpTagged.trim();
@@ -233,7 +254,6 @@ public class Assertions {
                 //end of Lin
 //                cal_ = Calendar.getInstance();
 //                System.out.println("after pos: " + df_.format(cal_.getTime()));
-
                 all_utts_.addAll(utts_);
                 ddt_ = new DocDialogueType(utts_);
                 //System.out.println("ddt_ type: " + ddt_.getType());
@@ -282,7 +302,7 @@ public class Assertions {
                 } else if (fn.startsWith("Mar14_GroupB")) {
                     Speaker part = parts_.get("jenniferb");
                     System.out.println(part.getUtts());
-                } 
+                }
                 //meso_topic and task_focus
                 //System.out.println("------------Generate Meso-topics of " + (String)doc_names_.get(i));
                 MesoTopic mt = new MesoTopic();
@@ -301,35 +321,45 @@ public class Assertions {
                  * System.out.println(Arrays.asList(mts.get(ai).toArray())); }
                  */
                 ArrayList spks = new ArrayList(parts_.values());
-                /*
-                 * for (int k = 0; k < spks.size(); k++) { Speaker part_ =
-                 * (Speaker)spks.get(k);
-                 * System.out.println("&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&speaker:
-                 * " + part_.getName() + "local topics: \n"); LocalTopics lts =
-                 * part_.getILTs(); for (int j = 0; j < lts.size(); j++) {
-                 * System.out.print("===" +
-                 * ((LocalTopic)lts.get(j)).getContent().getWord() + "==="); } }
-                 * System.out.println("====================================================================================");
-                 * for (int k = 0; k < spks.size(); k++) { Speaker part_ =
-                 * (Speaker)spks.get(k);
-                 * System.out.println("&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&speaker:
-                 * " + part_.getName() + " --- contributed utterances: \n");
-                 * ArrayList utts = part_.getUtterances(); for (int j = 0; j <
-                 * utts.size(); j++) { Utterance utt_ = (Utterance)utts.get(j);
-                 * System.out.println(utt_.getTurn() + " || " +
-                 * utt_.getSpeaker() + " || " + utt_.getTag() + " || " +
-                 * utt_.getRespTo() + ": " + utt_.getContent()); } }
-                 * System.out.println("====================================================================================");
-                 * for (int k = 0; k < utts_.size(); k++) { Utterance utt_ =
-                 * (Utterance)utts_.get(k); System.out.println(utt_.getTurn() +
-                 * " || " + utt_.getSpeaker() + " || " + utt_.getTag() + " || "
-                 * + utt_.getCommActType() + " || " + utt_.getRespTo() + ": " +
-                 * utt_.getContent()); }
-                 */
+/*
+                for (int k = 0; k < spks.size(); k++) {
+                    Speaker part_ = (Speaker) spks.get(k);
+                    System.out.println("&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&speaker:" + part_.getName() + "local topics: \n");
+                    LocalTopics lts =
+                            part_.getILTs();
+                    for (int j = 0; j < lts.size(); j++) {
+                        System.out.print("==="
+                                + ((LocalTopic) lts.get(j)).getContent().getWord() + "===");
+                    }
+                }
+                System.out.println("====================================================================================");
+                for (int k = 0; k < spks.size(); k++) {
+                    Speaker part_ =
+                            (Speaker) spks.get(k);
+                    System.out.println("&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&speaker: " + part_.getName() + " --- contributed utterances: \n");
+                    ArrayList utts = part_.getUtterances();
+                    for (int j = 0; j
+                            < utts.size(); j++) {
+                        Utterance utt_ = (Utterance) utts.get(j);
+                        System.out.println(utt_.getTurn() + " || "
+                                + utt_.getSpeaker() + " || " + utt_.getTag() + " || "
+                                + utt_.getRespTo() + ": " + utt_.getContent());
+                    }
+                }
+                System.out.println("====================================================================================");
+                for (int k = 0; k < utts_.size(); k++) {
+                    Utterance utt_ =
+                            (Utterance) utts_.get(k);
+                    System.out.println(utt_.getTurn()
+                            + " || " + utt_.getSpeaker() + " || " + utt_.getTag() + " || "
+                            + utt_.getCommActType() + " || " + utt_.getRespTo() + ": "
+                            + utt_.getContent());
+                }
 
+*/
                 //mt.clear();
                 //tf.clear();
-               createEmotive(i);
+                createEmotive(i);
 
             } else {
                 PhraseCheck phr_ch = (PhraseCheck) phr_checks_.get(i);
@@ -342,7 +372,7 @@ public class Assertions {
                 mt.calMesoTopicNew(lts_, utts_);//using new method. m2w 11/18/11 11:02 AM
 //                mt.calMesoTopic((String)doc_names_.get(i), utts_, xp, phr_ch, wn_, nlsA_);
                 mts_.add(mt);
-		createAnEmotive(i);
+                createAnEmotive(i);
             }
             ArrayList spks = new ArrayList(parts_.values());
             for (int k = 0; k < spks.size(); k++) {
@@ -361,15 +391,15 @@ public class Assertions {
             //added by peng
             ///////////////            
             //calEwi(i);
-            
-            
-          //  //Vocabulary Rate Index     
+
+
+            //  //Vocabulary Rate Index     
             calVri(i);
 
             //Vocabulary Introduction Measure
             calVim(i);
-          //  
-          //  //Argument Diverstiy
+            //  
+            //  //Argument Diverstiy
             calArgDiv(i);
 
             //Communication Links Measure
@@ -387,40 +417,40 @@ public class Assertions {
             ///////////////////////
             //end of peng's methods
             ///////////////////////
-            
+
 //	    System.err.println("@Topic Control");
-	    calTpCtl(i);  
+            calTpCtl(i);
 //	    System.err.println("@Involvement Control");
-	    System.out.println("@Involvement");
-	    calInv(i);
+            System.out.println("@Involvement");
+            calInv(i);
 //	    System.err.println("@Task Control");
-	    System.out.println("@Task Control");
-	    calTkCtl(i);
+            System.out.println("@Task Control");
+            calTkCtl(i);
 //	    System.err.println("@Expressive Disagreement");
-	    System.out.println("@Expressive Disagreement");
-	    calExDis(i);
+            System.out.println("@Expressive Disagreement");
+            calExDis(i);
 //	    System.err.println ("@Leadership");
-	    System.out.println ("@Leadership");
+            System.out.println("@Leadership");
             leader_ = null; // added by m2w 2/14/12 10:49 AM
-	    calLeader();
+            calLeader();
 //	    System.err.println("@Agreement");
-	    //System.out.println("@Agreement");
-	    //calAgr();
+            //System.out.println("@Agreement");
+            //calAgr();
 //	    System.err.println("@Task Focus");
-	    //System.out.println("@Task Focus");
-	    //calTaskFocus(i);
-	    //System.out.println("@Sociability Measure...");
-	    //calSociability();
-	    //System.out.println("\n\nProcessing L...");
+            //System.out.println("@Task Focus");
+            //calTaskFocus(i);
+            //System.out.println("@Sociability Measure...");
+            //calSociability();
+            //System.out.println("\n\nProcessing L...");
 //	    System.err.println("\n\nProcessing Sociability Measure...");
-	    //calGroupCohesion(i);
+            //calGroupCohesion(i);
             calPop();// m2w 2/15/12 9:07 AM
-            //influencer weighting scheme
+//            influencer weighting scheme
             weightingscheme();
-	    //System.out.println("\n\nprocessing topic disagreement...");
-	    //calTpDis(i);
-	    //createReport();
-	    //printReport();
+            //System.out.println("\n\nprocessing topic disagreement...");
+            //calTpDis(i);
+            //createReport();
+            //printReport();
 //            try{
 //                if(!ChineseWordnet.conn.isClosed()){
 //                        ChineseWordnet.closeConn();
@@ -488,256 +518,238 @@ public class Assertions {
     {
         if(total==0)
         {
-            System.err.println("Error: trying to divide a number by 0");
+            //System.err.println("Error: trying to divide a number by 0");
             //System.exit(0);
             return 0;
         }
         double tmp;
-        tmp = portion/total;
+        tmp = portion / total;
         //DecimalFormat fourDForm =new DecimalFormat("#.####");
         //tmp = Double.valueOf(fourDForm.format(tmp));
-        
+
         return tmp;
     }
-    
-    
+
     /*
      * Create Emotive list for annotated files.
      */
-    public void createAnEmotive(int k)
-    {
+    public void createAnEmotive(int k) {
         ArrayList spks = new ArrayList(parts_.values());
         ArrayList<String> speakerlist = new ArrayList<String>();
-        ArrayList<ArrayList <String>> emotiveTable = new ArrayList<ArrayList <String>>();
+        ArrayList<ArrayList<String>> emotiveTable = new ArrayList<ArrayList<String>>();
         ArrayList<Utterance> utterance = new ArrayList<Utterance>();
-        utterance = (ArrayList<Utterance>)docs_utts_.get(k);
-        ArrayList <String> allEmotiveWords = new ArrayList<String>(); 
-        String tmpname="";
+        utterance = (ArrayList<Utterance>) docs_utts_.get(k);
+        ArrayList<String> allEmotiveWords = new ArrayList<String>();
+        String tmpname = "";
         for (int i = 0; i < spks.size(); i++) {
-            Speaker part_ = (Speaker)spks.get(i);
+            Speaker part_ = (Speaker) spks.get(i);
             speakerlist.add(part_.getName());
             emotiveTable.add(new ArrayList<String>());
         }
-        
-        for (int j = 0; j < utterance.size(); j++){
-                                
+
+        for (int j = 0; j < utterance.size(); j++) {
+
             tmpname = utterance.get(j).getSpeaker();
             String emlist = utterance.get(j).getEmotion_list();
-            String em_arrlist[]=emlist.split(";");
-            int spkindex=speakerlist.indexOf(tmpname);
-            
-            for(int i=0; i<em_arrlist.length; i++)
-            {
-                if(em_arrlist[i].length()>1)
-                {
-                    String tmpstr=em_arrlist[i].substring(0,em_arrlist[i].indexOf("("));
-                    allEmotiveWords.add(tmpstr);     
+            String em_arrlist[] = emlist.split(";");
+            int spkindex = speakerlist.indexOf(tmpname);
+
+            for (int i = 0; i < em_arrlist.length; i++) {
+                if (em_arrlist[i].length() > 1) {
+                    String tmpstr = em_arrlist[i].substring(0, em_arrlist[i].indexOf("("));
+                    allEmotiveWords.add(tmpstr);
                     emotiveTable.get(spkindex).add(tmpstr);
-                }          
+                }
             }
 
         }
-        
-         int numofallEmotiveWords = allEmotiveWords.size();
-         
-        /*print the results.*/
-        for(int i=0; i<speakerlist.size(); i++)
-        {
-            ((Speaker)spks.get(i)).setEwi(calculatePercentage(emotiveTable.get(i).size(), numofallEmotiveWords));
-            ((Speaker)spks.get(i)).setEmotiveWordList(emotiveTable.get(i));
+
+        int numofallEmotiveWords = allEmotiveWords.size();
+
+        /*
+         * print the results.
+         */
+        for (int i = 0; i < speakerlist.size(); i++) {
+            ((Speaker) spks.get(i)).setEwi(calculatePercentage(emotiveTable.get(i).size(), numofallEmotiveWords));
+            ((Speaker) spks.get(i)).setEmotiveWordList(emotiveTable.get(i));
         }
-        
-        
+
+
     }
-    
+
     /*
      * create Emotive list for automated files.
      */
-    public void createEmotive(int k)
-    {
-                
+    public void createEmotive(int k) {
+
         ArrayList spks = new ArrayList(parts_.values());
         ArrayList<String> speakerlist = new ArrayList<String>();
-        ArrayList<ArrayList <String>> emotiveTable = new ArrayList<ArrayList <String>>();
+        ArrayList<ArrayList<String>> emotiveTable = new ArrayList<ArrayList<String>>();
         ArrayList<Utterance> utterance = new ArrayList<Utterance>();
-        utterance = (ArrayList<Utterance>)docs_utts_.get(k);
+        utterance = (ArrayList<Utterance>) docs_utts_.get(k);
         EmotiveWords ew = new EmotiveWords(Settings.getValue(Settings.EMOTIVE_WORDS));
-         ArrayList <String> allEmotiveWords = new ArrayList<String>(); 
-        String tmpname="";
-        String tmpstr="";
-        int numofallEmotiveWords=0;
-                
+        ArrayList<String> allEmotiveWords = new ArrayList<String>();
+        String tmpname = "";
+        String tmpstr = "";
+        int numofallEmotiveWords = 0;
+
         for (int i = 0; i < spks.size(); i++) {
-            Speaker part_ = (Speaker)spks.get(i);
+            Speaker part_ = (Speaker) spks.get(i);
             speakerlist.add(part_.getName());
             emotiveTable.add(new ArrayList<String>());
         }
-        
-        
-        /*loop through the utterances, save emotive words for each speaker into the emotiveTable 
-         * and all emotive words into allEmotiveWords*/
-        for(int i=0; i< utterance.size(); i++)
-        {
-           
+
+
+        /*
+         * loop through the utterances, save emotive words for each speaker into
+         * the emotiveTable and all emotive words into allEmotiveWords
+         */
+        for (int i = 0; i < utterance.size(); i++) {
+
             tmpname = utterance.get(i).getSpeaker();
-            
-            if ((Settings.getValue(Settings.LANGUAGE)).equals("english"))		
-            { 
+
+            if ((Settings.getValue(Settings.LANGUAGE)).equals("english")) {
                 tmpstr = utterance.get(i).getContent();
-            }	    
-            else if ((Settings.getValue(Settings.LANGUAGE)).equals("chinese"))        
-            {
+            } else if ((Settings.getValue(Settings.LANGUAGE)).equals("chinese")) {
                 tmpstr = utterance.get(i).getSpaceTagContent();
             }
-            if(tmpstr == null) { utterance.get(i).setSpaceTaggedContent(""); continue; }
-            int spkindex=speakerlist.indexOf(tmpname);
+            if (tmpstr == null) {
+                utterance.get(i).setSpaceTaggedContent("");
+                continue;
+            }
+            int spkindex = speakerlist.indexOf(tmpname);
             //print(utterance.get(i).getSpaceTagContent());
-            if(tmpstr.length()>1 && spkindex>=0)
-            {
+            if (tmpstr.length() > 1 && spkindex >= 0) {
 //                 System.out.println("TMPstr---"+tmpstr.toString());
-                 String [] tmpstrarr = tmpstr.split("\\s+");
-                
-                for(int j=0; j<tmpstrarr.length; j++)
-                {
-                 if(ew.isEmotiveWord(tmpstrarr[j]))
-                 {
-                     allEmotiveWords.add(tmpstrarr[j]);
+                String[] tmpstrarr = tmpstr.split("\\s+");
+
+                for (int j = 0; j < tmpstrarr.length; j++) {
+                    if (ew.isEmotiveWord(tmpstrarr[j])) {
+                        allEmotiveWords.add(tmpstrarr[j]);
 //                   System.out.println("emots==="+tmpstrarr[j]);
 //                   System.out.println("emots exists");
 
-                     emotiveTable.get(spkindex).add(tmpstrarr[j]);
-                 }
+                        emotiveTable.get(spkindex).add(tmpstrarr[j]);
+                    }
                 }
-            }  
+            }
         }//end of utternace loop
-        
+
         numofallEmotiveWords = allEmotiveWords.size();
 //              System.out.println("emotive wordnum:::"+numofallEmotiveWords);
-              for(int i=0;i<allEmotiveWords.size();i++){
+        for (int i = 0; i < allEmotiveWords.size(); i++) {
 //             "emot words:::"+allEmotiveWords.get(i)+"===individ==="+emotiveTable.get(i));
-              } 
-        /*print the results.*/
-        for(int i=0; i<speakerlist.size(); i++)
-        {
-            if(numofallEmotiveWords>0){
-            ((Speaker)spks.get(i)).setEwi(calculatePercentage(emotiveTable.get(i).size(), numofallEmotiveWords));
-            ((Speaker)spks.get(i)).setEmotiveWordList(emotiveTable.get(i));}
         }
-        
+        /*
+         * print the results.
+         */
+        for (int i = 0; i < speakerlist.size(); i++) {
+            if (numofallEmotiveWords > 0) {
+                ((Speaker) spks.get(i)).setEwi(calculatePercentage(emotiveTable.get(i).size(), numofallEmotiveWords));
+                ((Speaker) spks.get(i)).setEmotiveWordList(emotiveTable.get(i));
+            }
+        }
+
         //calculating the raw score for each speaker- without percentages-1/12/2012
-        for(int i=0; i<speakerlist.size(); i++)
-        {
+        for (int i = 0; i < speakerlist.size(); i++) {
 //                        System.out.println("individ"+emotiveTable.get(i).size());
-            
-           ((Speaker)spks.get(i)).setnewEwi(emotiveTable.get(i).size());
-          // print(speakerlist.get(i)+": "+ ((Speaker)spks.get(i)).getnewEwi());
+
+            ((Speaker) spks.get(i)).setnewEwi(emotiveTable.get(i).size());
+            // print(speakerlist.get(i)+": "+ ((Speaker)spks.get(i)).getnewEwi());
         }
-        
+
     }
-    
-    public void calEwi(int k)
-    {
+
+    public void calEwi(int k) {
 //         print("@@@@@@@@@@@@@@@@@Emotive Language Use@@@@@@@@@@@@@@@@@");
         print("@Emotive Lnguage use");
-         print("\n");
-         ArrayList spks = new ArrayList(parts_.values());
-         System.out.println("---Percentages-----");
-         for(int i=0; i<spks.size(); i++)
-         {
-             
-             Speaker part_ = (Speaker)spks.get(i);
-             print(part_.getName()+" :"+((Speaker)spks.get(i)).getEwi());
-             
-         }
-         /* print("\n");
-         System.out.println("-----Raw Scores-------");
-         for(int i=0; i<spks.size(); i++)
-         {
-            
-             Speaker part_ = (Speaker)spks.get(i);
-             print(part_.getName()+" :"+((Speaker)spks.get(i)).getnewEwi());
-             
-         }
-          print("\n");
-          print("@@@@@@@@@@@@@@@@@End of Emotive Language Use@@@@@@@@@@@@@@@@@");
+        print("\n");
+        ArrayList spks = new ArrayList(parts_.values());
+        System.out.println("---Percentages-----");
+        for (int i = 0; i < spks.size(); i++) {
+
+            Speaker part_ = (Speaker) spks.get(i);
+            print(part_.getOriName() + " :" + ((Speaker) spks.get(i)).getEwi());
+
+        }
+        /*
+         * print("\n"); System.out.println("-----Raw Scores-------"); for(int
+         * i=0; i<spks.size(); i++) {
+         *
+         * Speaker part_ = (Speaker)spks.get(i); print(part_.getName()+"
+         * :"+((Speaker)spks.get(i)).getnewEwi());
+         *
+         * }
+         * print("\n"); print("@@@@@@@@@@@@@@@@@End of Emotive Language
+         * Use@@@@@@@@@@@@@@@@@");
          */
     }
 
-           public void calVri(int k)
-    {        
+    public void calVri(int k) {
         //print("@@@@@@@@@@@@@@@@@Vocabulary Range Index@@@@@@@@@@@@@@@@@");
-        		 print("\n");
+        print("\n");
         ArrayList spks = new ArrayList(parts_.values());
         ArrayList<String> speakerlist = new ArrayList<String>();
         ArrayList<ArrayList<String>> vocabularytable = new ArrayList<ArrayList<String>>();
         ArrayList<Utterance> utterance = new ArrayList<Utterance>();
-        utterance = (ArrayList<Utterance>)docs_utts_.get(k);
-        ArrayList <String> alldistinctwords = new ArrayList<String>(); 
-        double sumofvri=0;
+        utterance = (ArrayList<Utterance>) docs_utts_.get(k);
+        ArrayList<String> alldistinctwords = new ArrayList<String>();
+        double sumofvri = 0;
         Stemmer stemmer = new Stemmer();
-        String tmpstr="";
-        String tmpname="";
+        String tmpstr = "";
+        String tmpname = "";
         //print("spk size="+ spks.size() + " utterance size ="+utterance.size());        
-        /*Initialize speakerlist and linkcounts*/
+        /*
+         * Initialize speakerlist and linkcounts
+         */
         for (int i = 0; i < spks.size(); i++) {
             Speaker part_ = (Speaker) spks.get(i);
             speakerlist.add(part_.getName());
             vocabularytable.add(new ArrayList<String>());
         }
-        
-        
-        /*                                
-        for (int j = 0; j < utterance.size(); j++){
-                                
-            String tmp_utt = utterance.get(j).getUtterance();
-            String noEmotes = ParseTools.removeEmoticons(tmp_utt);
 
-            String tmpTagged="";
-            if ((Settings.getValue(Settings.LANGUAGE)).equals("english"))
-            { tmpTagged=StanfordPOSTagger.tagString (noEmotes);
-            }
-            else if ((Settings.getValue(Settings.LANGUAGE)).equals("chinese"))
-            {
-                tmpTagged=StanfordPOSTagger.tagChineseString(noEmotes);
-            }
-            String tagged = "";
-            if (tmpTagged != null) { 
-                tagged = tmpTagged.trim();
-            } else tmpTagged = "";
-            String spcTagged=tmpTagged.replaceAll("/"+"([A-Z]+)*"+" ", " ");
-            utterance.get(j).setTaggedContent(tagged);
-            utterance.get(j).setSpaceTaggedContent(spcTagged);
-        }
-        */
-        
-        /*loop through the utterances, stemm the utterance, 
-         * and save distinct words for each speaker into the vocabularytable 
-         * and all distinct words into alldistinctwords*/
-        for(int i=0; i< utterance.size(); i++)
-        {
-           
+
+        /*
+         * for (int j = 0; j < utterance.size(); j++){
+         *
+         * String tmp_utt = utterance.get(j).getUtterance(); String noEmotes =
+         * ParseTools.removeEmoticons(tmp_utt);
+         *
+         * String tmpTagged=""; if
+         * ((Settings.getValue(Settings.LANGUAGE)).equals("english")) {
+         * tmpTagged=StanfordPOSTagger.tagString (noEmotes); } else if
+         * ((Settings.getValue(Settings.LANGUAGE)).equals("chinese")) {
+         * tmpTagged=StanfordPOSTagger.tagChineseString(noEmotes); } String
+         * tagged = ""; if (tmpTagged != null) { tagged = tmpTagged.trim(); }
+         * else tmpTagged = ""; String
+         * spcTagged=tmpTagged.replaceAll("/"+"([A-Z]+)*"+" ", " ");
+         * utterance.get(j).setTaggedContent(tagged);
+         * utterance.get(j).setSpaceTaggedContent(spcTagged); }
+         */
+
+        /*
+         * loop through the utterances, stemm the utterance, and save distinct
+         * words for each speaker into the vocabularytable and all distinct
+         * words into alldistinctwords
+         */
+        for (int i = 0; i < utterance.size(); i++) {
+
             tmpname = utterance.get(i).getSpeaker();
-            
-            if ((Settings.getValue(Settings.LANGUAGE)).equals("english"))		
-            { 
+
+            if ((Settings.getValue(Settings.LANGUAGE)).equals("english")) {
                 tmpstr = utterance.get(i).getContent();
                 tmpstr = stemmer.sentenceStemming(tmpstr);
-            }	    
-            else if ((Settings.getValue(Settings.LANGUAGE)).equals("chinese"))        
-            {
+            } else if ((Settings.getValue(Settings.LANGUAGE)).equals("chinese")) {
                 tmpstr = utterance.get(i).getSpaceTagContent();
             }
-            
-            int spkindex=speakerlist.indexOf(tmpname);
+
+            int spkindex = speakerlist.indexOf(tmpname);
             //print(utterance.get(i).getSpaceTagContent());
-            if(tmpstr != null && tmpstr.length()>1 && spkindex>=0)
-            {
-                String [] tmpstrarr = tmpstr.split("\\s+");
-                
-                for(int j=0; j<tmpstrarr.length; j++)
-                {
-                    if(!vocabularytable.get(spkindex).contains(tmpstrarr[j]))
-                    {
+            if (tmpstr != null && tmpstr.length() > 1 && spkindex >= 0) {
+                String[] tmpstrarr = tmpstr.split("\\s+");
+
+                for (int j = 0; j < tmpstrarr.length; j++) {
+                    if (!vocabularytable.get(spkindex).contains(tmpstrarr[j])) {
                         vocabularytable.get(spkindex).add(tmpstrarr[j]);
                     }
 
@@ -745,53 +757,55 @@ public class Assertions {
                         alldistinctwords.add(tmpstrarr[j]);
                     }
                 }
-            }  
+            }
         }//end of utternace loop
 
         int numofalldistinctwords = alldistinctwords.size();
 //      System.out.println("Total Distinct score==="+numofalldistinctwords );
-        /*print the results.*/
+        /*
+         * print the results.
+         */
         //raw scores
-        for(int i=0; i<speakerlist.size(); i++)
-        {
-            if(numofalldistinctwords>0)
-            ((Speaker)spks.get(i)).setVri(calculatePercentage(vocabularytable.get(i).size(), numofalldistinctwords));
+        for (int i = 0; i < speakerlist.size(); i++) {
+            if (numofalldistinctwords > 0) {
+                ((Speaker) spks.get(i)).setVri(calculatePercentage(vocabularytable.get(i).size(), numofalldistinctwords));
+            }
             //print(speakerlist.get(i)+": "+((Speaker)spks.get(i)).getVri());
-             sumofvri=sumofvri+((Speaker)spks.get(i)).getVri();
+            sumofvri = sumofvri + ((Speaker) spks.get(i)).getVri();
         }
-         //calculating the raw score for each speaker- without percentages-1/12/2012
+        //calculating the raw score for each speaker- without percentages-1/12/2012
         //System.out.println("-----Raw Scores-------");
         //for(int i=0; i<speakerlist.size(); i++)
         //{
-           
-	//  ((Speaker)spks.get(i)).setnewVri(((Speaker)spks.get(i)).getVri());
-           //print(speakerlist.get(i)+": "+ ((Speaker)spks.get(i)).getnewVri());
+
+        //  ((Speaker)spks.get(i)).setnewVri(((Speaker)spks.get(i)).getVri());
+        //print(speakerlist.get(i)+": "+ ((Speaker)spks.get(i)).getnewVri());
         //}
-        /*normalize the vri's by taking the percentage of speaker's vri to the sum of all vris*/
-	//print("\n");
-	 //System.out.println("-----Percentages-------");
-	// System.out.println ("@Vocabulary Range Index");
+        /*
+         * normalize the vri's by taking the percentage of speaker's vri to the
+         * sum of all vris
+         */
+        //print("\n");
+        //System.out.println("-----Percentages-------");
+        // System.out.println ("@Vocabulary Range Index");
 //        System.out.println("SUM==="+sumofvri);
-        for(int i=0; i<speakerlist.size(); i++)
-        {
-            if(sumofvri>0){
-            ((Speaker)spks.get(i)).setVri(calculatePercentage(((Speaker)spks.get(i)).getVri(), sumofvri));
+        for (int i = 0; i < speakerlist.size(); i++) {
+            if (sumofvri > 0) {
+                ((Speaker) spks.get(i)).setVri(calculatePercentage(((Speaker) spks.get(i)).getVri(), sumofvri));
 //            print(speakerlist.get(i)+": "+ ((Speaker)spks.get(i)).getVri());
-            }
-            else{
+            } else {
 //            System.out.println("All vaues ARE 0");
             }
         }
-	
-	//print("\n");   
-	     //print("@@@@@@@@@@@@@@@@@End of Vocabulary Range Index@@@@@@@@@@@@@@@@@");
+
+        //print("\n");   
+        //print("@@@@@@@@@@@@@@@@@End of Vocabulary Range Index@@@@@@@@@@@@@@@@@");
 
     }//end of calVri
-    
-       public void calVim(int k)
-    {        
+
+    public void calVim(int k) {
         //print("@@@@@@@@@@@@@@@@@Vocabulary Introduction Measure@@@@@@@@@@@@@@@@@");
-        	 print("\n");	
+        print("\n");
         ArrayList spks = new ArrayList(parts_.values());
         ArrayList<String> speakerlist = new ArrayList<String>();
         ArrayList<ArrayList<String>> vocabularytable = new ArrayList<ArrayList<String>>();
@@ -799,91 +813,78 @@ public class Assertions {
         utterance = (ArrayList<Utterance>) docs_utts_.get(k);
         ArrayList<String> alldistinctwords = new ArrayList<String>();
         Stemmer stemmer = new Stemmer();
-        StopWords sw=null;
-        String tmpstr="";
-        String tmpname="";
-        double sumofvim=0.0;
+        StopWords sw = null;
+        String tmpstr = "";
+        String tmpname = "";
+        double sumofvim = 0.0;
         //print("spk size="+ spks.size() + " utterance size ="+utterance.size());
-        
-        
-         if ((Settings.getValue(Settings.LANGUAGE)).equals("english"))
-            {
-                sw = new StopWords(English_stopword); //used to remove English stopwords.
-            }
-            else if ((Settings.getValue(Settings.LANGUAGE)).equals("chinese"))
-            {
-                sw = new StopWords(Chinese_stopword); //used to remove Chinese stopwords.
-            }
-        /*Initialize speakerlist and linkcounts*/
+
+
+        if ((Settings.getValue(Settings.LANGUAGE)).equals("english")) {
+            sw = new StopWords(English_stopword); //used to remove English stopwords.
+        } else if ((Settings.getValue(Settings.LANGUAGE)).equals("chinese")) {
+            sw = new StopWords(Chinese_stopword); //used to remove Chinese stopwords.
+        }
+        /*
+         * Initialize speakerlist and linkcounts
+         */
         for (int i = 0; i < spks.size(); i++) {
             Speaker part_ = (Speaker) spks.get(i);
             speakerlist.add(part_.getName());
             vocabularytable.add(new ArrayList<String>());
         }
-        
-        
-        /*
-        for (int j = 0; j < utterance.size(); j++){
-                                
-            String tmp_utt = utterance.get(j).getUtterance();
-            String noEmotes = ParseTools.removeEmoticons(tmp_utt);
 
-            String tmpTagged="";
-            if ((Settings.getValue(Settings.LANGUAGE)).equals("english"))
-            { tmpTagged=StanfordPOSTagger.tagString (noEmotes);
-            }
-            else if ((Settings.getValue(Settings.LANGUAGE)).equals("chinese"))
-            {
-                tmpTagged=StanfordPOSTagger.tagChineseString(noEmotes);
-            }
-            String tagged = tmpTagged.trim();
-            String spcTagged=tmpTagged.replaceAll("/"+"([A-Z]+)*"+" ", " ");
-            utterance.get(j).setTaggedContent(tagged);
-            utterance.get(j).setSpaceTaggedContent(spcTagged);
-        }
-        */
-        /*loop through the utterances, stemm the utterance, 
-         * and save distinct words for each speaker into the vocabularytable 
-         * and all distinct words into alldistinctwords*/
-        for(int i=0; i< utterance.size(); i++)
-        {
+
+        /*
+         * for (int j = 0; j < utterance.size(); j++){
+         *
+         * String tmp_utt = utterance.get(j).getUtterance(); String noEmotes =
+         * ParseTools.removeEmoticons(tmp_utt);
+         *
+         * String tmpTagged=""; if
+         * ((Settings.getValue(Settings.LANGUAGE)).equals("english")) {
+         * tmpTagged=StanfordPOSTagger.tagString (noEmotes); } else if
+         * ((Settings.getValue(Settings.LANGUAGE)).equals("chinese")) {
+         * tmpTagged=StanfordPOSTagger.tagChineseString(noEmotes); } String
+         * tagged = tmpTagged.trim(); String
+         * spcTagged=tmpTagged.replaceAll("/"+"([A-Z]+)*"+" ", " ");
+         * utterance.get(j).setTaggedContent(tagged);
+         * utterance.get(j).setSpaceTaggedContent(spcTagged); }
+         */
+        /*
+         * loop through the utterances, stemm the utterance, and save distinct
+         * words for each speaker into the vocabularytable and all distinct
+         * words into alldistinctwords
+         */
+        for (int i = 0; i < utterance.size(); i++) {
             tmpname = utterance.get(i).getSpeaker();
-            if ((Settings.getValue(Settings.LANGUAGE)).equals("english"))
-            {
+            if ((Settings.getValue(Settings.LANGUAGE)).equals("english")) {
                 tmpstr = utterance.get(i).getContent();
-            }
-            else if ((Settings.getValue(Settings.LANGUAGE)).equals("chinese"))
-            {
+            } else if ((Settings.getValue(Settings.LANGUAGE)).equals("chinese")) {
                 tmpstr = utterance.get(i).getSpaceTagContent();
                 //print(tmpstr);
             }
-            
-            int spkindex=speakerlist.indexOf(tmpname);
-            
+
+            int spkindex = speakerlist.indexOf(tmpname);
+
             //print(tmpstr);
-            if(tmpstr != null && tmpstr.length()>1 && spkindex>=0)
-            {
-                String [] tmpstrarr = tmpstr.split("\\s+");
-                ArrayList <String> utterancewordlist = new ArrayList<String>();
-                for(int n=0; n<tmpstrarr.length; n++)
-                {
+            if (tmpstr != null && tmpstr.length() > 1 && spkindex >= 0) {
+                String[] tmpstrarr = tmpstr.split("\\s+");
+                ArrayList<String> utterancewordlist = new ArrayList<String>();
+                for (int n = 0; n < tmpstrarr.length; n++) {
                     utterancewordlist.add(tmpstrarr[n]);
                 }
                 sw.filterIt(utterancewordlist);
-                
-                if ((Settings.getValue(Settings.LANGUAGE)).equals("english"))
-                {
-                    for(int l=0; l<utterancewordlist.size(); l++)
-                    {
-                        utterancewordlist.set(l,stemmer.wordStemming(utterancewordlist.get(l)));
-                       //System.out.print(utterancewordlist.get(l)+" ");
+
+                if ((Settings.getValue(Settings.LANGUAGE)).equals("english")) {
+                    for (int l = 0; l < utterancewordlist.size(); l++) {
+                        utterancewordlist.set(l, stemmer.wordStemming(utterancewordlist.get(l)));
+                        //System.out.print(utterancewordlist.get(l)+" ");
                     }
                 }
-                            
-                for(int j=0; j<utterancewordlist.size(); j++)
-                {
-                    if(!vocabularytable.get(spkindex).contains(utterancewordlist.get(j)))
-                    {
+
+                for (int j = 0; j < utterancewordlist.size(); j++) {
+                    if (!vocabularytable.get(spkindex).contains(utterancewordlist.get(j))) {
                         vocabularytable.get(spkindex).add(utterancewordlist.get(j));
                     }
 
@@ -897,92 +898,88 @@ public class Assertions {
         }//end of utternace loop
 
         int numofalldistinctwords = alldistinctwords.size();
-        /*set the vim to speakers and print them out.*/
-        for(int i=0; i<speakerlist.size(); i++)
-        {
-            if(numofalldistinctwords>0){
+        /*
+         * set the vim to speakers and print them out.
+         */
+        for (int i = 0; i < speakerlist.size(); i++) {
+            if (numofalldistinctwords > 0) {
 //                System.out.println("total ind"+ vocabularytable.get(i).size());
 //                System.out.println("Total Distinct score==="+numofalldistinctwords);
-            ((Speaker)spks.get(i)).setVim(calculatePercentage(vocabularytable.get(i).size(), numofalldistinctwords));
-             sumofvim=sumofvim+((Speaker)spks.get(i)).getVim();
-             
+                ((Speaker) spks.get(i)).setVim(calculatePercentage(vocabularytable.get(i).size(), numofalldistinctwords));
+                sumofvim = sumofvim + ((Speaker) spks.get(i)).getVim();
+
             }
         }
         //calculating the raw score for each speaker- without percentages-1/12/2012
         // System.out.println("-----Raw Scores-------");
         //for(int i=0; i<speakerlist.size(); i++)
         //{
-           
+
         //   ((Speaker)spks.get(i)).setnewVim(((Speaker)spks.get(i)).getVim());
         //  print(speakerlist.get(i)+": " +((Speaker)spks.get(i)).getnewVim());
         //}
-        /*normalize the vri's by taking the percentage of speaker's vri to the sum of all vris*/
+        /*
+         * normalize the vri's by taking the percentage of speaker's vri to the
+         * sum of all vris
+         */
         // print("\n");
         //System.out.println("-----Percentages-------");
-	// System.out.println ("@Vocabulary Introduction Measure");
+        // System.out.println ("@Vocabulary Introduction Measure");
 //        System.out.println("SUM==="+sumofvim);
-	 for(int i=0; i<speakerlist.size(); i++)
-        {
-            if(sumofvim>0.0){
-            ((Speaker)spks.get(i)).setVim(calculatePercentage(((Speaker)spks.get(i)).getVim(), sumofvim));
+        for (int i = 0; i < speakerlist.size(); i++) {
+            if (sumofvim > 0.0) {
+                ((Speaker) spks.get(i)).setVim(calculatePercentage(((Speaker) spks.get(i)).getVim(), sumofvim));
 //            print(speakerlist.get(i)+": "+ ((Speaker)spks.get(i)).getVim());
-            }
-            else{
+            } else {
 //            System.out.println("All vaues ARE 0");
             }
         }
         // print("\n");
-	// print("@@@@@@@@@@@@@@@@@End of Vocabulary Introduction Measure@@@@@@@@@@@@@@@@@");
-	
-    }//end of calVim
-       
-       
-       
-       
+        // print("@@@@@@@@@@@@@@@@@End of Vocabulary Introduction Measure@@@@@@@@@@@@@@@@@");
 
-       /**
-        * Calculate the score for Argument Diversity,
-        * it is the average of vri and vim of a speaker, thus, this method has
-        * to be called only after methods calVri and calVim
-        */
-       public void calArgDiv(int k)
-       {
-           
-	   // print("@@@@@@@@@@@@@@@@@Argument Diversity@@@@@@@@@@@@@@@@@");		
-	   //  print("\n");
-	   //System.out.println("-----Percentages-------");
-	 System.out.println ("@Argument Diversity");
+    }//end of calVim
+
+    /**
+     * Calculate the score for Argument Diversity, it is the average of vri and
+     * vim of a speaker, thus, this method has to be called only after methods
+     * calVri and calVim
+     */
+    public void calArgDiv(int k) {
+
+        // print("@@@@@@@@@@@@@@@@@Argument Diversity@@@@@@@@@@@@@@@@@");		
+        //  print("\n");
+        //System.out.println("-----Percentages-------");
+        System.out.println("@Argument Diversity");
         ArrayList spks = new ArrayList(parts_.values());
         for (int i = 0; i < spks.size(); i++) {
-		    Speaker part_ = (Speaker)spks.get(i);
-                    LocalTopics lts = part_.getILTs();
-                    
-                    double arg_div;
-                    arg_div=(((Speaker)spks.get(i)).getVri()+((Speaker)spks.get(i)).getVim())/2.0;
+            Speaker part_ = (Speaker) spks.get(i);
+            LocalTopics lts = part_.getILTs();
+
+            double arg_div;
+            arg_div = (((Speaker) spks.get(i)).getVri() + ((Speaker) spks.get(i)).getVim()) / 2.0;
 //                    DecimalFormat fourDForm =new DecimalFormat("#.####");
 //                    arg_div = Double.valueOf(fourDForm.format(arg_div));
 //                    
-                    ((Speaker)spks.get(i)).setArgDiv(arg_div);
-		    print(part_.getName()+ ":"+ ((Speaker)spks.get(i)).getArgDiv() );
+            ((Speaker) spks.get(i)).setArgDiv(arg_div);
+            print(part_.getOriName() + ":" + ((Speaker) spks.get(i)).getArgDiv());
         }
-          print("\n");
-	  // print("-------Raw Scores---------");
-	  /*for (int i = 0; i < spks.size(); i++) {
-		    Speaker part_ = (Speaker)spks.get(i);
-                    LocalTopics lts = part_.getILTs();
-                    
-                    double newarg_div;
-                    newarg_div=(((Speaker)spks.get(i)).getnewVri()+((Speaker)spks.get(i)).getnewVim())/2.0;
-//                    DecimalFormat fourDForm =new DecimalFormat("#.####");
-//                    arg_div = Double.valueOf(fourDForm.format(arg_div));
-//                    
-                    ((Speaker)spks.get(i)).setnewArgDiv(newarg_div);
-		    print(part_.getName()+ ":"+ ((Speaker)spks.get(i)).getnewArgDiv() );
-        } print("\n");
-        print("@@@@@@@@@@@@@@@@@End of Argument Diversity@@@@@@@@@@@@@@@@@\n\n\n");
-	  */
-       }
-    
+        print("\n");
+        // print("-------Raw Scores---------");
+	  /*
+         * for (int i = 0; i < spks.size(); i++) { Speaker part_ =
+         * (Speaker)spks.get(i); LocalTopics lts = part_.getILTs();
+         *
+         * double newarg_div;
+         * newarg_div=(((Speaker)spks.get(i)).getnewVri()+((Speaker)spks.get(i)).getnewVim())/2.0;
+         * // DecimalFormat fourDForm =new DecimalFormat("#.####"); // arg_div =
+         * Double.valueOf(fourDForm.format(arg_div)); //
+         * ((Speaker)spks.get(i)).setnewArgDiv(newarg_div);
+         * print(part_.getName()+ ":"+ ((Speaker)spks.get(i)).getnewArgDiv() );
+         * } print("\n"); print("@@@@@@@@@@@@@@@@@End of Argument
+         * Diversity@@@@@@@@@@@@@@@@@\n\n\n");
+         */
+    }
+
     /**
      * Calculate the score for Communication Links Measure
      *
@@ -990,7 +987,7 @@ public class Assertions {
      */
     public void calClm(int k) {
         //print("@@@@@@@@@@@@@@@@@Communication link measures@@@@@@@@@@@@@@@@@");
-	// 	 print("\n");	
+        // 	 print("\n");	
         ArrayList spks = new ArrayList(parts_.values());
         ArrayList<String> speakerlist = new ArrayList<String>();
         ArrayList<Integer> linkcounts = new ArrayList<Integer>();//counting the utterances that are addressed to or reponse to each speaker, it is parallel to speakerlist.
@@ -1009,12 +1006,14 @@ public class Assertions {
             speakerlist.add(part_.getName());
             linkcounts.add(new Integer(0));
 
-        }    
-        
-        /*loop through all utterances in the file and count the number of utterances that are addressed to or reponse to this speaker
-         *excludes utterances addressed to everyone*/
-        for(int n=0; n<utterance.size(); n++)            
-        {
+        }
+
+        /*
+         * loop through all utterances in the file and count the number of
+         * utterances that are addressed to or reponse to this speaker excludes
+         * utterances addressed to everyone
+         */
+        for (int n = 0; n < utterance.size(); n++) {
             //print(n+1 +" "+utterance.get(n).getContent());           
             lname=utterance.get(n).getRespTo().split(":")[0];
             CommActType=utterance.get(n).getCommActType().trim();
@@ -1028,7 +1027,7 @@ public class Assertions {
                 }
             }                                            
         }
-        
+       
         /*set the clm by counting the utterandces that are addressed to this speaker as a percentage 
          * of all utterances in discourse, and save the sum of all clms to sumofclm.*/
         for(int i=0; i<speakerlist.size(); i++)
@@ -1038,24 +1037,25 @@ public class Assertions {
             sumofclm=sumofclm+((Speaker)spks.get(i)).getClm();
         }
         //calculating the raw score for each speaker- without percentages-1/12/2012
-	/*  System.out.println("-----Raw Scores-------");
-        for(int i=0; i<speakerlist.size(); i++)
-        {
-           
-           ((Speaker)spks.get(i)).setnewClm(((Speaker)spks.get(i)).getClm());
-           print(speakerlist.get(i)+": "+ ((Speaker)spks.get(i)).getnewClm());
-	   }*/
-        /*normalize the clms by take the percentage of speaker's clm to the sum of all clms*/
+	/*
+         * System.out.println("-----Raw Scores-------"); for(int i=0;
+         * i<speakerlist.size(); i++) {
+         *
+         * ((Speaker)spks.get(i)).setnewClm(((Speaker)spks.get(i)).getClm());
+         * print(speakerlist.get(i)+": "+ ((Speaker)spks.get(i)).getnewClm()); }
+         */
+        /*
+         * normalize the clms by take the percentage of speaker's clm to the sum
+         * of all clms
+         */
 //        print("\n");
 //        System.out.println("-----Percentages-------");
 //        System.out.println("SUM indiv scores==="+sumofclm);
-        for(int i=0; i<speakerlist.size(); i++)
-        {
-            if(sumofclm>0){
-            ((Speaker)spks.get(i)).setClm(calculatePercentage(((Speaker)spks.get(i)).getClm(), sumofclm));
+        for (int i = 0; i < speakerlist.size(); i++) {
+            if (sumofclm > 0) {
+                ((Speaker) spks.get(i)).setClm(calculatePercentage(((Speaker) spks.get(i)).getClm(), sumofclm));
 //            print(speakerlist.get(i)+": "+ ((Speaker)spks.get(i)).getClm());
-            }
-            else{
+            } else {
 //            System.out.println("0");
             }
         }
@@ -1070,37 +1070,40 @@ public class Assertions {
      */
     public void calCri() {
         //print("@@@@@@@@@@@@@@@@@Citation Rate Index@@@@@@@@@@@@@@@@@");
-	//print("\n");
-        int numofalltopics=0;		
+        //print("\n");
+        int numofalltopics = 0;
         ArrayList spks = new ArrayList(parts_.values());
         double sumofcri = 0.0;
         for (int i = 0; i < spks.size(); i++) {
-		    Speaker part_ = (Speaker)spks.get(i);
-                    LocalTopics lts = part_.getILTs();
-                    numofalltopics = numofalltopics + lts.size();
-                    if(lts.size()>0)
-                    ((Speaker)spks.get(i)).setCri(calculatePercentage(lts.sizeOfCO(),lts.size()));
-                    sumofcri=sumofcri+((Speaker)spks.get(i)).getCri();
+            Speaker part_ = (Speaker) spks.get(i);
+            LocalTopics lts = part_.getILTs();
+            numofalltopics = numofalltopics + lts.size();
+            if (lts.size() > 0) {
+                ((Speaker) spks.get(i)).setCri(calculatePercentage(lts.sizeOfCO(), lts.size()));
+            }
+            sumofcri = sumofcri + ((Speaker) spks.get(i)).getCri();
         }
-        
-         //calculating the raw score for each speaker- without percentages-1/12/2012
-        /* System.out.println("-----Raw Scores-------");
-        for(int i=0; i<spks.size(); i++)
-        {
-           
-            ((Speaker)spks.get(i)).setnewCri(((Speaker)spks.get(i)).getCri());
-            print(((Speaker)spks.get(i)).getName()+": "+ ((Speaker)spks.get(i)).getnewCri());
-        }
-        */
-        /*normalize the cri by take the percentage of speaker's cri to the sum of all cri*/
+
+        //calculating the raw score for each speaker- without percentages-1/12/2012
+        /*
+         * System.out.println("-----Raw Scores-------"); for(int i=0;
+         * i<spks.size(); i++) {
+         *
+         * ((Speaker)spks.get(i)).setnewCri(((Speaker)spks.get(i)).getCri());
+         * print(((Speaker)spks.get(i)).getName()+": "+
+         * ((Speaker)spks.get(i)).getnewCri()); }
+         */
+        /*
+         * normalize the cri by take the percentage of speaker's cri to the sum
+         * of all cri
+         */
 //	print("\n");
 //        print("-----Percentages-------");
 //         System.out.println("SUM indiv scores==="+sumofcri);
-        for(int i=0; i<spks.size(); i++)
-        {
-            
-            if(sumofcri>0.0){
-         ((Speaker)spks.get(i)).setCri(calculatePercentage(((Speaker)spks.get(i)).getCri(),sumofcri));
+        for (int i = 0; i < spks.size(); i++) {
+
+            if (sumofcri > 0.0) {
+                ((Speaker) spks.get(i)).setCri(calculatePercentage(((Speaker) spks.get(i)).getCri(), sumofcri));
 //         print(((Speaker)spks.get(i)).getName()+": "+((Speaker)spks.get(i)).getCri() );
             }
         }
@@ -1118,9 +1121,9 @@ public class Assertions {
      */
     public void calMti(int k) {
         //print("@@@@@@@@@@@@@@@@@Meso Topic Introduction@@@@@@@@@@@@@@@@@");
-	//  print("\n");
-        int count=0;
-        MesoTopic tmp = (MesoTopic)mts_.get(k);
+        //  print("\n");
+        int count = 0;
+        MesoTopic tmp = (MesoTopic) mts_.get(k);
         ArrayList<ArrayList<String>> mt = new ArrayList<ArrayList<String>>();
         mt = tmp.getMeso_topics_();
         ArrayList<String> mesotopics = new ArrayList<String>();//all meso-topics in discourse
@@ -1167,28 +1170,29 @@ public class Assertions {
                 }
             }
         }
-        
-        
-        /*set mti to speakers and print them out.*/
+
+
+        /*
+         * set mti to speakers and print them out.
+         */
 //	  print("-----Percentages-------");
-        for(int i=0; i<speakerlist.size(); i++)
-        {
-      if(mt.size()>0)
-//            System.out.println("SUM indiv scores==="+mt);
-            ((Speaker)spks.get(i)).setMti(calculatePercentage(mesocounts.get(i).doubleValue(), mt.size()));
+        for (int i = 0; i < speakerlist.size(); i++) {
+            if (mt.size() > 0) //            System.out.println("SUM indiv scores==="+mt);
+            {
+                ((Speaker) spks.get(i)).setMti(calculatePercentage(mesocounts.get(i).doubleValue(), mt.size()));
+            }
 //            print(speakerlist.get(i)+": "+ ((Speaker)spks.get(i)).getMti());
         }
         //calculating the raw score for each speaker- without percentages-1/12/2012
-        /*print("\n");
-        System.out.println("-----Raw Scores-------");
-        for(int i=0; i<speakerlist.size(); i++)
-        {
-            
-           ((Speaker)spks.get(i)).setnewMti(mesocounts.get(i).doubleValue());
-           print(speakerlist.get(i)+": "+ ((Speaker)spks.get(i)).getnewMti());
-        }
-         print("\n");
-	 print("@@@@@@@@@@@@@@@@@End of Meso Topic Introduction@@@@@@@@@@@@@@@@@");*/
+        /*
+         * print("\n"); System.out.println("-----Raw Scores-------"); for(int
+         * i=0; i<speakerlist.size(); i++) {
+         *
+         * ((Speaker)spks.get(i)).setnewMti(mesocounts.get(i).doubleValue());
+         * print(speakerlist.get(i)+": "+ ((Speaker)spks.get(i)).getnewMti()); }
+         * print("\n"); print("@@@@@@@@@@@@@@@@@End of Meso Topic
+         * Introduction@@@@@@@@@@@@@@@@@");
+         */
     }//end of calMti
 
     /**
@@ -1196,52 +1200,50 @@ public class Assertions {
      * and mti of a speaker, thus, this method has to be called only after
      * methods calVri and calVim
      */
-    public void calNetWorkCentrality()    
-    {
-       
-	// print("@@@@@@@@@@@@@@@@@NetWork Centrality@@@@@@@@@@@@@@@@@");		
+    public void calNetWorkCentrality() {
+
+        // print("@@@@@@@@@@@@@@@@@NetWork Centrality@@@@@@@@@@@@@@@@@");		
         // print("\n");
         ArrayList spks = new ArrayList(parts_.values());
 	//print("-----Percentages-------");
 	 System.out.println ("@Network Centrality");
         for (int i = 0; i < spks.size(); i++) {
-             
-		    Speaker part_ = (Speaker)spks.get(i);
-                    //LocalTopics lts = part_.getILTs();
-                    
-                    double netcentr;
-                    netcentr=(((Speaker)spks.get(i)).getClm()+((Speaker)spks.get(i)).getCri() + ((Speaker)spks.get(i)).getMti())/3.0;
-                   // DecimalFormat fourDForm =new DecimalFormat("#.####");
-                    //netcentr = Double.valueOf(fourDForm.format(netcentr));
-                    
-                    ((Speaker)spks.get(i)).setNetCentr(netcentr);
-		    print(part_.getName()+ ":"+ ((Speaker)spks.get(i)).getNetCentr() );
+
+            Speaker part_ = (Speaker) spks.get(i);
+            //LocalTopics lts = part_.getILTs();
+
+            double netcentr;
+            netcentr = (((Speaker) spks.get(i)).getClm() + ((Speaker) spks.get(i)).getCri() + ((Speaker) spks.get(i)).getMti()) / 3.0;
+            // DecimalFormat fourDForm =new DecimalFormat("#.####");
+            //netcentr = Double.valueOf(fourDForm.format(netcentr));
+
+            ((Speaker) spks.get(i)).setNetCentr(netcentr);
+            print(part_.getOriName() + ":" + ((Speaker) spks.get(i)).getNetCentr());
         }
         print("\n");
-	//   print("-----Raw scores-------");
+        //   print("-----Raw scores-------");
 	/*
-        for (int i = 0; i < spks.size(); i++) {
-          
-		    Speaker part_ = (Speaker)spks.get(i);
-                    //LocalTopics lts = part_.getILTs();
-                    
-                    double newnetcentr;
-                    newnetcentr=(((Speaker)spks.get(i)).getnewClm()+((Speaker)spks.get(i)).getnewCri() + ((Speaker)spks.get(i)).getnewMti())/3.0;
-                   // DecimalFormat fourDForm =new DecimalFormat("#.####");
-                    //netcentr = Double.valueOf(fourDForm.format(netcentr));
-                    
-                    ((Speaker)spks.get(i)).setnewNetCentr(newnetcentr);
-		    print(part_.getName()+ ":"+ ((Speaker)spks.get(i)).getnewNetCentr() );
-        } print("\n");
-        print("@@@@@@@@@@@@@@@@@End of NetWork Centrality@@@@@@@@@@@@@@@@@\n\n\n");
-	*/
+         * for (int i = 0; i < spks.size(); i++) {
+         *
+         * Speaker part_ = (Speaker)spks.get(i); //LocalTopics lts =
+         * part_.getILTs();
+         *
+         * double newnetcentr;
+         * newnetcentr=(((Speaker)spks.get(i)).getnewClm()+((Speaker)spks.get(i)).getnewCri()
+         * + ((Speaker)spks.get(i)).getnewMti())/3.0; // DecimalFormat fourDForm
+         * =new DecimalFormat("#.####"); //netcentr =
+         * Double.valueOf(fourDForm.format(netcentr));
+         *
+         * ((Speaker)spks.get(i)).setnewNetCentr(newnetcentr);
+         * print(part_.getName()+ ":"+ ((Speaker)spks.get(i)).getnewNetCentr()
+         * ); } print("\n"); print("@@@@@@@@@@@@@@@@@End of NetWork
+         * Centrality@@@@@@@@@@@@@@@@@\n\n\n");
+         */
     }
     //////////////////////////////////
     ////////////end of peng's methods
     /////////////////////////////////     
-    
-    
-    
+
 //influencer weighting scheme-3/5/12-chat and wiki-english and chinese
     
     private void weightingscheme(){
@@ -1262,82 +1264,86 @@ public class Assertions {
         String spkmad1="",spkncm1="",spktcm1="",spkcdm1="",stinf="";
 
         System.out.println("\n@Influencer");
-        
-        num_=spks.size();
+
+        num_ = spks.size();
         Speaker speaker = null;
-        for(int i=0;i<spks.size();i++){
+        for (int i = 0; i < spks.size(); i++) {
             if (docs_path_.indexOf("wiki") != -1) {
                 ddt_.setDDT(DocDialogueType.WK);
             }
 //            System.out.println(ddt_.getType());
-        if(ddt_.getType().equals("wiki")){
+            if (ddt_.getType().equals("wiki")) {
 //            System.out.println("IT is wiki!");
-        
-        wt1=0.45;wt2=0.2;wt3=0.3;wt4=0.7;
-        }
-        else{ 
+
+                wt1 = 0.45;
+                wt2 = 0.2;
+                wt3 = 0.3;
+                wt4 = 0.7;
+            } else {
 //            System.out.println("Not wiki");
-        if((Settings.getValue(Settings.LANGUAGE)).equals("english")){    
-        wt1=0.4;wt2=0.5;wt3=0.75;wt4=0.15;    
-        }
-        
-        else if((Settings.getValue(Settings.LANGUAGE)).equals("chinese")){
-         wt1=0.75;wt2=0.35;wt3=0.75;wt4=0.1;
-        }
-        }
+                if ((Settings.getValue(Settings.LANGUAGE)).equals("english")) {
+                    wt1 = 0.4;
+                    wt2 = 0.5;
+                    wt3 = 0.75;
+                    wt4 = 0.15;
+                } else if ((Settings.getValue(Settings.LANGUAGE)).equals("chinese")) {
+                    wt1 = 0.75;
+                    wt2 = 0.35;
+                    wt3 = 0.75;
+                    wt4 = 0.1;
+                }
+            }
 //        System.out.println("wt1:"+wt1+"\twt2:"+wt2+"\twt3:"+wt3+"\twt4:"+wt4);
-        speaker=(Speaker)spks.get(i);
-        tcm_ = speaker.getTC().getPower();
-
-        TCM.add(tcm_);
-        cdm_=speaker.getDisagreement();
-
-        CDM.add(cdm_);
-        ncm_=speaker.getNetCentr();
-
-        NCM.add(ncm_);
-        mad_=speaker.getArgDiv();
-
-     
+            speaker = (Speaker) spks.get(i);
+            tcm_ = speaker.getTC().getPower();
+            TCM.add(tcm_);
+            
+            cdm_ = speaker.getDisagreement();
+            CDM.add(cdm_);
+            
+            ncm_ = speaker.getNetCentr();
+            NCM.add(ncm_);
+           
+            mad_ = speaker.getArgDiv();
 //         System.out.println(speaker.getName()+":"+mad_);
-         MAD.add(mad_);
-        Infwts_=wt1*mad_ +wt2*ncm_+wt3*tcm_+wt4*cdm_;
+            MAD.add(mad_);
+            Infwts_ = wt1 * mad_ + wt2 * ncm_ + wt3 * tcm_ + wt4 * cdm_;
 //        System.out.println("weights==="+speaker.getName()+":"+Infwts_);
-        ((Speaker)spks.get(i)).setinfwts(Infwts_);
-        sum_=sum_+((Speaker)spks.get(i)).getinfwts();
-        
-        if(sum_>0)
-            avg_=sum_/(double)num_;
-        
+            ((Speaker) spks.get(i)).setinfwts(Infwts_);
+            sum_ = sum_ + ((Speaker) spks.get(i)).getinfwts();
+
+            if (sum_ > 0) {
+                avg_ = sum_ / (double) num_;
+            }
+
         }
-        
-        for(int i=0;i<spks.size();i++){
-        Double subtract=((((Speaker)spks.get(i)).getinfwts())-avg_);
-        Double square=subtract*subtract;
+
+        for (int i = 0; i < spks.size(); i++) {
+            Double subtract = ((((Speaker) spks.get(i)).getinfwts()) - avg_);
+            Double square = subtract * subtract;
 //        System.out.println(square);
-        ((Speaker)spks.get(i)).setsq(square);
-        summ=summ+((Speaker)spks.get(i)).getsq();
+            ((Speaker) spks.get(i)).setsq(square);
+            summ = summ + ((Speaker) spks.get(i)).getsq();
         }
-        
-        one_stdev_=(double)Math.sqrt(summ/(num_-1));
-        two_stdev_=2*one_stdev_;
-        sum1=avg_+one_stdev_;
-        sum2=avg_+two_stdev_;
+        one_stdev_ = (double) Math.sqrt(summ / (num_ - 1));
+        two_stdev_ = 2 * one_stdev_;
+        sum1 = avg_ + one_stdev_;
+        sum2 = avg_ + two_stdev_;
 //        System.out.println("\navg:"+avg_);
 //        System.out.println("stdev"+one_stdev_+two_stdev_);
 //        System.out.println("s1:"+sum1+"s2:"+sum2+"\n");
-        
-        
-        for(int i=0;i<spks.size();i++){
-         speaker=(Speaker)spks.get(i); 
-        if((((Speaker)spks.get(i)).getinfwts()) >= sum2) {
-         set=true;
-         sd2=true;
-        spk.add(((Speaker)spks.get(i)).getName());
-        }
-        else
-            continue;
-        
+
+
+        for (int i = 0; i < spks.size(); i++) {
+            speaker = (Speaker) spks.get(i);
+            if ((((Speaker) spks.get(i)).getinfwts()) >= sum2) {
+                set = true;
+                sd2 = true;
+                spk.add(((Speaker) spks.get(i)).getOriName());
+            } else {
+                continue;
+            }
+
         }
          for(int i=0;i<spks.size();i++){
          if( ((((Speaker)spks.get(i)).getinfwts()) >= sum1 && (((Speaker)spks.get(i)).getinfwts()) < sum2 ) && (sd2!=true) ){
@@ -1347,7 +1353,6 @@ public class Assertions {
          else
              continue;
         }
-
         for(int i=0;i<spk.size();i++){
         if( (spk.size()<3 && spk.size()>0)) {
         System.out.println(spk.get(i));
@@ -1365,7 +1370,7 @@ public class Assertions {
             System.out.println(stinf);
         }
         //Influencer Confidence Scores
-        
+
         System.out.println("\n@Influencer_Confidence");
         if(!stinf.equals("No Influencer")){
             
@@ -1376,54 +1381,49 @@ public class Assertions {
         Collections.sort(TCM, c);
         Collections.sort(CDM, c);
 
-        for(int i=0;i<spks.size();i++){
-        if((((Speaker)spks.get(i)).getArgDiv())==(MAD.get(0)) ){
+        for (int i = 0; i < spks.size(); i++) {
+            if ((((Speaker) spks.get(i)).getArgDiv()) == (MAD.get(0))) {
 //        System.out.println("spkr="+((Speaker)spks.get(i)).getName());
-        spkmad1=((Speaker)spks.get(i)).getName();
-        }
-        if((((Speaker)spks.get(i)).getNetCentr())==(NCM.get(0)) ){
+                spkmad1 = ((Speaker) spks.get(i)).getName();
+            }
+            if ((((Speaker) spks.get(i)).getNetCentr()) == (NCM.get(0))) {
 //        System.out.println("spkr="+((Speaker)spks.get(i)).getName());
-        spkncm1=((Speaker)spks.get(i)).getName();
-        }
-        if((((Speaker)spks.get(i)).getTC().getPower())==(TCM.get(0)) ){
+                spkncm1 = ((Speaker) spks.get(i)).getName();
+            }
+            if ((((Speaker) spks.get(i)).getTC().getPower()) == (TCM.get(0))) {
 //        System.out.println("spkr="+((Speaker)spks.get(i)).getName());
-        spktcm1=((Speaker)spks.get(i)).getName();
-        }
-        if((((Speaker)spks.get(i)).getDisagreement())==(CDM.get(0)) ){
+                spktcm1 = ((Speaker) spks.get(i)).getName();
+            }
+            if ((((Speaker) spks.get(i)).getDisagreement()) == (CDM.get(0))) {
 //        System.out.println("spkr="+((Speaker)spks.get(i)).getName());
-        spkcdm1=((Speaker)spks.get(i)).getName();
-        }
+                spkcdm1 = ((Speaker) spks.get(i)).getName();
+            }
         }
 
 //        System.out.println("mad1"+spkmad1);
 //        System.out.println("ncm1"+spkncm1);
 //        System.out.println("tcm1"+spktcm1);
 //        System.out.println("ncm1"+spkcdm1);
-        if((spkmad1.equals(spkncm1) && spkmad1.equals(spktcm1) && spkmad1.equals(spkcdm1) &&
-                spkncm1.equals(spktcm1) && spkncm1.equals(spkcdm1) &&
-                spktcm1.equals(spkcdm1)) 
-                ){
-            conf_score=1.0;
-        System.out.println(conf_score);
-        }
-        else if( ( (spkmad1.equals(spkncm1)) && (spkncm1.equals(spktcm1)) ) || ( (spkmad1.equals(spktcm1)) && ( (spktcm1.equals(spkcdm1) )) ) || ( (spkmad1.equals(spkcdm1)) && (spkcdm1.equals(spkncm1)) ) || ( (spkncm1.equals(spktcm1)) && (spktcm1.equals(spkcdm1) ) ) ||
-                ( (spkncm1.equals(spkcdm1) ) &&( spkcdm1.equals(spkmad1) )) || ((spktcm1.equals(spkcdm1)) && (spkcdm1.equals(spkmad1) )) ||( (spkmad1.equals(spkncm1)) && (spkncm1.equals(spkcdm1) )) || ((spktcm1.equals(spkncm1)) && (spkncm1.equals(spkcdm1)) ) ||
-                 ( (spkmad1.equals(spktcm1)) && (spktcm1.equals(spkncm1) ) ) || ((spkmad1.equals(spkcdm1)) && (spkcdm1.equals(spktcm1)) )|| ((spkncm1.equals(spkcdm1)) && (spkcdm1.equals(spktcm1)) ) || ((spkncm1.equals(spktcm1)) && (spktcm1.equals(spkmad1))) ){
-        
-        conf_score=0.75;
-        System.out.println(conf_score);
-       
-        }
-        else if(((spkmad1.equals(spkncm1)) || (spkmad1.equals(spktcm1)) || (spkmad1.equals(spkcdm1)) ||
-                (spkncm1.equals(spktcm1)) || (spkncm1.equals(spkcdm1)) ||
-                (spktcm1.equals(spkcdm1))) ){
-        conf_score=0.5;
-        System.out.println(conf_score);
-        }
-        
-        else{
-            conf_score=0.25;
-        System.out.println(conf_score);
+        if ((spkmad1.equals(spkncm1) && spkmad1.equals(spktcm1) && spkmad1.equals(spkcdm1)
+                && spkncm1.equals(spktcm1) && spkncm1.equals(spkcdm1)
+                && spktcm1.equals(spkcdm1))) {
+            conf_score = 1.0;
+            System.out.println(conf_score);
+        } else if (((spkmad1.equals(spkncm1)) && (spkncm1.equals(spktcm1))) || ((spkmad1.equals(spktcm1)) && ((spktcm1.equals(spkcdm1)))) || ((spkmad1.equals(spkcdm1)) && (spkcdm1.equals(spkncm1))) || ((spkncm1.equals(spktcm1)) && (spktcm1.equals(spkcdm1)))
+                || ((spkncm1.equals(spkcdm1)) && (spkcdm1.equals(spkmad1))) || ((spktcm1.equals(spkcdm1)) && (spkcdm1.equals(spkmad1))) || ((spkmad1.equals(spkncm1)) && (spkncm1.equals(spkcdm1))) || ((spktcm1.equals(spkncm1)) && (spkncm1.equals(spkcdm1)))
+                || ((spkmad1.equals(spktcm1)) && (spktcm1.equals(spkncm1))) || ((spkmad1.equals(spkcdm1)) && (spkcdm1.equals(spktcm1))) || ((spkncm1.equals(spkcdm1)) && (spkcdm1.equals(spktcm1))) || ((spkncm1.equals(spktcm1)) && (spktcm1.equals(spkmad1)))) {
+
+            conf_score = 0.75;
+            System.out.println(conf_score);
+
+        } else if (((spkmad1.equals(spkncm1)) || (spkmad1.equals(spktcm1)) || (spkmad1.equals(spkcdm1))
+                || (spkncm1.equals(spktcm1)) || (spkncm1.equals(spkcdm1))
+                || (spktcm1.equals(spkcdm1)))) {
+            conf_score = 0.5;
+            System.out.println(conf_score);
+        } else {
+            conf_score = 0.25;
+            System.out.println(conf_score);
         }
         }
         else{
@@ -1431,8 +1431,7 @@ public class Assertions {
         System.out.println(conf_score);
         }
     }
-    
-    
+
     public void preprocess() {
         for (int i = 0; i < docs_utts_.size(); i++) {
             PhraseCheck phr_ch = (PhraseCheck) phr_checks_.get(i);
@@ -1461,25 +1460,26 @@ public class Assertions {
     }
 
     public void tagDAct() {
-	//information level
-	Settings.setValue("tagNum", "3");
-	Settings.setValue("tagType", "da3");
-	DialogueActType daT = new DialogueActType(all_utts_, tr_utts_, utts_);
-	daT.tagIt3();
-	for (int i = 0; i < utts_.size(); i++) {
-	    Utterance utt_ = (Utterance)utts_.get(i);
+        //information level
+        Settings.setValue("tagNum", "3");
+        Settings.setValue("tagType", "da3");
+        DialogueActType daT = new DialogueActType(all_utts_, tr_utts_, utts_);
+        daT.tagIt3();
+        for (int i = 0; i < utts_.size(); i++) {
+            Utterance utt_ = (Utterance) utts_.get(i);
 //	    System.out.println("utt_ information level tag: " + utt_.getMTag());
-	    break;
-	}
-	//dialogue action level
-	//System.exit(0);
-	Settings.setValue("tagNum", "15");
-	Settings.setValue("tagType", "da15");
-	//System.out.println("tagNum: " + Settings.getValue("tagNum"));
-	//daT = new DialogueActType(all_utts_, tr_utts_, utts_); comment out at 05/19 by TL
+            break;
+        }
+        //dialogue action level
+        //System.exit(0);
+        Settings.setValue("tagNum", "15");
+        Settings.setValue("tagType", "da15");
+        //System.out.println("tagNum: " + Settings.getValue("tagNum"));
+        //daT = new DialogueActType(all_utts_, tr_utts_, utts_); comment out at 05/19 by TL
 
         // modified by Laura, May 5th, 2011
-        if (Boolean.valueOf(Settings.getValue("splitUtterance"))) {
+        if (Boolean.valueOf(Settings.getValue("splitUtterance"))&&
+                (Settings.getValue(Settings.LANGUAGE)).equals("english")) {
             //System.out.println("Laura debug: before splitting, size = " + utts_.size());
             SplitTestingUtterance stu = new SplitTestingUtterance(utts_);
             stu.startSplitting();
@@ -1489,29 +1489,31 @@ public class Assertions {
             //System.out.println("splitted turns and quantities: " + turnNoSplitNo);
 
             daT = new DialogueActType(all_utts_, tr_utts_, utts_, splittedUtts, turnNoSplitNo);
-             
+
         } else {
             daT = new DialogueActType(all_utts_, tr_utts_, utts_);
         }
         for (int i = 0; i < utts_.size(); i++) {
-             String tagcontent="",content="",required="";
-             String[] words=null;
-	    Utterance utt_ = (Utterance)utts_.get(i);
-            content=utt_.getContent();
-          
-           
-        tagcontent=utt_.getTaggedContent();
+            String tagcontent = "", content = "", required = "";
+            String[] words = null;
+            Utterance utt_ = (Utterance) utts_.get(i);
+            content = utt_.getContent();
+
+
+            tagcontent = utt_.getTaggedContent();
 //        System.out.println(utt_.getTurn()+"TaggedContent:"+tagcontent);
-       /*  if(utt_.getTag().trim().equalsIgnoreCase("action-directive")){
-	    System.out.println("\noriginal utterance\nutt_ DA tag: " + utt_);
-            
-            }*/
+       /*
+             * if(utt_.getTag().trim().equalsIgnoreCase("action-directive")){
+             * System.out.println("\noriginal utterance\nutt_ DA tag: " + utt_);
+             *
+             * }
+             */
         }
-	daT.tagIt();
-	for (int i = 0; i < utts_.size(); i++) {
-	    Utterance utt_ = (Utterance)utts_.get(i);
+        daT.tagIt();
+        for (int i = 0; i < utts_.size(); i++) {
+            Utterance utt_ = (Utterance) utts_.get(i);
             break;
-	}
+        }
     }
 
     public void calExDis(int j) {
@@ -1561,6 +1563,12 @@ public class Assertions {
         Iterator keys = parts_.keySet().iterator();
         Speaker leader = null;
         double ld_score = -100;
+
+        //CSLIN
+        ArrayList <Double> scoreDI = new ArrayList();
+        double dCVDI=0;
+        
+
         while (keys.hasNext()) {
             String key = (String) keys.next();
             if (key.startsWith("ils")) {
@@ -1574,11 +1582,23 @@ public class Assertions {
                 leader = part_;
                 ld_score = part_.getLeadershipR();
             }
-            System.out.println(part_.getName() + ":" + part_.getLeadershipRInfo());
+
+            System.out.println(part_.getOriName() + ":" + part_.getLeadershipRInfo());
+            
+            Double e=part_.getLeadershipInfo().getDisagreement()+part_.getLeadershipInfo().getInvolvement();
+            //DIS-INV
+            scoreDI.add(e);
         }
+
+        Leadership ls=new Leadership();
+        dCVDI=ls.calCV(scoreDI);
+        //System.out.println("====>CV of (Dis+Inv)"+dCVDI);
+
+            
+ 
         if (leader != null) {
             System.out.println("@Leader");
-            System.out.println(leader.getName());
+            System.out.println(leader.getOriName());
             System.out.println("@Confidence:\n" + leader.getLeadershipConfidence());
             this.setLeader_(leader);// added by m2w 2/14/12 10:44 AM
         }
@@ -1607,7 +1627,7 @@ public class Assertions {
         for (int i = 0; i < keys.size(); i++) {
             String key = (String) keys.get(i);
             Speaker spk = parts_.get(key);
-            if (spk.getName().startsWith("ils")) {
+            if (spk.getOriName().startsWith("ils")) {
                 continue;
             }
             spk.calATX();
@@ -1615,21 +1635,33 @@ public class Assertions {
             //System.out.println(/*"The actural score of ATX of " + */spk.getName() + /*" is: "*/ " : " + spk.getATX());
         }
         //added by TL 06/01
-	double total_agreed = 0;
-	for (int i = 0; i < keys.size(); i++) {
-	    String key = (String)keys.get(i);
-	    Speaker spk = parts_.get(key);
-	    if (spk.getName().startsWith("ils")) continue;
-	    total_agreed += spk.getAgreed();
-            System.out.println(/*"The actural score of ATX of " + */spk.getName() + /*" is: "*/ " : " + spk.getATX());
-	}
-	for (int i = 0; i < keys.size(); i++) {
-	    String key = (String)keys.get(i);
-	    Speaker spk = parts_.get(key);
-	    if (spk.getName().startsWith("ils")) continue;
-	    double agreed_per = spk.getAgreed() / total_agreed;
-	    System.out.println(/*"The actural score of ATX of " + */spk.getName() + /*" is: "*/ " : " + agreed_per);
-	}
+        double total_agreed = 0;
+        for (int i = 0; i < keys.size(); i++) {
+            String key = (String) keys.get(i);
+            Speaker spk = parts_.get(key);
+            if (spk.getName().startsWith("ils")) {
+                continue;
+            }
+            total_agreed += spk.getAgreed();
+            System.out.println(/*
+                     * "The actural score of ATX of " +
+                     */spk.getName() + /*
+                     * " is: "
+                     */ " : " + spk.getATX());
+        }
+        for (int i = 0; i < keys.size(); i++) {
+            String key = (String) keys.get(i);
+            Speaker spk = parts_.get(key);
+            if (spk.getName().startsWith("ils")) {
+                continue;
+            }
+            double agreed_per = spk.getAgreed() / total_agreed;
+            System.out.println(/*
+                     * "The actural score of ATX of " +
+                     */spk.getName() + /*
+                     * " is: "
+                     */ " : " + agreed_per);
+        }
 
     }
 
@@ -1912,14 +1944,14 @@ public class Assertions {
         /*
          * System.out.println("++++++++++++++++++++++++++++++++\ncalculate CLTI
          * quintile"); calQuintile(spks_CLTI, spks, "TPC", "CLTI", null);
-         */
+        
         for (int i = 0; i < keys.size(); i++) {
             String key1 = (String) keys.get(i);
             Speaker spk1 = parts_.get(key1);
             spk1.getTC().calPower();
             //System.out.println("The topic control merged socre of " + spk1.getName() + " is: " + spk1.getTC().getPower());
         }
-
+ */
 
 
         //process Power quintile
@@ -2199,7 +2231,7 @@ public class Assertions {
                     // modified by Laura, Apirl 13, 2011
                     System.out.println(/*
                              * "The quintile score of " +
-                             */((Speaker) spks.get(j)).getName() + " : " /*
+                             */((Speaker) spks.get(j)).getOriName() + " : " /*
                              * + 3 + " --- actual score: "
                              */ + di);
                     //System.out.println("The actual count of
@@ -2217,7 +2249,7 @@ public class Assertions {
                     // modified by Laura, Apirl 13, 2011
                     System.out.println(/*
                              * "The quintile score " +
-                             */((Speaker) spks.get(j)).getName() + " : " /*
+                             */((Speaker) spks.get(j)).getOriName() + " : " /*
                              * + 5 + " --- actual score: "
                              */ + di);
                     out_spks.add(((Speaker) spks.get(j)).getName());
@@ -2234,7 +2266,7 @@ public class Assertions {
                     // modified by Laura, Apirl 13, 2011
                     System.out.println(/*
                              * "The quintile score " +
-                             */((Speaker) spks.get(j)).getName() + " : "/*
+                             */((Speaker) spks.get(j)).getOriName() + " : "/*
                              * + 1 + " --- actual score: "
                              */ + di);
                     out_spks.add(((Speaker) spks.get(j)).getName());
@@ -2270,7 +2302,7 @@ public class Assertions {
                     // modified by Laura, Apirl 13, 2011
                     System.out.println(/*
                              * "The quintile score of " +
-                             */((Speaker) spks.get(j)).getName() + " : "/*
+                             */((Speaker) spks.get(j)).getOriName() + " : "/*
                              * + 4 + " --- actual score: "
                              */ + di);
                     out_spks.add(((Speaker) spks.get(j)).getName());
@@ -2292,7 +2324,7 @@ public class Assertions {
                     // modified by Laura, Apirl 13, 2011
                     System.out.println(/*
                              * "The quintile score of " +
-                             */((Speaker) spks.get(j)).getName() + " : "/*
+                             */((Speaker) spks.get(j)).getOriName() + " : "/*
                              * + 5 + " --- actual score: "
                              */ + di);
                     qscs.put(id_spk, 5);
@@ -2307,7 +2339,7 @@ public class Assertions {
                     // modified by Laura, Apirl 13, 2011
                     System.out.println(/*
                              * "The quintile score " +
-                             */((Speaker) spks.get(j)).getName() + " : "/*
+                             */((Speaker) spks.get(j)).getOriName() + " : "/*
                              * + 4 + " --- actual score: "
                              */ + di);
                     out_spks.add(((Speaker) spks.get(j)).getName());
@@ -2326,7 +2358,7 @@ public class Assertions {
                     // modified by Laura, Apirl 13, 2011
                     System.out.println(/*
                              * "The quintile score " +
-                             */((Speaker) spks.get(j)).getName() + " : "/*
+                             */((Speaker) spks.get(j)).getOriName() + " : "/*
                              * + 3 + " --- actual score: "
                              */ + di);
                     out_spks.add(((Speaker) spks.get(j)).getName());
@@ -2345,7 +2377,7 @@ public class Assertions {
                     // modified by Laura, Apirl 13, 2011
                     System.out.println(/*
                              * "The quintile score " +
-                             */((Speaker) spks.get(j)).getName() + " : " /*
+                             */((Speaker) spks.get(j)).getOriName() + " : " /*
                              * + 2 + " --- actual score: "
                              */ + di);
                     out_spks.add(((Speaker) spks.get(j)).getName());
@@ -2362,7 +2394,7 @@ public class Assertions {
                     // modified by Laura, Apirl 13, 2011
                     System.out.println(/*
                              * "The quintile score " +
-                             */((Speaker) spks.get(j)).getName() + " : "/*
+                             */((Speaker) spks.get(j)).getOriName() + " : "/*
                              * + 1 + " --- actual score: "
                              */ + di);
                     out_spks.add(((Speaker) spks.get(j)).getName());
@@ -2727,15 +2759,16 @@ public class Assertions {
         //System.out.println("++++++++++++++++++++++++++++++++\ncalculate Merged quintile");
         calQuintile(spks_Power, spks, "INV", "Merged", rank);
     }
-    
+
     /**
      * m2w: pursuit of power
      */
-    public void calPop(){
+    public void calPop() {
         PursuitOfPower pop = new PursuitOfPower(utts_, parts_, leader_);
         pop.calPursuitOfPower();
     }
     //}
+
     public void calCommLink(XMLParse xp) {
         /*
          * for (int i = 0; i < docs_utts_.size(); i++) { utts_ =
@@ -2927,137 +2960,62 @@ public class Assertions {
         }
     }
 
-    public void getChinesePhrases() {
-        ArrayList<String> unique_words = new ArrayList<String>();
-        for (int i = 0; i < docs_utts_.size(); i++) {
-            String fn = (String) doc_names_.get(i);
-            System.err.println("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$\nprocessing: " + fn);
-            //utts_ = (ArrayList)docs_utts_.get(i);
-            all_utts_.clear();
-            all_utts_.addAll(tr_utts_);
-            gch_ = new GroupCohesion();
-            if (Settings.getValue(Settings.PROCESS_TYPE).equals("automated")) {
-                PhraseCheck phr_ch = (PhraseCheck) phr_checks_.get(i);
-                XMLParse xp = xmlps_.get(i);
-                utts_ = (ArrayList) docs_utts_.get(i);
-                cal_ = Calendar.getInstance();
-                //System.out.println("before pos tagging: " + df_.format(cal_.getTime()));
-
-                for (int j = 0; j < utts_.size(); j++) {
-                    Utterance utt_ = utts_.get(j);
-                    String utterance = utt_.getUtterance().toString();
-                    String noEmotes = ParseTools.removeEmoticons(utterance);
-                    //noEmotes = noEmotes.replaceAll("，", "");
-                    //noEmotes = noEmotes.replaceAll("？", "questionmark");
-                    //String tmpTagged=StanfordPOSTagger.tagChineseString(noEmotes);
-                    //System.out.println("parsing: " + utterance);
-                    String tmpTagged = "";
-                    if ((Settings.getValue(Settings.LANGUAGE)).equals("english")) {
-                        //tmpTagged=StanfordPOSTagger.tagString(noEmotes);
-                        SentenceSplitter sp = new SentenceSplitter();
-                        ArrayList splitUtterance = null;
-                        if (noEmotes.length() > 200) {
-                            splitUtterance = sp.split(noEmotes);
-                        }
-                        if (splitUtterance == null || splitUtterance.size() == 1) {
-                            tmpTagged = StanfordPOSTagger.tagString(noEmotes);
-                        } else {
-                            String temps = "";
-                            for (int k = 0; k < splitUtterance.size(); k++) {
-                                String toTag = (String) splitUtterance.get(k);
-                                //System.out.println ("toTag: " + toTag);
-                                String temp = StanfordPOSTagger.tagString((String) splitUtterance.get(k));
-                                //System.out.println("tagged: " + temp);
-                                temps = temps + " " + temp;
-
-                            }
-                            tmpTagged = temps.trim();
-                        }
-
-                    } else if ((Settings.getValue(Settings.LANGUAGE)).equals("chinese")) {
-                        tmpTagged = StanfordPOSTagger.tagChineseString(noEmotes);
-                        if (tmpTagged == null) {
-                            continue;
-                        }
-                    }
-                    String tagged = tmpTagged.trim();
-                    String spcTagged = tmpTagged.replaceAll("/" + "([A-Z]+)*" + " ", " ");
-                    utt_.setTaggedContent(tagged);
-                    utt_.setSpaceTaggedContent(spcTagged);
-                    if (spcTagged != null) {
-                        String[] words = spcTagged.split("[ ]+");
-                        for (int ij = 0; ij < words.length; ij++) {
-                            String word = words[ij];
-                            if (!unique_words.contains(word)) {
-                                unique_words.add(word);
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        /*
-         * try { BufferedWriter bw = new BufferedWriter(new FileWriter(new
-         * File("Unique_Words_in_Chinese_Corpus.txt"))); for (String
-         * unique_word:unique_words) { bw.write(unique_word + "\n"); }
-         * bw.close(); System.out.println("total unique words in Chinese corpus:
-         * " + unique_words.size()); System.exit(0); }catch (Exception e) {
-         * e.printStackTrace(); }
-         */
-    }
-
     public void buildLocalTopicList(PhraseCheck phr_ch, XMLParse xp) {
-	ArrayList utts = new ArrayList();
-	ArrayList spks = new ArrayList();
-	ArrayList comm_acts = new ArrayList();
-	ArrayList resps_to = new ArrayList();
-	ArrayList turn_nums = new ArrayList();
-	lts_.clear();
-	spks_.clear();
-	nls_ = null;
-	parts_.clear();
-	for (int i = 0; i < utts_.size(); i++) {
-	    Utterance utt = utts_.get(i);
-	    utts.add(utt.getContent());
-	    /*
-	    if (utt.getContent().split("[ ]+").length < 80 &&
-		utt.getContent().split("[ ]+").length > 5) {
-		System.out.println("parsing: " + utt.getContent());
-		Util.parser_.parse(utt.getContent());
-		//Util.parser_.printTree(Util.parser_.getTree());
-		Util.parser_.showAllDependencies(Util.parser_.getDependencies(), utt.getTag());
-	    }
-	    */
-	    String spk = utt.getSpeaker();
-            if(spk.equals("ilsperson") ||spk.equals("ilspersonnel")) continue;//skip to next loop if the speaker is ilsperson
-	    spks.add(spk.toLowerCase());
-	    comm_acts.add(utt.getCommActType());
-	    resps_to.add(utt.getRespTo());
-	    turn_nums.add(utt.getTurn());
-	    //if (spk.startsWith("ils")) continue;//only for test!!! remember to remove
-	    if (!spks_.contains(spk.toLowerCase())) spks_.add(spk.toLowerCase());
-	    Speaker part = parts_.get(spk.toLowerCase());
-	    if (part == null) {
-		part = new Speaker(spk.toLowerCase());
-		part.setAllUtts(utts_); //1/26/2011
-		parts_.put(spk.toLowerCase(), part);
-	    }
-	    part.addUtterance(utt);
-        
-	}
-	Collections.sort(spks_);
-	//comment it out for TkC
-	if (!is_tskc_) {
-	    FindVerb fv = new FindVerb();
-	    //nls_ = new NounList(utts, spks, wn_, comm_acts, resps_to, turn_nums, phr_ch, xp);
-	    nls_ = new NounList(xp, wn_, phr_ch, utts_);
-            if(isEnglish_){
-		    nls_.setEnglish(true);                
-            }else if(isUrdu_){
-                nls_.setUrdu (true);
-                nls_.setUrduPath (Settings.getValue (Settings.URDU_PATH));
-            }else if(isChinese_){
-                nls_.setChinese (true);
+        ArrayList utts = new ArrayList();
+        ArrayList spks = new ArrayList();
+        ArrayList comm_acts = new ArrayList();
+        ArrayList resps_to = new ArrayList();
+        ArrayList turn_nums = new ArrayList();
+        lts_.clear();
+        spks_.clear();
+        nls_ = null;
+        parts_.clear();
+        for (int i = 0; i < utts_.size(); i++) {
+            Utterance utt = utts_.get(i);
+            utts.add(utt.getContent());
+            /*
+             * if (utt.getContent().split("[ ]+").length < 80 &&
+             * utt.getContent().split("[ ]+").length > 5) {
+             * System.out.println("parsing: " + utt.getContent());
+             * Util.parser_.parse(utt.getContent());
+             * //Util.parser_.printTree(Util.parser_.getTree());
+             * Util.parser_.showAllDependencies(Util.parser_.getDependencies(),
+             * utt.getTag()); }
+             */
+            String spk = utt.getSpeaker();
+            if (spk.equals("ilsperson") || spk.equals("ilspersonnel")) {
+                continue;//skip to next loop if the speaker is ilsperson
+            }
+            spks.add(spk.toLowerCase());
+            comm_acts.add(utt.getCommActType());
+            resps_to.add(utt.getRespTo());
+            turn_nums.add(utt.getTurn());
+            //if (spk.startsWith("ils")) continue;//only for test!!! remember to remove
+            if (!spks_.contains(spk.toLowerCase())) {
+                spks_.add(spk.toLowerCase());
+            }
+            Speaker part = parts_.get(spk.toLowerCase());
+            if (part == null) {
+                part = new Speaker(spk.toLowerCase(), utt.getOriSpeaker());
+                part.setAllUtts(utts_); //1/26/2011
+                parts_.put(spk.toLowerCase(), part);
+            }
+            part.addUtterance(utt);
+
+        }
+        Collections.sort(spks_);
+        //comment it out for TkC
+        if (!is_tskc_) {
+            FindVerb fv = new FindVerb();
+            //nls_ = new NounList(utts, spks, wn_, comm_acts, resps_to, turn_nums, phr_ch, xp);
+            nls_ = new NounList(xp, wn_, phr_ch, utts_);
+            if (isEnglish_) {
+                nls_.setEnglish(true);
+            } else if (isUrdu_) {
+                nls_.setUrdu(true);
+                nls_.setUrduPath(Settings.getValue(Settings.URDU_PATH));
+            } else if (isChinese_) {
+                nls_.setChinese(true);
 //                nls_.setCnwn(CNWN);
             }
 //	    if ((Settings.getValue (Settings.LANGUAGE)).equals("english") )
@@ -3144,76 +3102,86 @@ public class Assertions {
     }
 
     public void buildALocalTopicList(PhraseCheck phr_ch, XMLParse xp) {
-	ArrayList nouns = new ArrayList();
-	lts_.clear();
-	spks_.clear();
-	nls_ = null;
-	parts_.clear();
-	for (int i = 0; i < utts_.size(); i++) {
-	    Utterance utt = utts_.get(i);
-	    String spk = utt.getSpeaker();
-            if(spk.equals("ilsperson")||spk.equals("ilspersonnel")) continue; // skip to next loop if the speaker is ilsperson
-	    if (!spks_.contains(spk.toLowerCase())) spks_.add(spk.toLowerCase());
-	    //if (spk.startsWith("ils")) continue;//only for test!!! remember to remove
-	    Speaker part = parts_.get(spk.toLowerCase());
-	    if (part == null) {
-		part = new Speaker(spk.toLowerCase());
-		part.setAllUtts(utts_); //1/26/2011
-		parts_.put(spk.toLowerCase(), part);
-	    }
-	    part.addUtterance(utt);
-	    String turnno = utt.getTurn();
-	    //System.out.println("turnno: " + turnno);
-	    String turnnos[] = turnno.split("\\.");
-	    int tn = Integer.parseInt(turnnos[0]);
-	    String tag = utt.getTag();
-	    String pos = utt.getPOS();
-	    String pos_ori = utt.getPOSORIGIN();
-	    //System.out.println("pos: " + pos);
-	    //System.out.println("pos_ori: " + pos_ori);
-	    if (pos != null) {
-		//process reference
-		String[] list = pos.split(";");
-		for (int j = 0; j < list.length; j++) {
-		    if (list[j].trim().length() == 0) continue;
-		    String[] noun_comp = list[j].split("[\\(\\)]");
-		    if (noun_comp.length == 1) continue;
-		    //System.out.println("word: " + noun_comp[0] + "  reference id: " + noun_comp[1]);
-		    NounToken nt = new NounToken(noun_comp[0], tag, spk, tn, null, noun_comp[1].trim());
-		    boolean found_pref = false;
-		    for (int k = 0; k < nouns.size(); k++) {
-			NounToken nt1 = (NounToken)nouns.get(k);
-			if (nt1.getId() != null &&
-			    nt1.getId().equals(noun_comp[1].trim())) {
-			    nt1.addSubsequent(noun_comp[1].trim());
-			    found_pref = true;
-			    break;
-			}
-		    }
-		    if (!found_pref) {
-			//System.out.println("not found the reference");
-			nt = new NounToken(noun_comp[0], tag, spk, tn, noun_comp[1].trim(), null);
-		    }
-		    nouns.add(nt);
-		}
-	    }
-	    if (pos_ori != null) {
-		//process reference
-		String[] list = pos_ori.split(";");
-		for (int j = 0; j < list.length; j++) {
-		    if (list[j].trim().length() == 0) continue;
-		    String[] noun_comp = list[j].split("[\\(\\)]");
-		    //System.out.println("origin--- word: " + noun_comp[0] + "  id: " + noun_comp[1]);
-		    NounToken nt = new NounToken(noun_comp[0], tag, spk, tn, noun_comp[1], null);
-		    nouns.add(nt);
-		}
-	    }
-            
-        //}
-	}
-	Collections.sort(spks_);
-	//only for invlovement
-	//if (is_inv_) {
+        ArrayList nouns = new ArrayList();
+        lts_.clear();
+        spks_.clear();
+        nls_ = null;
+        parts_.clear();
+        for (int i = 0; i < utts_.size(); i++) {
+            Utterance utt = utts_.get(i);
+            String spk = utt.getSpeaker();
+            if (spk.equals("ilsperson") || spk.equals("ilspersonnel")) {
+                continue; // skip to next loop if the speaker is ilsperson
+            }
+            if (!spks_.contains(spk.toLowerCase())) {
+                spks_.add(spk.toLowerCase());
+            }
+            //if (spk.startsWith("ils")) continue;//only for test!!! remember to remove
+            Speaker part = parts_.get(spk.toLowerCase());
+            if (part == null) {
+                part = new Speaker(spk.toLowerCase(), utt.getOriSpeaker());
+                part.setAllUtts(utts_); //1/26/2011
+                parts_.put(spk.toLowerCase(), part);
+            }
+            part.addUtterance(utt);
+            String turnno = utt.getTurn();
+            //System.out.println("turnno: " + turnno);
+            String turnnos[] = turnno.split("\\.");
+            int tn = Integer.parseInt(turnnos[0]);
+            String tag = utt.getTag();
+            String pos = utt.getPOS();
+            String pos_ori = utt.getPOSORIGIN();
+            //System.out.println("pos: " + pos);
+            //System.out.println("pos_ori: " + pos_ori);
+            if (pos != null) {
+                //process reference
+                String[] list = pos.split(";");
+                for (int j = 0; j < list.length; j++) {
+                    if (list[j].trim().length() == 0) {
+                        continue;
+                    }
+                    String[] noun_comp = list[j].split("[\\(\\)]");
+                    if (noun_comp.length == 1) {
+                        continue;
+                    }
+                    //System.out.println("word: " + noun_comp[0] + "  reference id: " + noun_comp[1]);
+                    NounToken nt = new NounToken(noun_comp[0], tag, spk, tn, null, noun_comp[1].trim());
+                    boolean found_pref = false;
+                    for (int k = 0; k < nouns.size(); k++) {
+                        NounToken nt1 = (NounToken) nouns.get(k);
+                        if (nt1.getId() != null
+                                && nt1.getId().equals(noun_comp[1].trim())) {
+                            nt1.addSubsequent(noun_comp[1].trim());
+                            found_pref = true;
+                            break;
+                        }
+                    }
+                    if (!found_pref) {
+                        //System.out.println("not found the reference");
+                        nt = new NounToken(noun_comp[0], tag, spk, tn, noun_comp[1].trim(), null);
+                    }
+                    nouns.add(nt);
+                }
+            }
+            if (pos_ori != null) {
+                //process reference
+                String[] list = pos_ori.split(";");
+                for (int j = 0; j < list.length; j++) {
+                    if (list[j].trim().length() == 0) {
+                        continue;
+                    }
+                    String[] noun_comp = list[j].split("[\\(\\)]");
+                    //System.out.println("origin--- word: " + noun_comp[0] + "  id: " + noun_comp[1]);
+                    NounToken nt = new NounToken(noun_comp[0], tag, spk, tn, noun_comp[1], null);
+                    nouns.add(nt);
+                }
+            }
+
+            //}
+        }
+        Collections.sort(spks_);
+        //only for invlovement
+        //if (is_inv_) {
         nls1_ = nouns;
         sortNTs(nls1_);
         top10nouns_.clear();
@@ -3366,11 +3334,13 @@ public class Assertions {
                 String filename = files[0];
                 if (filename.startsWith("ZH")) {
                     System.err.println("Setting Chinese");
+		    Settings.setValue (Settings.LANGUAGE, "chinese");
                     isChinese_ = true;
                     StanfordPOSTagger.initializeChinese();
                 } else if (filename.startsWith("EN")) {
                     System.err.println("Setting English");
                     isEnglish_ = true;
+		    Settings.setValue (Settings.LANGUAGE, "english");
                     StanfordPOSTagger.initialize();
                 }
             } else {
@@ -3436,9 +3406,8 @@ public class Assertions {
     private Calendar cal_ = Calendar.getInstance();
     private DateFormat df_ = DateFormat.getDateTimeInstance(DateFormat.FULL,
             DateFormat.MEDIUM);
-    
-    private String English_stopword="conf/stop-words";
-    private String Chinese_stopword="conf/Chinese-stop-words";
+    private String English_stopword = "conf/stop-words";
+    private String Chinese_stopword = "conf/Chinese-stop-words";
     private Speaker leader_ = null;
 //    private ChineseWordnet CNWN = null;
 
@@ -3455,7 +3424,7 @@ public class Assertions {
     public void setLeader_(Speaker leader_) {
         this.leader_ = leader_;
     }
-    
+
     private class QueryListener extends Thread {
 
         String QUERY = "";
@@ -3556,6 +3525,6 @@ public class Assertions {
     }
 
     public void print(String s) {
-	System.out.println(s);
+        System.out.println(s);
     }
 }
