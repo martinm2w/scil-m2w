@@ -478,7 +478,7 @@ public class TaskControl {
             evaluate(dis, dis_count, spks, over_thr, over_str_thr, prxmlp, ordered_spks);
             return true;
         }
-//        System.out.println("only Action Directive is not enough!!!");
+//        System.out.println("only Action Directive is not enough!!!"); //commented by m2w 3/22/12 11:09 AM
         return false;
     }
 
@@ -635,7 +635,7 @@ public class TaskControl {
                 // modified by Laura, Apirl 13, 2011
                 System.out.println(/*
                          * "The quintile score of " +
-                         */((Speaker) spks.get(j)).getName() + " : " + -1);
+                         */((Speaker) spks.get(j)).getOriName() + " : " + -1);
             }
             if (prxmlp != null) {
                 prxmlp.setTaskControl(final_qscs);
@@ -679,12 +679,12 @@ public class TaskControl {
                         // modified by Laura, Apirl 13, 2011
                         System.out.println(/*
                                  * "The quintile score of " +
-                                 */((Speaker) spks.get(j)).getName() + " : "/*
+                                 */((Speaker) spks.get(j)).getOriName() + " : "/*
                                  * + 3 + " --- actual score: "
                                  */ + di);
                     } else {
                         // modified by Laura, Apirl 13, 2011
-                        System.out.println("The quintile score of " + ((Speaker) spks.get(j)).getName() + " : "/*
+                        System.out.println("The quintile score of " + ((Speaker) spks.get(j)).getOriName() + " : "/*
                                  * + 3 + " --- actual score: "
                                  */
                                 /*
@@ -705,14 +705,14 @@ public class TaskControl {
                         // modified by Laura, Apirl 13, 2011
                         System.out.println(/*
                                  * "The quintile score of " +
-                                 */((Speaker) spks.get(j)).getName() + " : "/*
+                                 */((Speaker) spks.get(j)).getOriName() + " : "/*
                                  * + 5 + " --- actual score: "
                                  */ + di);
                     } else {
                         // modified by Laura, Apirl 13, 2011
                         System.out.println(/*
                                  * "The quintile score of " +
-                                 */((Speaker) spks.get(j)).getName() + " : "/*
+                                 */((Speaker) spks.get(j)).getOriName() + " : "/*
                                  * + 5 + " --- actual score: "
                                  */
                                 /*
@@ -735,14 +735,14 @@ public class TaskControl {
                         // modified by Laura, Apirl 13, 2011
                         System.out.println(/*
                                  * "The quintile score of " +
-                                 */((Speaker) spks.get(j)).getName() + " : "/*
+                                 */((Speaker) spks.get(j)).getOriName() + " : "/*
                                  * + 1 + " --- actual score: "
                                  */ + di);
                     } else {
                         // modified by Laura, Apirl 13, 2011
                         System.out.println(/*
                                  * "The quintile score of " +
-                                 */((Speaker) spks.get(j)).getName() + " : "/*
+                                 */((Speaker) spks.get(j)).getOriName() + " : "/*
                                  * + 1 + " --- actual score: "
                                  */
                                 /*
@@ -769,14 +769,14 @@ public class TaskControl {
                         // modified by Laura, Apirl 13, 2011
                         System.out.println(/*
                                  * "The quintile score of " +
-                                 */((Speaker) spks.get(j)).getName() + " : "/*
+                                 */((Speaker) spks.get(j)).getOriName() + " : "/*
                                  * + 4 + " --- actual score: "
                                  */ + di);
                     } else {
                         // modified by Laura, Apirl 13, 2011
                         System.out.println(/*
                                  * "The quintile score of " +
-                                 */((Speaker) spks.get(j)).getName() + " : "/*
+                                 */((Speaker) spks.get(j)).getOriName() + " : "/*
                                  * + 4 + " --- actual score: "
                                  */
                                 /*
@@ -805,14 +805,14 @@ public class TaskControl {
                         // modified by Laura, Apirl 13, 2011
                         System.out.println(/*
                                  * "The quintile score of " +
-                                 */((Speaker) spks.get(j)).getName() + " : "/*
+                                 */((Speaker) spks.get(j)).getOriName() + " : "/*
                                  * + 1 + " --- actual score: "
                                  */ + di);
                     } else {
                         // modified by Laura, Apirl 13, 2011
                         System.out.println(/*
                                  * "The quintile score of " +
-                                 */((Speaker) spks.get(j)).getName() + " : "/*
+                                 */((Speaker) spks.get(j)).getOriName() + " : "/*
                                  * + 1 + " --- actual score: "
                                  */
                                 /*
@@ -835,14 +835,14 @@ public class TaskControl {
                         // modified by Laura, Apirl 13, 2011
                         System.out.println(/*
                                  * "The quintile score of " +
-                                 */((Speaker) spks.get(j)).getName() + " : "/*
+                                 */((Speaker) spks.get(j)).getOriName() + " : "/*
                                  * + 5 + " --- actual score: "
                                  */ + di);
                     } else {
                         // modified by Laura, Apirl 13, 2011
                         System.out.println(/*
                                  * "The quintile score of " +
-                                 */((Speaker) spks.get(j)).getName() + " : "/*
+                                 */((Speaker) spks.get(j)).getOriName() + " : "/*
                                  * + 5 + " --- actual score: "
                                  */
                                 /*
@@ -865,14 +865,14 @@ public class TaskControl {
                         // modified by Laura, Apirl 13, 2011
                         System.out.println(/*
                                  * "The quintile score of " +
-                                 */((Speaker) spks.get(j)).getName() + " : " /*
+                                 */((Speaker) spks.get(j)).getOriName() + " : " /*
                                  * + 4 + " --- actual score: "
                                  */ + di);
                     } else {
                         // modified by Laura, Apirl 13, 2011
                         System.out.println(/*
                                  * "The quintile score of " +
-                                 */((Speaker) spks.get(j)).getName() + " : " /*
+                                 */((Speaker) spks.get(j)).getOriName() + " : " /*
                                  * + 4 + " --- actual score: "
                                  */
                                 /*
@@ -895,14 +895,14 @@ public class TaskControl {
                         // modified by Laura, Apirl 13, 2011
                         System.out.println(/*
                                  * "The quintile score of " +
-                                 */((Speaker) spks.get(j)).getName() + " : "/*
+                                 */((Speaker) spks.get(j)).getOriName() + " : "/*
                                  * + 3 + " --- actual score: "
                                  */ + di);
                     } else {
                         // modified by Laura, Apirl 13, 2011
                         System.out.println(/*
                                  * "The quintile score of " +
-                                 */((Speaker) spks.get(j)).getName() + " : "/*
+                                 */((Speaker) spks.get(j)).getOriName() + " : "/*
                                  * + 3 + " --- actual score: "
                                  */
                                 /*
@@ -925,14 +925,14 @@ public class TaskControl {
                         // modified by Laura, Apirl 13, 2011
                         System.out.println(/*
                                  * "The quintile score of " +
-                                 */((Speaker) spks.get(j)).getName() + " : "/*
+                                 */((Speaker) spks.get(j)).getOriName() + " : "/*
                                  * + 2 + " --- actual score: "
                                  */ + di);
                     } else {
                         // modified by Laura, Apirl 13, 2011
                         System.out.println(/*
                                  * "The quintile score of " +
-                                 */((Speaker) spks.get(j)).getName() + " : "/*
+                                 */((Speaker) spks.get(j)).getOriName() + " : "/*
                                  * + 2 + " --- actual score: "
                                  */
                                 /*
@@ -955,14 +955,14 @@ public class TaskControl {
                         // modified by Laura, Apirl 13, 2011
                         System.out.println(/*
                                  * "The quintile score of " +
-                                 */((Speaker) spks.get(j)).getName() + " : "/*
+                                 */((Speaker) spks.get(j)).getOriName() + " : "/*
                                  * + 1 + " --- actual score: "
                                  */ + di);
                     } else {
                         // modified by Laura, Apirl 13, 2011
                         System.out.println(/*
                                  * "The quintile score of " +
-                                 */((Speaker) spks.get(j)).getName() + " : "/*
+                                 */((Speaker) spks.get(j)).getOriName() + " : "/*
                                  * + 1 + " --- actual score: "
                                  */
                                 /*
