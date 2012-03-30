@@ -142,7 +142,24 @@ public class Leadership {
 
     public void calculateR() {
 	//System.out.println(topic_control_r_ + " "  + task_control_r_  + " " + involvement_r_  + " " + disagreement_r_);
-	leadership_r_ = topic_control_r_ + task_control_r_ + involvement_r_ + disagreement_r_;
+	leadership_r_ = topic_control_r_ + task_control_r_ + involvement_r_ + disagreement_r_;       
+    }
+
+    public double calCV(ArrayList <Double> aryScore){
+        double dAverage=0, dDeviation=0, dCV=0;
+        for (int i=0; i<aryScore.size(); i++){
+            dAverage+= aryScore.get(i);
+        }
+        dAverage=dAverage/aryScore.size();
+
+        for (int i=0; i<aryScore.size(); i++){
+            dDeviation+= (aryScore.get(i)-dAverage)*(aryScore.get(i)-dAverage);
+        }
+        dDeviation=Math.sqrt(dDeviation/aryScore.size());
+
+        dCV=dDeviation/dAverage;
+        return dCV;
+
     }
 
     /******************************Attributes*******************/
