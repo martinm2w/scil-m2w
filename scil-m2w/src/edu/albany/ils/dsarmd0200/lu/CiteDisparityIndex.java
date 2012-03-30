@@ -85,7 +85,7 @@ public class CiteDisparityIndex {
             }
             Set<String> spkSet = parts_.keySet();
             if(!spkSet.contains(spk)){
-                Speaker speaker = new Speaker(spk);
+                Speaker speaker = new Speaker(spk, utt.getOriSpeaker().trim());
                 speaker.addUtterance(utt);
                 parts_.put(spk, speaker);
             }
