@@ -123,7 +123,7 @@ public class LocalTopics extends ArrayList{
     }
     
     public LocalTopic addA(NounToken nt,
-			  String spk) {
+			   String spk) {
 	if (nt.firstAMention()) {
 	    LocalTopic lt = new LocalTopic();
 	    lt.setContent(nt);
