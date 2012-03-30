@@ -16,7 +16,7 @@ public class DocumentProcessor {
     public static ArrayList parseUtts(File doc) {
         String[] items = null;
         try {
-            BufferedReader br = new BufferedReader(new FileReader(doc));
+            BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(doc), "UTF-8"));
             String a_line = null;
             ArrayList utts = new ArrayList();
             int count = 1;
@@ -31,11 +31,13 @@ public class DocumentProcessor {
                 String[] time_spk = items[0].split("\\)[ |\\t]+");
                 if (time_spk.length > 1) {
                     utt.setTime(time_spk[0].replace("\\(", ""));
+                    //System.out.println("(in Docu) speaker: " + time_spk[1]);
                     utt.setSpeaker(time_spk[1]);
                     utt.setTurn((new Integer(count)).toString());
                 } else {
                     time_spk = items[0].split("\\(");
                     utt.setTime(time_spk[1].split(" ")[0]);
+                    //System.out.println("(in Docu) speaker: " + time_spk[0].split(" ")[1]);
                     utt.setSpeaker(time_spk[0].split(" ")[1]);
                     utt.setTurn((new Integer(count)).toString());
                 }
@@ -61,7 +63,8 @@ public class DocumentProcessor {
     public static ArrayList parseWikiUtts(File doc) {
         String[] items = null;
         try {
-            BufferedReader br = new BufferedReader(new FileReader(doc));
+            BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(doc), "UTF-8"));
+            //BufferedReader br = new BufferedReader(new FileReader(doc));
             String a_line = null;
             ArrayList utts = new ArrayList();
             int count = 1;
