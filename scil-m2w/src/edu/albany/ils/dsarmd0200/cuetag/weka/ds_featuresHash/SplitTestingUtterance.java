@@ -46,13 +46,14 @@ public class SplitTestingUtterance {
             else if(subSentences.size() > 2){ // sub sentences num : 2 - 3
                 
 		//System.out.println("Laura debug: turn no = " + utt.getTurn());
+                //System.out.println("(in split) speaker: " + utt.getOriSpeaker());
                 int subSentenceNum = subSentences.size();
                 int turnNo = Integer.parseInt(utt.getTurn());
                 turnNoSplitNo.put(turnNo, subSentenceNum);
                 for(String s : subSentences){
                     Utterance tmp = new Utterance();
                     tmp.setCommActType(utt.getCommActType());
-                    tmp.setSpeaker(utt.getSpeaker());
+                    tmp.setSpeaker(utt.getOriSpeaker());
                     tmp.setPOS(utt.getPOS());
                     tmp.setPOSCOUNT(utt.getPOSCOUNT());
                     tmp.setPOSORIGIN(utt.getPOSORIGIN());
