@@ -80,7 +80,7 @@ public class DsarmdDP extends DialogParser {
 	if (sub_node != null) {
 	    tag = sub_node.getNodeValue();
             //replaceAll("[^\\p{L}]","") will remove any character that is not a letter in unicode.
-            da.setSpeaker(sub_node.getNodeValue().replaceAll("[^\\p{L}]",""));
+            da.setSpeaker(sub_node.getNodeValue());//.replaceAll("[^\\p{L}]",""));
 	}
 	
 	sub_node = map.getNamedItem(Link_to);
