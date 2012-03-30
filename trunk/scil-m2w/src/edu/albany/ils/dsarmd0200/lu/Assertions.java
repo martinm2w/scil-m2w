@@ -1317,10 +1317,9 @@ public class Assertions {
 //        System.out.println(square);
         ((Speaker)spks.get(i)).setsq(square);
         summ=summ+((Speaker)spks.get(i)).getsq();
-        one_stdev_=(double)Math.sqrt(summ/(num_-1));
-        
         }
         
+        one_stdev_=(double)Math.sqrt(summ/(num_-1));
         two_stdev_=2*one_stdev_;
         sum1=avg_+one_stdev_;
         sum2=avg_+two_stdev_;
