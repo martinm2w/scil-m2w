@@ -29,6 +29,7 @@ public class Utterance implements DialogAct {
     private String resp_to_spk = null;
     private String resp_to_utt = null;
     private String speaker = null;
+    private String ori_speaker = null;
     private String comm_act_type = "";
     private String time = null;
     
@@ -92,6 +93,10 @@ public class Utterance implements DialogAct {
     
     public String getSpeaker() {
 	return speaker;
+    }
+    
+    public String getOriSpeaker() {
+        return ori_speaker;
     }
     
     public String getPolarity() {
@@ -243,6 +248,8 @@ public class Utterance implements DialogAct {
 
     public void setSpeaker(String speaker) {
 	this.speaker = speaker.toLowerCase();//add toLowerCase 1/20/2011
+        this.ori_speaker = speaker;
+        //System.out.println("(in utt)ori_speaker: " + ori_speaker);
     }
 
     public void setPolarity(String polarity) {
