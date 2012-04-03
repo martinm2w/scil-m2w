@@ -267,7 +267,6 @@ public class PursuitOfPower {
         localMapNCM = this.normalizingMap(localMapNCM); 
         
         
-        
         //4.  print.
         ArrayList<ArrayList> NCMList = new ArrayList();
         NCMList = this.sortAndConvertMapToArrayList(localMapNCM);
