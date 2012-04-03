@@ -18,6 +18,23 @@ public class DocumentProcessor {
         try {
             BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(doc), "UTF-8"));
             String a_line = null;
+            StringBuffer content = new StringBuffer();
+            boolean breakln = false;
+            while ((a_line = br.readLine()) != null) {
+                if (a_line.trim().length() == 0) {
+                    continue;
+                }
+                if (breakln) {
+                    content.append(a_line + "\n");
+                    breakln = false;
+                } else if (a_line.endsWith(": ")) {
+                    breakln = true;
+                content.append(a_line);
+                } else {
+                    content.append(a_line + "\n");
+                }
+            }
+            br = new BufferedReader(new StringReader(content.toString().trim()));
             ArrayList utts = new ArrayList();
             int count = 1;
             while ((a_line = br.readLine()) != null) {
