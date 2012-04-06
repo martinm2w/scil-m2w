@@ -67,10 +67,10 @@ public class PursuitOfPower {
                 this.decidePopAndPrintEnglish(PopList); // decide 1 or 2 for english.
             }else if(language.equalsIgnoreCase("chinese") && MODE.equals("simple")){
                 this.decidePopAndPrintChinese(PopList); // decide 1 or 2 for english.
-            }else if (MODE.equals("std")){
-                this.decidePopAndPrintSTD(PopList);
-            }else if (MODE.equals("cov")){
-                
+            }else if (language.equalsIgnoreCase("english") && MODE.equals("std")){
+                this.decidePopAndPrintSTDEnglish(PopList);
+            }else if (language.equalsIgnoreCase("chinese") && MODE.equals("cov")){
+                this.decidePopAndPrintSTDChinese(PopList);
             }
             
             
@@ -728,7 +728,7 @@ public class PursuitOfPower {
      * m2w: standard deviation version of decide and print.
      * @param PopList 
      */
-    private void decidePopAndPrintSTD(ArrayList<ArrayList> PopList){
+    private void decidePopAndPrintSTDEnglish(ArrayList<ArrayList> PopList){
         Double totalWeight = 0.0;
         Double avgWeight = 0.0;
         Double sum = 0.0;
@@ -797,6 +797,78 @@ public class PursuitOfPower {
         }
     }
     
+     /**
+     * m2w: standard deviation version of decide and print.
+     * @param PopList 
+     */
+    private void decidePopAndPrintSTDChinese(ArrayList<ArrayList> PopList){
+        Double totalWeight = 0.0;
+        Double avgWeight = 0.0;
+        Double sum = 0.0;
+        Double sumSTD1 = 0.0;
+        Double sumSTD2 = 0.0;
+        Double num = (double)PopMap.size();
+        ArrayList<String> outList = new ArrayList<String>();
+        boolean hasPop = false;
+        //getting average weight
+        for(String spk : PopMap.keySet()){
+            Double tmpWeight = PopMap.get(spk);
+            totalWeight = totalWeight + tmpWeight;
+        }
+        avgWeight = totalWeight / num;
+        
+        //getting standard deviation
+        for(String spk : PopMap.keySet()){
+            Double subtract = PopMap.get(spk) - avgWeight;
+            Double square = subtract*subtract;
+            sum = sum + square;
+        }
+        
+        Double tmpSTD1 = (double)Math.sqrt(sum/(num-1.0));
+        Double tmpSTD2 = 2* tmpSTD1;
+        
+        //these 2 are for comparing.
+        sumSTD1 = avgWeight + tmpSTD1;
+        sumSTD2 = avgWeight + tmpSTD2;
+        
+//        Double p1score = (Double)PopList.get(0).get(1);
+//        Double p2score = (Double)PopList.get(1).get(1);
+        
+//        if(p1score > sumSTD1) hasPop = true; // judging.
+        
+//        if(hasPop){
+        for(int i = 0; i < PopList.size(); i++){
+            Double tempScore = (Double)PopList.get(i).get(1);
+            String tempSpk = (String)PopList.get(i).get(0);
+            if(tempScore > sumSTD2){
+                outList.add(tempSpk);
+                continue;
+            }
+            if(tempScore > sumSTD1){
+                outList.add(tempSpk);
+            }
+        }
+        
+        int outsize = outList.size();
+        if(outsize > 0 && outsize < 4){
+            for(int i = 0; i < outList.size() && i < 2 ; i ++){
+                String spk = outList.get(i);
+                System.out.print(parts.get(spk).getOriName() + " ");
+            }
+            System.out.println();
+        }else{
+            System.out.println("No Pursuit of Power");
+        }
+
+        
+        if(doSTDdebuggingPrintOut){
+            System.out.println("total" + totalWeight);
+            System.out.println("avg" + avgWeight);
+            System.out.println("sum" + sum);
+            System.out.println("sumstd1: " + sumSTD1);
+            System.out.println("sumstd2: " + sumSTD2);
+        }
+    }
 //    =================================== vars and consts =============================================
     //variables:
     private HashMap<String, Double> PopMap; //where the precentage of each speaker are stored.
@@ -840,7 +912,7 @@ public class PursuitOfPower {
 //    private final String MODE = "cov"; // Coefficient_of_variation
     
     //print out control:
-    private boolean doSTDdebuggingPrintOut = false;
+    private boolean doSTDdebuggingPrintOut = true;
     private boolean doAnalysisPrintOut = false;
     private boolean doFinalPrintOut = true;
 }
