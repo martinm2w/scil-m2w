@@ -777,8 +777,9 @@ public class PursuitOfPower {
         }
         
         int outsize = outList.size();
-        if(outsize > 0 && outsize < 3){
-            for(String spk : outList){
+        if(outsize > 0 && outsize < 4){
+            for(int i = 0; i < outList.size() && i < 2 ; i ++){
+                String spk = outList.get(i);
                 System.out.print(parts.get(spk).getOriName() + " ");
             }
             System.out.println();
