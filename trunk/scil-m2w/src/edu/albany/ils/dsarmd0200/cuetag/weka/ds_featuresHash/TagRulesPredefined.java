@@ -12,14 +12,23 @@ public class TagRulesPredefined {
             new HashMap<String, ArrayList<String>>();
     protected HashMap<String, HashMap<String, Double>> tagFeaturesPredefinedWithScore =
             new HashMap<String, HashMap<String, Double>>();
-
+    protected HashMap<String, ArrayList<String>> tagFeaturesPredefinedWiki =
+            new HashMap<String, ArrayList<String>>();
+    private  ArrayList<String> Wiki_AD_Features = new ArrayList<String>();
+    private String Wiki_AD="";
+    private ArrayList<String> filters=new ArrayList<String>();
     public TagRulesPredefined(){        
     }
 
     public void allGramsAndDRMSet(String AllGrams, String DRMSet){
         
     }
-
+    
+    public void setfilter(String f){
+        if(!f.equals(""))
+     filters.add(f);
+    }
+   
     public void setTag(String tag){
      
     }
@@ -34,16 +43,41 @@ public class TagRulesPredefined {
 
     public String rules_filtered(String str){
         init();
-        String str2 = "<start> " + str.toLowerCase().trim() + " <finish>";
         
-        ArrayList<String> AD_Features = tagFeaturesPredefined.get(DsarmdDATag.AD);
-        ArrayList<String> DR_Features = tagFeaturesPredefined.get(DsarmdDATag.DR);
-        for(String s : AD_Features){
-            if(str2.contains(s)){
-                str = str.replace(s, DsarmdDATag.AD);
+        String str2 = "<start> " + str.toLowerCase().trim() + " <finish>";
+        ArrayList<String> AD_Feature = tagFeaturesPredefined.get(DsarmdDATag.AD);
+        ArrayList<String> Wiki_AD_Feature = new ArrayList<String>() ;
+        ArrayList<String> DR_Feature = tagFeaturesPredefined.get(DsarmdDATag.DR);
+        if(!tagFeaturesPredefinedWiki.isEmpty() )
+        Wiki_AD_Feature= tagFeaturesPredefinedWiki.get(Wiki_AD);
+
+        if(!Wiki_AD_Feature.isEmpty() ){
+        for(String s : Wiki_AD_Feature){
+            if(!s.equals("")|| s!=null)
+            if(str2.contains(s) ){
+                str = str.replace(s, Wiki_AD);
             }
+            continue;
         }
-        for(String s : DR_Features){
+        }
+        if(!filters.isEmpty()){
+         for(String se:filters){
+            if(str2.contains(se) && !se.isEmpty()){
+
+                str2=str2.replace(se,"");
+//                System.out.println("STR2:"+str2);
+            }
+         }
+        }
+        for(String s : AD_Feature){
+           if(str2.contains(s)){
+//                 System.out.println("STR3:"+str2);
+                str = str.replace(s, DsarmdDATag.AD);
+               
+            }
+            continue;
+        }
+        for(String s : DR_Feature){
             if(str2.contains(s)){
                 str = str.replace(s, DsarmdDATag.DR);
             }
@@ -52,7 +86,21 @@ public class TagRulesPredefined {
         return str;
         
     }
-
+  
+    //new rules for wiki added to AD-3/13/12  
+    public void addmoreADfeature(String req){
+        
+      if(!req.equals("") | (req!=null) ){
+         Wiki_AD="Wiki_AD";
+//         System.out.println("AddWiki!="+req);
+         if(!Wiki_AD_Features.contains(req))
+     Wiki_AD_Features.add(req);
+                  if(!(Wiki_AD_Features.isEmpty()))
+     tagFeaturesPredefinedWiki.put(Wiki_AD, Wiki_AD_Features);
+     }
+     return;
+    }
+  
     protected void init(){
         /* Action-Directive pre-defined features */
         ArrayList<String> AD_Features = new ArrayList<String>();
@@ -98,8 +146,8 @@ public class TagRulesPredefined {
         AD_Features.add("remind everyone to");
         AD_Features.add("don\'t pick on");
         AD_Features.add("so decide now");
-
-
+        
+        
 
 
         DR_Features.add("though <finish>");
