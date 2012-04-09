@@ -284,24 +284,34 @@ public class SentenceSplitter implements Serializable
         //instance varibles
         ArrayList sentences=new ArrayList();
         int totalLength=content.length();
-        //int wordCount=0;
+        
         int sentenceStartIndex=0;
-        //int wordStartIndex=-1;
+        
         //currentChar
-        char c;
+        
         for(int i=0;i<totalLength;i++){
-            c=content.charAt(i);
+            char c=content.charAt(i);
             
             //check whether it is a sequence unconditionally
             if(c==cnExclamationmark || c==cnQuestionmark || c==cnSemicolon){
                 String item=content.substring(sentenceStartIndex, i+1);
-                item=item.trim();
+               
                 sentences.add(item);
                 //next Sentence beign
                 sentenceStartIndex=i+1;               
                 
             }
         }
+        
+        // do one last add sentence if startindex isn't at the end so we get the last sentence
+    	if ( sentenceStartIndex < totalLength )
+	    {
+		String s = new String();
+		//			s = text.substring( sentenceStartIndex, totalLength - 1 );
+		s = content.substring( sentenceStartIndex, totalLength );		
+		s = s.trim();
+		sentences.add( s );    		
+	    }
         
         return sentences;
         //return new ArrayList(Arrays.asList(items));
