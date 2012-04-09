@@ -28,9 +28,7 @@ public class PursuitOfPower {
         NameMap = new HashMap<String, Double>(); // for init
         ITCMMap = new HashMap<String, Double>(); //4 sub-method maps
         CDMMap = new HashMap<String, Double>();
-//        DWLMap = new HashMap<String, Double>();
         TFMMap = new HashMap<String, Double>();
-        POMMap = new HashMap<String, Double>();
         ConfMap = new HashMap<String, Double>();
         NCMMap = new HashMap<String, Double>();
         for(Utterance u : Utts){
@@ -40,16 +38,19 @@ public class PursuitOfPower {
         PopMap.putAll(NameMap);
         ITCMMap.putAll(NameMap);
         CDMMap.putAll(NameMap);
-//        DWLMap.putAll(NameMap);
         TFMMap.putAll(NameMap);
-        POMMap.putAll(NameMap);
         ConfMap.putAll(NameMap);
         NCMMap.putAll(NameMap);
         language = Settings.getValue(Settings.LANGUAGE);
     }
     
     public void calPursuitOfPower(){
-        this.calPOP();//calucaltions done this line.
+        if(language.equalsIgnoreCase("english")){
+            this.calPopEng();//calucaltions done this line.
+        }else if (language.equalsIgnoreCase("chinese")){
+            this.calPopChn();//calucaltions done this line.
+        }
+        
         ArrayList<ArrayList> PopList = new ArrayList<ArrayList>();//converting hashmap to arraylist for sorting.
         PopList = this.sortAndConvertMapToArrayList(PopMap);
         if(doFinalPrintOut){
@@ -63,16 +64,11 @@ public class PursuitOfPower {
             }
             System.out.println("@Pursuit of Power:");
             
-            if(language.equalsIgnoreCase("english") && MODE.equals("simple")){
-                this.decidePopAndPrintEnglish(PopList); // decide 1 or 2 for english.
-            }else if(language.equalsIgnoreCase("chinese") && MODE.equals("simple")){
-                this.decidePopAndPrintChinese(PopList); // decide 1 or 2 for english.
-            }else if (language.equalsIgnoreCase("english") && MODE.equals("std")){
+            if (language.equalsIgnoreCase("english") && MODE.equals("std")){
                 this.decidePopAndPrintSTDEnglish(PopList);
             }else if (language.equalsIgnoreCase("chinese") && MODE.equals("cov")){
                 this.decidePopAndPrintSTDChinese(PopList);
             }
-            
             
             System.out.println("Confidence:");
             System.out.println("0.7" );
@@ -80,80 +76,81 @@ public class PursuitOfPower {
         
     }
 //    ============================================ top level cal methods =================================================
-    private void calPOP(){
+    /**
+     * m2w: this is a wrapper method for pop score calculation. English
+     * score is stored in PopMap
+     */
+    private void calPopEng(){
         //calculate pop
-        //1.Tension Focus Measure (TFM) //moved to 1st because itcm uses tf score.
-        TFMMap = this.calTFM();
-        //2.Involved Topic COntrol Measure (ITCM)
-        ITCMMap = this.calITCM();
-        //3.Cumulative Disagreement Measure (CDM)
-        CDMMap = this.calCDM();
-        //4.Disagreement with Leader (DWL)
-//        DWLMap = this.calDWL();
-        //5.Positioning Measure (POM)
-        POMMap = this.calPOM();
-        //6.calculate confirmation request.(Conf)
-        ConfMap = this.calConfRequestScore();
-        //7.get network centrality map (NCM)
-        NCMMap = this.calNCM();
+        TFMMap = this.calTFM();         //1.Tension Focus Measure (TFM) //moved to 1st because itcm uses tf score.
+        ITCMMap = this.calITCM();       //2.Involved Topic COntrol Measure (ITCM)
+        CDMMap = this.calCDM();         //3.Cumulative Disagreement Measure (CDM)
+        ConfMap = this.calConfRequestScore();        //6.calculate confirmation request.(Conf)
+        NCMMap = this.calNCM();         //7.get network centrality map (NCM)
         
         //8.average.
-        ArrayList<HashMap<String, Double>> averageList = new  ArrayList<HashMap<String, Double>>();
+        ArrayList<HashMap<String, Double>> mapList = new  ArrayList<HashMap<String, Double>>();
         
         if(language.equalsIgnoreCase("english")){
-            averageList.add(this.weightingMap(TFMMap, TFMWGT_EN));
-            averageList.add(this.weightingMap(ITCMMap, ITCMWGT_EN));
-            averageList.add(this.weightingMap(CDMMap, CDMWGT_EN));
-            averageList.add(this.weightingMap(POMMap, POMWGT_EN));
-            averageList.add(this.weightingMap(NCMMap, NCMWGT_EN));
-        }else if(language.equalsIgnoreCase("chinese")){
-            averageList.add(this.weightingMap(TFMMap, TFMWGT_CN));
-            averageList.add(this.weightingMap(ITCMMap, ITCMWGT_CN));
-            averageList.add(this.weightingMap(CDMMap, CDMWGT_CN));
-            averageList.add(this.weightingMap(POMMap, POMWGT_CN));
-            averageList.add(this.weightingMap(NCMMap, NCMWGT_CN));
+            mapList.add(this.weightingMap(TFMMap, TFMWGT_EN));
+            mapList.add(this.weightingMap(ITCMMap, ITCMWGT_EN));
+            mapList.add(this.weightingMap(CDMMap, CDMWGT_EN));
+            mapList.add(this.weightingMap(NCMMap, NCMWGT_EN));
         }
         
-        PopMap = this.addingMaps(averageList);
-        
-//        PopMap = this.addingMapsAndAverageIt(averageList);
-        
-        //normalizing 3/26/12 1:10 PM
-//        PopMap = this.normalizingMap(PopMap);
-        
-        //deleting leader, 3/28/12 2:23 PM
+        PopMap = this.addingMaps(mapList);
+        //deleting leader, 3/28/12 2:23 PM just for english. 
         PopMap = this.deleteLeader(PopMap);
     }
     
     /**
+     * m2w: this is a wrapper method for pop score calculation. Chinese
+     * score is stored in PopMap
+     */
+    private void calPopChn(){
+        //calculate pop
+        TFMMap = this.calTFM();         //1.Tension Focus Measure (TFM) //moved to 1st because itcm uses tf score.
+        ITCMMap = this.calITCM();       //2.Involved Topic COntrol Measure (ITCM)
+        CDMMap = this.calCDM();         //3.Cumulative Disagreement Measure (CDM)
+        ConfMap = this.calConfRequestScore();        //6.calculate confirmation request.(Conf)
+        NCMMap = this.calNCM();         //7.get network centrality map (NCM)
+        
+        //8.average.
+        ArrayList<HashMap<String, Double>> mapList = new  ArrayList<HashMap<String, Double>>();
+        
+        if(language.equalsIgnoreCase("chinese")){
+            mapList.add(this.weightingMap(TFMMap, TFMWGT_CN));
+            mapList.add(this.weightingMap(ITCMMap, ITCMWGT_CN));
+            mapList.add(this.weightingMap(CDMMap, CDMWGT_CN));
+            mapList.add(this.weightingMap(NCMMap, NCMWGT_CN));
+        }
+        PopMap = this.addingMaps(mapList);
+        //leader is deleted after pop
+    }
+    
+    /**
      * m2w: this method calculates pop using Involved Topic COntrol Measure.
-       * //1. init all maps,  involvement, localitcm;
-     *  //2. get and set these maps.
-     *  //3. add the 2 maps and average
-     *  //4. add to pop.
+     *      //1. init all maps,  involvement, localitcm;
+     *      //2. get and set these maps.
+     *      //3. add the 2 maps and average
+     *      //4. add to pop.
      *  @date 3/22/12 1:07 PM
      */
     private HashMap<String, Double> calITCM(){
        //1. init all maps, topic ctrl, involvement, local itcm, 
-//        HashMap<String, Double> localMapTPctrl = new HashMap(); // commented on 3/6/12 2:33 PM
         HashMap<String, Double> localMapInv = new HashMap<String, Double>();
         HashMap<String, Double> localMapITCM = new HashMap<String, Double>();
-//        localMapTPctrl.putAll(NameMap);
         localMapInv.putAll(NameMap);
         localMapITCM.putAll(NameMap);
         
        //2. get and set these maps.
         for(String spk : parts.keySet()){
             Speaker tmpSpk = parts.get(spk);
-//            Double tpctrl = tmpSpk.getTC().getPower();// topic control 
             Double inv = tmpSpk.getInv().getPower();
-//            localMapTPctrl.put(spk, tpctrl);
             localMapInv.put(spk, inv);
         }
         
-        
        //3. add the maps and average
-//        localMapITCM = this.adding2MapsAndAverageIt(localMapTPctrl, localMapInv) ;
         localMapITCM = localMapInv;
         
         //4: normalizing 3/26/12 12:27 PM
@@ -170,7 +167,6 @@ public class PursuitOfPower {
         }
         if(doAnalysisPrintOut){
             System.out.println("@ITCM");
-//            System.out.println("topic ctrl map: " + localMapTPctrl.toString());
             System.out.println("involvement map: " + localMapInv.toString());
             System.out.println("itcm map before pop: " + localMapITCM.toString());
             System.out.println("pop map:" + PopMap.toString());
@@ -311,70 +307,7 @@ public class PursuitOfPower {
         return localTFMMap;
     }
     
-    /**
-     * m2w: this method calculates pop using Positioning Measure.
-     * //1.calcualte conf-re
-     * //2.calcualte offer-commit.
-     */
-    private HashMap<String, Double> calPOM(){
-        int totalComm = 0;
-        HashMap<String, Double> localMapPomComm = new HashMap<String, Double>();
-        HashMap<String, Double> localMapPom = new HashMap<String, Double>();
-        HashMap<String, Double> localMapPomCommCount = new HashMap<String, Double>();
-        localMapPomComm.putAll(NameMap);
-        localMapPom.putAll(NameMap);
-        localMapPomCommCount.putAll(NameMap);
-        //1. parse utt list, adding count to local map
-        for(Utterance u : Utts){
-            String tempDaTag = u.getTag();
-            String tempCATag = u.getCommActType();
-            String tempSpk = u.getSpeaker();
-            
-            // adding  confirmation request count & offe-comit. 
-            if(tempDaTag.toLowerCase().contains(OFFER_COMMIT) && tempCATag.equalsIgnoreCase(RESPONSE_TO)) {
-                totalComm++;
-                String lkto_spk = u.getRespToSpk();
-                Double tempCountComm = (Double) localMapPomCommCount.get(tempSpk);
-                localMapPomCommCount.put(lkto_spk, tempCountComm+1);
-            }
-        }
-        
-        //2. transform conf & comm list from count to percentage.
-        if(totalComm > 0.0){ //2/14/12 1:52 PM
-            for(String spk : localMapPomComm.keySet()){
-                Double spkConfCount = localMapPomCommCount.get(spk);
-                Double percentage = (spkConfCount)/ (double) totalComm;
-                localMapPomComm.put(spk, percentage);
-            }
-        }
-        
-        //3. adding
-        localMapPom = this.adding2MapsAndAverageIt(ConfMap, localMapPomComm);
-        
-        //4. normalizing 
-        localMapPom = this.normalizingMap(PopMap);
-        
-        ArrayList<ArrayList> POMList = new ArrayList();
-        POMList = this.sortAndConvertMapToArrayList(localMapPom);
-        if(doFinalPrintOut){
-            System.out.println("@POM");
-            for(ArrayList a : POMList){
-                System.out.println( parts.get((String)(a.get(0))).getOriName() + " : " + (Double)(a.get(1)) );
-            }
-        }
-        if(doAnalysisPrintOut){
-            System.out.println("@POM");
-            System.out.println("total comm: " + totalComm);
-            System.out.println("count map Comm: " + localMapPomCommCount.toString());
-            System.out.println("local POM conf map: " + ConfMap);
-            System.out.println("local POM conf map: " + localMapPomComm);
-            System.out.println("local POM map before pop: " + localMapPom);
-            System.out.println();
-        }
-        
-        return localMapPom;
-    }
-    
+
     /**
      * m2w: TFM 's Disagree-Reject Target Index (DRT)
      */
@@ -417,69 +350,6 @@ public class PursuitOfPower {
         HashMap<String, Double> localTFM_TDTMap = new HashMap<String, Double>();
         return localTFM_TDTMap;
     }
-    
-        /**
-//     * m2w: this method calculates pop using Disagreement with Leader Measure.
-//     *   //1. get the leader of the dialogue
-//     *   //2. build local map of count.
-//     *   //3. get count of dis towards the leader, assign to each key in the local map.
-//     *   //4. build and add the local map of percent to the pop map.
-//     */
-//    private HashMap<String, Double> calDWL(){
-//        
-//        Double totalDis = 0.0;
-//        //1. get the leader of the dialogue
-//        String leaderName = leader.getName();
-//        //2. build local map of count.
-//        HashMap<String, Double> localMapCount = new HashMap();
-//        localMapCount.putAll(NameMap);
-//        //3. get count of dis towards the leader, assign to each key in the local map.
-//        for(Utterance u : Utts){
-//            String DaTag = u.getTag();
-//            String tempSpk = u.getSpeaker();
-//            String tempCATag = u.getCommActType();
-//            if(DaTag.toLowerCase().contains(DISAGREE_REJECT) && tempCATag.equalsIgnoreCase(RESPONSE_TO)){
-//                totalDis++;
-//                String lkto_spk = u.getRespToSpk();
-////                System.out.println(lkto_spk);
-//                //if it links to the leader and current speaker is not the leader
-//                if((lkto_spk != null) && (tempSpk != null) && lkto_spk.equalsIgnoreCase(leaderName) && !tempSpk.equalsIgnoreCase(leaderName)){
-//                    Double tempCount = localMapCount.get(tempSpk);
-//                    localMapCount.put(tempSpk, tempCount + 1); // count + 1
-//                }
-//            }
-//        }
-//        //4. build and add the local map of percent to the pop map.
-//        HashMap<String, Double> localMapDWL = new HashMap();
-//        localMapDWL.putAll(NameMap);
-//        if(totalDis > 0){
-//            for(String spk : localMapCount.keySet()){
-//                Double tempDisCount = localMapCount.get(spk);
-//                Double tempPerc = tempDisCount / totalDis;
-//                localMapDWL.put(spk, tempPerc);
-//            }
-//        }
-//
-//        //output
-//        ArrayList<ArrayList> DWLList = new ArrayList();
-//        DWLList = this.sortAndConvertMapToArrayList(localMapDWL);
-//        if(doFinalPrintOut){
-//            System.out.println("@DWL");
-//            for(ArrayList a : DWLList){
-//                System.out.println( (String)(a.get(0)) + " : " + (Double)(a.get(1)) );
-//            }
-//        }
-//        if(doAnalysisPrintOut){
-//            System.out.println("@DWL");
-//            System.out.println("total dis: " + totalDis);
-//            System.out.println("count map dis: " + localMapCount.toString());
-//            System.out.println("local DWL map before pop: " + localMapDWL);
-//            System.out.println(" pop map: " + PopMap.toString());
-//            System.out.println();
-//        }
-//        return localMapDWL;
-//    }
-    
     
     //    ======================================== sub level util methods =================================================
     
@@ -675,54 +545,7 @@ public class PursuitOfPower {
         return map;
     }
     
-    private void decidePopAndPrintEnglish(ArrayList<ArrayList> PopList){
-        ArrayList<Double> gaps = new ArrayList<Double>();
-        if(PopList.size() > 1){
-            Double gapsum = 0.0;
-            Double howMany = 0.0;
-            for(int i = 1; i <PopList.size(); i++){            
-                Double gap = (Double)PopList.get(i-1).get(1) - (Double)PopList.get(i).get(1);
-//                System.out.println((Double)PopList.get(i).get(1));
-//                System.out.println((Double)PopList.get(i-1).get(1));
-                gaps.add(gap);
-                if(i < 6){
-                    gapsum = gapsum + gap;
-                    howMany = (double)i;
-            }
-            }
-            
-            Double gapMean = gapsum / howMany;
-            
-            if(gapMean < 0.3){
-                System.out.println("no pop");
-            }else if(gaps.get(0) > ONE_OR_TWO_POP_GAP){
-                System.out.println((String)PopList.get(0).get(0));
-            }else{
-                System.out.println((String)PopList.get(0).get(0) + " , "  + (String)PopList.get(1).get(0));
-            }
-        }
-        
-    }
-    
-    private void decidePopAndPrintChinese(ArrayList<ArrayList> PopList){
-        ArrayList<Double> gaps = new ArrayList<Double>();
-        if(PopList.size() > 1){
-            for(int i = 1; i <PopList.size(); i++){            
-                Double gap = (Double)PopList.get(i-1).get(1) - (Double)PopList.get(i).get(1);
-//                System.out.println((Double)PopList.get(i).get(1));
-//                System.out.println((Double)PopList.get(i-1).get(1));
-                gaps.add(gap);
-//                System.out.println(gap);
-            }
-            
-            if(gaps.get(0) > ONE_OR_TWO_POP_GAP){
-                System.out.println((String)PopList.get(0).get(0));
-            }else{
-                System.out.println((String)PopList.get(0).get(0) + " , "  + (String)PopList.get(1).get(0));
-            }
-        }
-        
-    }
+
     
     /**
      * m2w: standard deviation version of decide and print.
@@ -876,35 +699,27 @@ public class PursuitOfPower {
     private HashMap<String, Speaker> parts;
     private Speaker leader;
     private HashMap<String, Double> NameMap; // an empty map, used for each local map initialization. 
-    private int timesAddedToPopMap = 0;
     private HashMap<String, Double> ITCMMap; // stroing itcm score, for average pop.
     private HashMap<String, Double> CDMMap; // stroing cdm score, for average pop.
-//    private HashMap<String, Double> DWLMap; // stroing dwl score, for average pop.
     private HashMap<String, Double> TFMMap; // stroing tfm score, for average pop.
-    private HashMap<String, Double> POMMap; // stroing pom score, for average pop.
     private HashMap<String, Double> ConfMap; // stroing Confirmation request score.
     private HashMap<String, Double> NCMMap; // stroing net work centrality score.
     private String language;
     
     //constants:
-    private final String DISAGREE_REJECT = "disagree-reject";
     private final String CONFIRMATION_REQUEST = "confirmation-request";
     private final String RESPONSE_TO = "response-to";
-    private final String OFFER_COMMIT = "offer-commit";
-    
+    //english weights
     private final Double ITCMWGT_EN = 0.80;
     private final Double CDMWGT_EN = 0.09;
     private final Double TFMWGT_EN = 0.01;
-    private final Double POMWGT_EN = 0.01;
     private final Double NCMWGT_EN = 0.09;
+    //chinese weights
+    private final Double ITCMWGT_CN = 0.12;
+    private final Double CDMWGT_CN = 0.12;
+    private final Double TFMWGT_CN = 0.70;
+    private final Double NCMWGT_CN = 0.06;
     
-    private final Double ITCMWGT_CN = 0.2;
-    private final Double CDMWGT_CN = 0.2;
-    private final Double TFMWGT_CN = 0.45;
-    private final Double POMWGT_CN = 0.00;
-    private final Double NCMWGT_CN = 0.15;
-    
-    private final Double ONE_OR_TWO_POP_GAP = 0.20;
     
     //mode control
 //    private final String MODE = "simple";//standard deviation
