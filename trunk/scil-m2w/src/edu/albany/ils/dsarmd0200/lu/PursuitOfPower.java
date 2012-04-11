@@ -31,6 +31,8 @@ public class PursuitOfPower {
         TFMMap = new HashMap<String, Double>();
         ConfMap = new HashMap<String, Double>();
         NCMMap = new HashMap<String, Double>();
+        PopOutList = new ArrayList<String>();
+        
         for(Utterance u : Utts){
             String tempSpk = u.getSpeaker();
             NameMap.put(tempSpk, 0.0);
@@ -63,15 +65,17 @@ public class PursuitOfPower {
                 }
             }
             System.out.println("@Pursuit of Power:");
-            
+            int confidence = 0;
             if (language.equalsIgnoreCase("english") && MODE.equals("std")){
                 this.decidePopAndPrintSTDEnglish(PopList);
-            }else if (language.equalsIgnoreCase("chinese") && MODE.equals("cov")){
+                confidence = this.calConfidenceEng(PopList);
+            }else if (language.equalsIgnoreCase("chinese") && MODE.equals("std")){
                 this.decidePopAndPrintSTDChinese(PopList);
+                confidence = this.calConfidenceEng(PopList);
             }
             
-            System.out.println("Confidence:");
-            System.out.println("0.7" );
+            System.out.println("@Confidence:");
+            System.out.println(confidence + "%" );
         }
         
     }
@@ -419,31 +423,6 @@ public class PursuitOfPower {
     }
     
     /**
-     * m2w: calculating average from several maps. 
-     * @param list
-     * @return 
-     */
-    private HashMap<String, Double> addingMapsAndAverageIt(ArrayList<HashMap<String, Double>> list){
-        HashMap<String, Double> averageMap = new HashMap<String, Double>();
-        averageMap.putAll(NameMap);
-        int size = list.size();
-        if(size > 0){
-            for(String spk : averageMap.keySet()){
-                Double tempTotal = 0.0;
-                for(HashMap<String, Double> tempMap : list){
-                    if(tempMap != null){
-                        tempTotal = tempTotal + tempMap.get(spk);
-                    }
-                }
-                Double tempAverage = tempTotal / (double) size;
-                averageMap.put(spk, tempAverage);
-            }
-        }
-        return averageMap;
-    }
-    
-    
-    /**
      * m2w: adding maps without averaging
      * @param list
      * @return 
@@ -545,8 +524,6 @@ public class PursuitOfPower {
         return map;
     }
     
-
-    
     /**
      * m2w: standard deviation version of decide and print.
      * @param PopList 
@@ -581,12 +558,6 @@ public class PursuitOfPower {
         sumSTD1 = avgWeight + tmpSTD1;
         sumSTD2 = avgWeight + tmpSTD2;
         
-//        Double p1score = (Double)PopList.get(0).get(1);
-//        Double p2score = (Double)PopList.get(1).get(1);
-        
-//        if(p1score > sumSTD1) hasPop = true; // judging.
-        
-//        if(hasPop){
         for(int i = 0; i < PopList.size(); i++){
             Double tempScore = (Double)PopList.get(i).get(1);
             String tempSpk = (String)PopList.get(i).get(0);
@@ -604,6 +575,7 @@ public class PursuitOfPower {
             for(int i = 0; i < outList.size() && i < 2 ; i ++){
                 String spk = outList.get(i);
                 System.out.print(parts.get(spk).getOriName() + " ");
+                PopOutList.add(spk);
             }
             System.out.println();
         }else{
@@ -654,12 +626,6 @@ public class PursuitOfPower {
         sumSTD1 = avgWeight + tmpSTD1;
         sumSTD2 = avgWeight + tmpSTD2;
         
-//        Double p1score = (Double)PopList.get(0).get(1);
-//        Double p2score = (Double)PopList.get(1).get(1);
-        
-//        if(p1score > sumSTD1) hasPop = true; // judging.
-        
-//        if(hasPop){
         for(int i = 0; i < PopList.size(); i++){
             Double tempScore = (Double)PopList.get(i).get(1);
             String tempSpk = (String)PopList.get(i).get(0);
@@ -677,6 +643,7 @@ public class PursuitOfPower {
             for(int i = 0; i < outList.size() && i < 2 ; i ++){
                 String spk = outList.get(i);
                 System.out.print(parts.get(spk).getOriName() + " ");
+                PopOutList.add(spk);
             }
             System.out.println();
         }else{
@@ -692,6 +659,61 @@ public class PursuitOfPower {
             System.out.println("sumstd2: " + sumSTD2);
         }
     }
+    
+    private int calConfidenceEng(ArrayList<ArrayList> PopList){
+        int confidence = 0;
+        ArrayList<ArrayList> itcmList = this.sortAndConvertMapToArrayList(ITCMMap);
+        ArrayList<ArrayList> cdmList = this.sortAndConvertMapToArrayList(CDMMap);
+        ArrayList<ArrayList> ncmList = this.sortAndConvertMapToArrayList(NCMMap);
+        ArrayList<ArrayList> tfmList = this.sortAndConvertMapToArrayList(TFMMap);
+        
+        if(PopOutList.isEmpty()){ confidence = 70;}
+        else if(PopOutList.size() == 1){
+            String pop = PopOutList.get(0);
+            if(pop.equalsIgnoreCase((String)itcmList.get(0).get(0))){confidence += 50;}
+            if(pop.equalsIgnoreCase((String)cdmList.get(0).get(0))){confidence += 20;}
+            if(pop.equalsIgnoreCase((String)ncmList.get(0).get(0))){confidence += 20;}
+            if(pop.equalsIgnoreCase((String)tfmList.get(0).get(0))){confidence += 10;}
+        }else if (PopOutList.size() > 1){
+            for(int i = 0; i < PopOutList.size(); i++){
+                String pop = PopOutList.get(i);
+                if(pop.equals((String)itcmList.get(i).get(0))){confidence += 25;}
+                if(pop.equals((String)cdmList.get(i).get(0))){confidence += 10;}
+                if(pop.equals((String)ncmList.get(i).get(0))){confidence += 10;}
+                if(pop.equals((String)tfmList.get(i).get(0))){confidence += 5;}
+            }
+        }
+        
+        return confidence;
+    }
+    
+    
+    private int calConfidenceChn(ArrayList<ArrayList> PopList){
+        int confidence = 0;
+        ArrayList<ArrayList> itcmList = this.sortAndConvertMapToArrayList(ITCMMap);
+        ArrayList<ArrayList> cdmList = this.sortAndConvertMapToArrayList(CDMMap);
+        ArrayList<ArrayList> ncmList = this.sortAndConvertMapToArrayList(NCMMap);
+        ArrayList<ArrayList> tfmList = this.sortAndConvertMapToArrayList(TFMMap);
+        
+        if(PopOutList.isEmpty()){ confidence = 70;}
+        else if(PopOutList.size() == 1){
+            String pop = PopOutList.get(0);
+            if(pop.equalsIgnoreCase((String)itcmList.get(0).get(0))){confidence += 12;}
+            if(pop.equalsIgnoreCase((String)cdmList.get(0).get(0))){confidence += 12;}
+            if(pop.equalsIgnoreCase((String)ncmList.get(0).get(0))){confidence += 6;}
+            if(pop.equalsIgnoreCase((String)tfmList.get(0).get(0))){confidence += 70;}
+        }else if (PopOutList.size() > 1){
+            for(int i = 0; i < PopOutList.size(); i++){
+                String pop = PopOutList.get(i);
+                if(pop.equals((String)itcmList.get(i).get(0))){confidence += 6;}
+                if(pop.equals((String)cdmList.get(i).get(0))){confidence += 6;}
+                if(pop.equals((String)ncmList.get(i).get(0))){confidence += 3;}
+                if(pop.equals((String)tfmList.get(i).get(0))){confidence += 35;}
+            }
+        }
+        
+        return confidence;
+    }
 //    =================================== vars and consts =============================================
     //variables:
     private HashMap<String, Double> PopMap; //where the precentage of each speaker are stored.
@@ -704,6 +726,7 @@ public class PursuitOfPower {
     private HashMap<String, Double> TFMMap; // stroing tfm score, for average pop.
     private HashMap<String, Double> ConfMap; // stroing Confirmation request score.
     private HashMap<String, Double> NCMMap; // stroing net work centrality score.
+    private ArrayList<String> PopOutList;
     private String language;
     
     //constants:
@@ -712,7 +735,7 @@ public class PursuitOfPower {
     //english weights
     private final Double ITCMWGT_EN = 0.80;
     private final Double CDMWGT_EN = 0.09;
-    private final Double TFMWGT_EN = 0.01;
+    private final Double TFMWGT_EN = 0.02;
     private final Double NCMWGT_EN = 0.09;
     //chinese weights
     private final Double ITCMWGT_CN = 0.12;
