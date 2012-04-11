@@ -639,7 +639,7 @@ public class PursuitOfPower {
         }
         
         int outsize = outList.size();
-        if(outsize > 0 && outsize < 4){
+        if(outsize > 0 && outsize < 3){
             for(int i = 0; i < outList.size() && i < 2 ; i ++){
                 String spk = outList.get(i);
                 System.out.print(parts.get(spk).getOriName() + " ");
@@ -738,10 +738,10 @@ public class PursuitOfPower {
     private final Double TFMWGT_EN = 0.02;
     private final Double NCMWGT_EN = 0.09;
     //chinese weights
-    private final Double ITCMWGT_CN = 0.12;
-    private final Double CDMWGT_CN = 0.12;
-    private final Double TFMWGT_CN = 0.70;
-    private final Double NCMWGT_CN = 0.06;
+    private final Double ITCMWGT_CN = 0.04;
+    private final Double CDMWGT_CN = 0.04;
+    private final Double TFMWGT_CN = 0.90;
+    private final Double NCMWGT_CN = 0.02;
     
     
     //mode control
