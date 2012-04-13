@@ -70,7 +70,6 @@ public class PursuitOfPower {
                 this.decidePopAndPrintSTDEnglish(PopList);
                 confidence = this.calConfidenceEng(PopList);
             }else if (language.equalsIgnoreCase("chinese")){
-                this.decidePopAndPrintChinese(PopList);
                 this.decidePopAndPrintSTDChinese(PopList);
                 confidence = this.calConfidenceEng(PopList);
             }
@@ -528,23 +527,23 @@ public class PursuitOfPower {
         return map;
     }
     
-    private void decidePopAndPrintChinese(ArrayList<ArrayList> PopList){
-        ArrayList<Double> gaps = new ArrayList<Double>();
-        if(PopList.size() > 1){
-            for(int i = 1; i <PopList.size(); i++){            
-                Double gap = (Double)PopList.get(i-1).get(1) - (Double)PopList.get(i).get(1);
-                gaps.add(gap);
-            }
-            
-            if(gaps.get(0) > ONE_OR_TWO_POP_GAP){
-                System.out.println((String)PopList.get(0).get(0));
-            }else{
-                System.out.println((String)PopList.get(0).get(0) + " , "  + (String)PopList.get(1).get(0));
-            }
-        }
-        
-    }
-    
+//    private void decidePopAndPrintChinese(ArrayList<ArrayList> PopList){
+//        ArrayList<Double> gaps = new ArrayList<Double>();
+//        if(PopList.size() > 1){
+//            for(int i = 1; i <PopList.size(); i++){            
+//                Double gap = (Double)PopList.get(i-1).get(1) - (Double)PopList.get(i).get(1);
+//                gaps.add(gap);
+//            }
+//            
+//            if(gaps.get(0) > ONE_OR_TWO_POP_GAP){
+//                System.out.println((String)PopList.get(0).get(0));
+//            }else{
+//                System.out.println((String)PopList.get(0).get(0) + " , "  + (String)PopList.get(1).get(0));
+//            }
+//        }
+//        
+//    }
+//    
     /**
      * m2w: standard deviation version of decide and print.
      * @param PopList 
@@ -622,9 +621,9 @@ public class PursuitOfPower {
      */
     private void decidePopAndPrintSTDChinese(ArrayList<ArrayList> PopList){
         
-        PopList = this.exclude2PplChating(PopList);
-        PopList = this.excludePplisnotPop(PopList);
-        PopList = this.increaseScoreSpk1(PopList);
+//        PopList = this.exclude2PplChating(PopList);
+//        PopList = this.excludePplisnotPop(PopList);
+//        PopList = this.increaseScoreSpk1(PopList);
         
         Double totalWeight = 0.0;
         Double avgWeight = 0.0;
@@ -767,21 +766,16 @@ public class PursuitOfPower {
     private ArrayList<ArrayList> exclude2PplChating(ArrayList<ArrayList> PopList){
         //loop through pop list's speakers
         if(Utts.size() > 40){//if file is big
-//            System.out.println("+in excluding > 40");
             HashSet<String> deleteSet = new HashSet<String>();
             for(int i = 0; i < PopList.size(); i++){
                 String spk = (String)PopList.get(i).get(0);
-//                System.out.println("+curr spk " + spk);
                 ArrayList<Utterance> spkUttList = parts.get(spk).getUtts_();
                 
                 //calculate gap & sub speaker turns
                 if(spkUttList.size() > 10){
-//                    System.out.println("+curr spk" + spk);
-//                    System.out.println("+in size> 10" );
                     HashMap<String, Integer> subSpeakerMap = new HashMap<String , Integer>();
                     Integer start = Integer.parseInt(spkUttList.get(0).getTurn());
                     Integer end = Integer.parseInt(spkUttList.get(spkUttList.size() - 1).getTurn());
-//                    System.out.println("+" + start + " " + end);
                     //within the gap
                     //build sub map
                     for(int j = start; j < end; j++){
@@ -799,7 +793,6 @@ public class PursuitOfPower {
                     for(String subSpk : subSpeakerMap.keySet()){
                         int subSpkTurns = subSpeakerMap.get(subSpk);
                         Double subSpkPercent = (double)subSpkTurns / (double)(end - start);
-//                        System.out.println("+spk: " +spk + ", sub:" + subSpk + ", perc: " + subSpkPercent + ", turns: " + subSpkTurns);
                         if(subSpkPercent > 0.35){
                             deleteSet.add(spk);
                             deleteSet.add(subSpk);
@@ -807,7 +800,6 @@ public class PursuitOfPower {
                     }
                 }
             }//closes pop list loop
-//            System.out.println("+delete:" + deleteSet.toString());
             for(int i = 0; i < PopList.size(); i++){
                 String spk = (String)PopList.get(i).get(0);
                 if(deleteSet.contains(spk)){
@@ -816,7 +808,6 @@ public class PursuitOfPower {
                 }
             }
         }//closes file size > 40 utts
-//        System.out.println(PopList.toString());
         return PopList;
     }
     
@@ -825,7 +816,6 @@ public class PursuitOfPower {
      */
     private ArrayList<ArrayList> excludePplisnotPop(ArrayList<ArrayList> PopList){
         if(Utts.size() > 15){
-//            System.out.println("-in exclude ppl");
             HashSet<String> deleteSet = new HashSet<String>();
             for(int i = 0; i < PopList.size(); i++){
                 String spk = (String)PopList.get(i).get(0);
@@ -834,7 +824,6 @@ public class PursuitOfPower {
                 Integer end = Integer.parseInt(spkUttList.get(spkUttList.size() - 1).getTurn());
                 Double sizePerc = (double)spkUttList.size() / (double)Utts.size();
                 Double gapPerc = (double)(end-start) / (double)Utts.size();
-//                System.out.println("-spk " + spk +" sizeperc: " + sizePerc + " gapPerc: " + gapPerc)  ;
                 if(sizePerc > 0 && sizePerc < 0.07 && gapPerc < 0.15 && gapPerc > 0){
                     //if involved ppl is few then delete this ppl
                     HashSet<String> subSpkSet = new HashSet<String>();
@@ -848,14 +837,12 @@ public class PursuitOfPower {
                     }
                     
                     Double subSpkPercent = (double)subSpkSet.size() / (double)PopList.size();
-//                    System.out.println("--sub prec" + subSpkPercent + "subset: " + subSpkSet);
                     if(subSpkPercent > 0 && subSpkPercent < 0.2){
                         deleteSet.add(spk);
                     }
                 }
             }
             
-//            System.out.println("-deleteset: " + deleteSet);
             for(int i = 0; i < PopList.size(); i++){
                 String spk = (String)PopList.get(i).get(0);
                 if(deleteSet.contains(spk)){
@@ -863,7 +850,6 @@ public class PursuitOfPower {
                 }
             }
         }//closes if
-//        System.out.println(PopList.toString());
         return PopList;
     }
         
@@ -874,7 +860,6 @@ public class PursuitOfPower {
      */
     private ArrayList<ArrayList> increaseScoreSpk1(ArrayList<ArrayList> PopList){
         if(Utts.size() > 10){
-//            System.out.println("=in increase ");
             HashSet<String>  increaseSet= new HashSet<String>();
             for(int i = 0; i < PopList.size(); i++){
                 String spk = (String)PopList.get(i).get(0);
@@ -884,7 +869,6 @@ public class PursuitOfPower {
                 Integer end = Integer.parseInt(spkUttList.get(spkUttList.size() - 1).getTurn());
                 Double sizePerc = (double)spkUttList.size() / (double)Utts.size();
                 Double gapPerc = (double)(end-start) / (double)Utts.size();
-//                System.out.println("-spk " + spk +" sizeperc: " + sizePerc + " gapPerc: " + gapPerc)  ;
                 if(sizePerc > 0.07 && gapPerc > 0.15){
                     //if involved ppl is few then delete this ppl
                     HashSet<String> subSpkSet = new HashSet<String>();
@@ -914,7 +898,6 @@ public class PursuitOfPower {
                 }
             }
             
-//            System.out.println("=increaseSet: " + increaseSet);
             for(int i = 0; i < PopList.size(); i++){
                 String spk = (String)PopList.get(i).get(0);
                 if(increaseSet.contains(spk)){
@@ -923,7 +906,6 @@ public class PursuitOfPower {
                 }
             }
         }//closes if
-//        System.out.println(PopList.toString());
         return PopList;
     }
     
@@ -957,10 +939,9 @@ public class PursuitOfPower {
     private final Double TFMWGT_CN = 0.90;
     private final Double NCMWGT_CN = 0.02;
     
-    private final Double ONE_OR_TWO_POP_GAP = 0.20;
     
     //print out control:
-    private boolean doSTDdebuggingPrintOut = true;
+    private boolean doSTDdebuggingPrintOut = false;
     private boolean doAnalysisPrintOut = false;
     private boolean doFinalPrintOut = true;
 }

@@ -21,7 +21,9 @@ public class ExpressiveDisagreement {
 	utts_ = utts;
     }
     /*********************************get attributes**********************/
-
+    public double percentageOfDis() {
+        return cedi.percentageOfDis();
+    }
     /*********************************set attributes**********************/
     public void calDRI() {
 	DisagreeRejectIndex dri = new DisagreeRejectIndex(utts_);
@@ -30,10 +32,11 @@ public class ExpressiveDisagreement {
 
     public void calCEDI(PtsReportXMLParser prxmlp, ArrayList spks,
 			HashMap<String, Speaker> parts) {
-	CumulativeEDisagreementIndex cedi = new CumulativeEDisagreementIndex(utts_);
+	cedi = new CumulativeEDisagreementIndex(utts_);
 	cedi.calCEDI(prxmlp, spks, parts);
     }
     /*******************************   Attributes  **************************/
     HashMap<String, Speaker> spks_ = null; //the speaker who has this control
     ArrayList utts_ = null;
+    CumulativeEDisagreementIndex cedi = null;
 }

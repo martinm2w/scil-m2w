@@ -20,6 +20,7 @@ public class DirectiveIndex {
     /*********************************get attributes**********************/
     public double getDI() { return di_; }
     public double getCount() { return ac_oc_; }
+    public double getTotalCount() {return total_ac_oc_;}
 
     /*********************************set attributes**********************/
     public void initialize(double total_ac_oc,
@@ -60,10 +61,8 @@ public class DirectiveIndex {
 		}
 	    }
 	}
-	if (total_ac_oc_ != 0){ 
-	    //System.out.println("Actual DI " + spk_.getName() + " is: " + ((double)ac_oc_));
-	   di_ = ((double)ac_oc_)/total_ac_oc_;
-         }
+	if (total_ac_oc_ != 0) 
+	    di_ = ((double)ac_oc_)/total_ac_oc_;
 	else di_ = -1;
 	//System.out.println("The di of " + spk_.getName() + " is: " + di_);
     }

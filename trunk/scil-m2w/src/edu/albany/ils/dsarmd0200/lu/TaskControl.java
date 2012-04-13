@@ -21,6 +21,9 @@ public class TaskControl {
     /**
      * *******************************get attributes*********************
      */
+    public double getTotalAcOc() {
+        return total_ac_oc_;
+    }
     /**
      * *******************************set attributes*********************
      */
@@ -474,7 +477,7 @@ public class TaskControl {
                 }
             }
         }
-        if (over_thr || over_str_thr) {
+        if (total_ac_oc_ >= str_threshold_) { //modified by TL 04/12/12
             evaluate(dis, dis_count, spks, over_thr, over_str_thr, prxmlp, ordered_spks);
             return true;
         }
@@ -623,7 +626,7 @@ public class TaskControl {
             }
         }
         //System.out.println("task control: " + rank);
-        if ((total_ac_oc_ < 4
+        if ((total_ac_oc_ < str_threshold_ //changed from 4 by TL 4/12/12
                 || !over_thr)
                 && !over_str_thr) {
             for (int j = 0; j < dis.size(); j++) {
@@ -1000,6 +1003,6 @@ public class TaskControl {
     ArrayList<Utterance> utts_ = null;
     int str_threshold_ = 3;
     int str_threshold_QA_ = 1;
-    int threshold_ = 2;
+    int threshold_ = 1; //changed to 1 from 2 by TL 04/12/2012
     int threshold_QA_ = 1;
 }
