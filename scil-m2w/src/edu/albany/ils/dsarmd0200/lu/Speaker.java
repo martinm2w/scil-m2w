@@ -26,11 +26,11 @@ public class Speaker {
     /*******************************get information**************************/
     public String getName() { return name_; }
     public String getOriName() { return ori_name_; }
-    public ArrayList<Utterance> getUtterances() {return utts_;}
+    public ArrayList<Utterance> getUtterances() {return getUtts_();}
     public String getUtts() {
         StringBuffer cont = new StringBuffer();
         cont.append(name_ /*+ " speaked in the discussion:\n"*/);
-        for (Utterance utt:utts_) {
+        for (Utterance utt:getUtts_()) {
             cont.append(utt.getContent() + "\n");
         }
         return cont.toString().trim();
@@ -184,7 +184,7 @@ public class Speaker {
 	}
     }
     public void setAllUtts(ArrayList utts) { all_utts_ = utts; } //1/26/2011
-    public void addUtterance(Utterance utt) {utts_.add(utt);}
+    public void addUtterance(Utterance utt) {getUtts_().add(utt);}
     public void addLnkUtterance(Utterance utt) {lnk_utts_.add(utt);}
     public void addNoun(NounToken nt) { if (!nls_.contains(nt)) nls_.add(nt); }
     public void calTpCtl(LocalTopics lcs_,
@@ -214,8 +214,8 @@ public class Speaker {
     }
     public void collTPPolarities(ArrayList topics) {
 	//System.out.println("utts size: " + utts_.size());
-	for (int i = 0; i < utts_.size(); i++) {
-	    Utterance utt = (Utterance)utts_.get(i);
+	for (int i = 0; i < getUtts_().size(); i++) {
+	    Utterance utt = (Utterance)getUtts_().get(i);
 	    String pola = null;
 	    if (Settings.getValue(Settings.PROCESS_TYPE).equals("annotated")) {
 		pola = utt.getPolarity(); //from human annotated
@@ -370,7 +370,7 @@ public class Speaker {
     }
 
     public void calATX() {
-	agr_.calATX(utts_, all_utts_);
+	agr_.calATX(getUtts_(), all_utts_);
     }
 
     public void calLeadership() {
@@ -771,6 +771,13 @@ public class Speaker {
      */
     public double getLnkto_disagreement_() {
         return lnkto_disagreement_;
+    }
+
+    /**
+     * @return the utts_
+     */
+    public ArrayList<Utterance> getUtts_() {
+        return utts_;
     }
     /********************************************/
 }
