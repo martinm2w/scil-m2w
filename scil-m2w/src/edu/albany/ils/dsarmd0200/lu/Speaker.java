@@ -20,20 +20,39 @@ public class Speaker {
     public Speaker(String name, String ori_name) {
 	name_ = name;
         ori_name_ = ori_name;
+        leadership_.setSpeaker(this);
         //System.out.println("ori_name: " + ori_name_);
     }
 
     /*******************************get information**************************/
     public String getName() { return name_; }
     public String getOriName() { return ori_name_; }
-    public ArrayList<Utterance> getUtterances() {return getUtts_();}
+    public ArrayList<Utterance> getUtterances() {return utts_;}
     public String getUtts() {
         StringBuffer cont = new StringBuffer();
         cont.append(name_ /*+ " speaked in the discussion:\n"*/);
-        for (Utterance utt:getUtts_()) {
+        for (Utterance utt:utts_) {
             cont.append(utt.getContent() + "\n");
         }
         return cont.toString().trim();
+    }
+    public int sizeofInvTopics() {
+        ArrayList topics = new ArrayList();
+        for (Utterance utt: utts_) {
+            if (utt.getCommActType().equalsIgnoreCase("addressed-to")) {
+                if (!topics.contains(utt)) {topics.add(utt);}
+                else {
+                    Utterance tmp_utt = getUtterance(utt.getRespTo());
+                    while (tmp_utt != null && !tmp_utt.getCommActType().equalsIgnoreCase("addressed-to")) {
+                        tmp_utt = getUtterance(utt.getRespTo());
+                    }
+                    if (tmp_utt != null && !topics.contains(tmp_utt)) {
+                        topics.add(tmp_utt);
+                    }
+                }
+            }
+        }
+        return topics.size();
     }
     public ArrayList<Utterance> getLnkUtterances() {return lnk_utts_;}
     public LocalTopics getILTs() {return ilts_;}
@@ -47,7 +66,7 @@ public class Speaker {
 		if (Util.filterIt(name_, nt)){
 		    continue;
 		}
-                if (ilt.getMentions().size() <= 1) continue; //added by TL 03/28/12
+                if (ilt.getMentions().size() <= 1) continue; //added by TL 03/28/12 
 		//}
 	    size++;
 	}
@@ -117,6 +136,13 @@ public class Speaker {
 	}
 	return count;
     }
+    
+    public Utterance getUtterance(String turn) {
+        for (Utterance utt: all_utts_) {
+            if (utt.getTurn().equals(turn)) {return utt;}
+        }
+        return null;
+    }
     public TopicControl getTC() { return tc_; }
     public ArrayList getNounList() { return nls_; }
     public Involvement getInv() { return inv_; }
@@ -184,7 +210,7 @@ public class Speaker {
 	}
     }
     public void setAllUtts(ArrayList utts) { all_utts_ = utts; } //1/26/2011
-    public void addUtterance(Utterance utt) {getUtts_().add(utt);}
+    public void addUtterance(Utterance utt) {utts_.add(utt);}
     public void addLnkUtterance(Utterance utt) {lnk_utts_.add(utt);}
     public void addNoun(NounToken nt) { if (!nls_.contains(nt)) nls_.add(nt); }
     public void calTpCtl(LocalTopics lcs_,
@@ -214,8 +240,8 @@ public class Speaker {
     }
     public void collTPPolarities(ArrayList topics) {
 	//System.out.println("utts size: " + utts_.size());
-	for (int i = 0; i < getUtts_().size(); i++) {
-	    Utterance utt = (Utterance)getUtts_().get(i);
+	for (int i = 0; i < utts_.size(); i++) {
+	    Utterance utt = (Utterance)utts_.get(i);
 	    String pola = null;
 	    if (Settings.getValue(Settings.PROCESS_TYPE).equals("annotated")) {
 		pola = utt.getPolarity(); //from human annotated
@@ -370,7 +396,7 @@ public class Speaker {
     }
 
     public void calATX() {
-	agr_.calATX(getUtts_(), all_utts_);
+	agr_.calATX(utts_, all_utts_);
     }
 
     public void calLeadership() {
@@ -442,7 +468,7 @@ public class Speaker {
 	    }
 	    diff_from_first = first - second;
 	    diff_from_third = second - getDI(); 
-	    if (diff_from_first < diff_from_third) {//modified by TL 09/01/11 < to <=
+	    if (diff_from_first <= diff_from_third) {//modified by TL 09/01/11 < to <=
 		spk2.getLeadershipInfo().setTaskControl2R(2); //modified by TL 09/01/11 before is leadership_....
 	    }
 	}else {
@@ -460,11 +486,12 @@ public class Speaker {
 		if (spk.equals(this)) continue;
 		if (spk.getEXDRank() == 1) {
 		    diff_from_first = spk.getDisagreement() - getDisagreement();
-		} else if (spk.getEXDRank() == 3) {
+		} else if (getDisagreement() > spk.getDisagreement() &&
+                        diff_from_third < getDisagreement() - spk.getDisagreement()) {
 		    diff_from_third = getDisagreement() - spk.getDisagreement();
 		}
 	    }
-	    if (diff_from_first < diff_from_third) {//modified by TL 09/01/11 < to <=
+	    if (diff_from_first <= diff_from_third) {//modified by TL 09/01/11 < to <=
 		leadership_.setDisagreement2R(rank);
 	    }
 	} else {
@@ -482,7 +509,8 @@ public class Speaker {
 		if (spk.equals(this)) continue;
 		if (spk.getINVRank() == 1) {
 		    diff_from_first = spk.getInv().getPower() - getInv().getPower();
-		} else if (spk.getINVRank() == 3) {
+		} else if (getInv().getPower() > spk.getINVRank() &&
+                        diff_from_third < getInv().getPower() - spk.getInv().getPower()) {
 		    diff_from_third =  getInv().getPower() - spk.getInv().getPower();
 		}
 	    }
@@ -493,6 +521,15 @@ public class Speaker {
 	    leadership_.setInvolvementR(rank);
 	}
     }
+
+    public int getLnk_exd_rank() {
+        return lnk_exd_rank;
+    }
+
+    public void setLnk_exd_rank(int lnk_exd_rank) {
+        this.lnk_exd_rank = lnk_exd_rank;
+    }
+    
     public void incAgreed() { agreed_ += 1; }
      
     public void setnewVri(double d){this.newvri=d;}
@@ -704,6 +741,7 @@ public class Speaker {
     public double getDPM () { return DPM; }
     public void setPRM (double prm) { if (PRM < prm) PRM = prm; /*System.out.println("prm: " + PRM);*/}
     public double getPRM () { return PRM; }
+    public TensionFocus getTension() {return tf_;}
 
     /*******************************   Attributes  **************************/
     private String name_ = null;
@@ -736,6 +774,7 @@ public class Speaker {
     private int tkc_rank = -1;
     private int exd_rank = -1;
     private int inv_rank = -1;
+    private int lnk_exd_rank = -1;
     private double agreed_ = 0;
 
     private double DPM = 0;
@@ -753,6 +792,8 @@ public class Speaker {
     private double newmti;
     private double newnet_centr;
     private double newewi;
+    
+    private TensionFocus tf_ = new TensionFocus(this);
     /******************************************
      * Add by Peng
      */
@@ -772,7 +813,6 @@ public class Speaker {
     public double getLnkto_disagreement_() {
         return lnkto_disagreement_;
     }
-
     /**
      * @return the utts_
      */

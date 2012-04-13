@@ -319,6 +319,8 @@ public class Utterance implements DialogAct {
     }
 
     public void setUtterance(String content) {
+        //content = content.replaceAll("[\n\r]+", " ");
+        content = content.replaceAll("[ ]+", " ");
 	this.content = content;
     }
     

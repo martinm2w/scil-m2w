@@ -12,7 +12,7 @@ import edu.albany.ils.dsarmd0200.util.xml.*;
 import java.util.*;
 
 public class CumulativeEDisagreementIndex {
-
+    
     public CumulativeEDisagreementIndex(ArrayList utts) {
         utts_ = utts;
     }
@@ -20,6 +20,10 @@ public class CumulativeEDisagreementIndex {
     /**
      * *******************************get attributes*********************
      */
+    
+    public double percentageOfDis() {
+        return ((double)total_dri_)/utts_.size();
+    }
     /**
      * *******************************set attributes*********************
      */
@@ -30,16 +34,25 @@ public class CumulativeEDisagreementIndex {
             System.out.println("parts are null!!!!");
             return;
         }
-        collectInfo();
+        collectInfo(parts);
         calDis(spks, parts, dris_, false); //calculate outgoing links of expressive disagreement
         genQuintileSc(prxmlp, spks, parts, false);
         calDis(spks, parts, respto_dris_, true);
+        genQuintileSc(prxmlp, spks, parts, true);
+        ArrayList<String> keys = new ArrayList(Arrays.asList(parts.keySet().toArray()));
+        /*
+        for (String key: keys) {
+            System.out.println(parts.get(key).getTension().showDistributions());
+        }
+        * 
+        */
         //genQuintileSc(prxmlp, spks, parts, true); //calculate ingoing links of expressive disagreement
         //System.out.println("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%");
         //System.out.println("++++++++++++++++++++++++++++++++\ncalculate Expressive Disagreement - CDXI quintile");
+        //System.out.println("percentage of disagreement:" + ((double)total_dri_)/utts_.size());
     }
-
-    public void collectInfo() {
+    
+    public void collectInfo(HashMap<String, Speaker> parts) {
         int total_pl_neg = 0;
         int total_ex_dis = 0;
         int total_count = 0;
@@ -52,7 +65,7 @@ public class CumulativeEDisagreementIndex {
                     || (utt_.getTag().toLowerCase().indexOf(DATagger.NDISAGREE_REJECT1) != -1) || //1/26/2011
                     (utt_.getTag().toLowerCase().indexOf(DATagger.NDISAGREE_REJECT2) != -1)/*
                      * || //1/26/2011
-                    utt_.getPolarity().equalsIgnoreCase("negative")
+                     * utt_.getPolarity().equalsIgnoreCase("negative")
                      */) {
                 //System.out.println("utt_.getTag(): " + utt_.getTag() + " ============= " + utt_.getContent());
 		/*
@@ -76,6 +89,8 @@ public class CumulativeEDisagreementIndex {
                 //System.out.println("respto_spk: " + respto_spk);
                 if (respto_spk != null) {
                     dis_count = (Integer) respto_dris_.get(respto_spk);
+                    Speaker resp_spk = parts.get(respto_spk);
+                    resp_spk.getTension().addDistribution(cur_spk);
                     if (dis_count == null) {
                         dis_count = new Integer(0);
                     }
@@ -98,7 +113,7 @@ public class CumulativeEDisagreementIndex {
         //System.out.println("utts_count:\n" + utts_count_);
         //System.out.println("dris_count:\n" + dris_);
     }
-
+    
     public void calDis(ArrayList spks,
             HashMap<String, Speaker> parts,
             HashMap dris_,
@@ -126,14 +141,16 @@ public class CumulativeEDisagreementIndex {
                     continue;
                 }
                 if (!in) {
-                parts.get(key).setDisagreement(dis_count.doubleValue() / total_dri_);
+                    parts.get(key).setDisagreement(dis_count.doubleValue() / total_dri_);
                 } else {
-                parts.get(key).setLnktoDisagreement(dis_count.doubleValue()/total_dri_);    
+                    parts.get(key).getTension().setCount(dis_count);
+                    parts.get(key).setLnktoDisagreement(dis_count.doubleValue() / total_dri_);
+                    parts.get(key).getTension().setScore(dis_count.doubleValue() / total_dri_);
                 }
             } else {
                 dris_sc_.put(key, new Double(-1));
                 if (!in) {
-                parts.get(key).setDisagreement(-1);
+                    parts.get(key).setDisagreement(-1);
                 } else {
                     parts.get(key).setLnktoDisagreement(-1);
                 }
@@ -144,7 +161,7 @@ public class CumulativeEDisagreementIndex {
                 if (over_thr) {
                     dris_sc_.put(spks.get(i), new Double(0));
                     if (!in) {
-                    parts.get(spks.get(i)).setDisagreement(0);
+                        parts.get(spks.get(i)).setDisagreement(0);
                     } else {
                         parts.get(spks.get(i)).setLnktoDisagreement(0);
                     }
@@ -155,13 +172,14 @@ public class CumulativeEDisagreementIndex {
                     if (!in) {
                         parts.get(spks.get(i)).setDisagreement(-1);
                     } else {
-                    parts.get(spks.get(i)).setLnktoDisagreement(-1);
+                        parts.get(spks.get(i)).setLnktoDisagreement(-1);
+                        parts.get(spks.get(i)).getTension().setScore(-1);
                     }
                 }
             }
         }
     }
-
+    
     public void calLnkDis(ArrayList utts) {
         ArrayList lnk_tos = new ArrayList();
         int count = 0;
@@ -177,7 +195,7 @@ public class CumulativeEDisagreementIndex {
         }
         //System.out.println("size of linked disagreements: " + count);
     }
-
+    
     public void genQuintileSc(PtsReportXMLParser prxmlp, ArrayList spknms, HashMap<String, Speaker> parts,
             boolean in) {
         Iterator keys = dris_sc_.keySet().iterator();
@@ -256,11 +274,16 @@ public class CumulativeEDisagreementIndex {
                 int index = spknms.indexOf(spks.get(j));
                 String spk = (String) spknms.get(index);
                 ArrayList val_evi = new ArrayList();
+                if (!in) {
                 parts.get(spk).setEXDRank(-1);
+                } else {
+                    parts.get(spk).setLnk_exd_rank(-1);
+                    continue;
+                }
                 if (di > qt_thrs[0]) {
                     qt_dis.add(new Integer(5));
                     val_evi.add(5);
-                    val_evi.add("Participant " + spk + " contributes " + di * 100 + "% of CDX Index;");
+                    val_evi.add("Participant " + parts.get(spk).getOriName() + " contributes " + di * 100 + "% of CDX Index;");
                     qscs.put(index + "_" + spks.get(j), val_evi);
                     // modified by Laura, Apirl 13, 2011
                     System.out.println(/*
@@ -271,7 +294,7 @@ public class CumulativeEDisagreementIndex {
                 } else if (di == qt_thrs[0]) {
                     qt_dis.add(new Integer(3));
                     val_evi.add(3);
-                    val_evi.add("Participant " + spk + " contributes " + di * 100 + "% of CDX Index;");
+                    val_evi.add("Participant " + parts.get(spk).getOriName() + " contributes " + di * 100 + "% of CDX Index;");
                     qscs.put(index + "_" + spks.get(j), val_evi);
                     // modified by Laura, Apirl 13, 2011
                     System.out.println(/*
@@ -282,7 +305,7 @@ public class CumulativeEDisagreementIndex {
                 } else if (di < qt_thrs[1]) {
                     qt_dis.add(new Integer(1));
                     val_evi.add(1);
-                    val_evi.add("Participant " + spk + " contributes " + di * 100 + "% of CDX Index;");
+                    val_evi.add("Participant " + parts.get(spk).getOriName() + " contributes " + di * 100 + "% of CDX Index;");
                     qscs.put(index + "_" + spks.get(j), val_evi);
                     // modified by Laura, Apirl 13, 2011
                     System.out.println(/*
@@ -301,13 +324,18 @@ public class CumulativeEDisagreementIndex {
                 }
                 String spk = (String) spknms.get(index);
                 ArrayList val_evi = new ArrayList();
+                if (!in) {
                 parts.get(spk).setEXDRank(rank.get(j).intValue());
+                } else {
+                    parts.get(spk).setLnk_exd_rank(rank.get(j));
+                    continue;
+                }
                 if (qt_thrs[0] == qt_thrs[1]
                         && qt_thrs[1] == qt_thrs[2]
                         && di == qt_thrs[0]) {
                     qt_dis.add(new Integer(4));
                     val_evi.add(4);
-                    val_evi.add("Participant " + spk + " contributes " + di * 100 + "% of CDX Index;");
+                    val_evi.add("Participant " + parts.get(spk).getOriName() + " contributes " + di * 100 + "% of CDX Index;");
                     qscs.put(index + "_" + spks.get(j), val_evi);
                     // modified by Laura, Apirl 13, 2011
                     System.out.println(/*
@@ -318,7 +346,7 @@ public class CumulativeEDisagreementIndex {
                 } else if (di > qt_thrs[0]) {
                     qt_dis.add(new Integer(5));
                     val_evi.add(5);
-                    val_evi.add("Participant " + spk + " contributes " + di * 100 + "% of CDX Index;");
+                    val_evi.add("Participant " + parts.get(spk).getOriName() + " contributes " + di * 100 + "% of CDX Index;");
                     qscs.put(index + "_" + spks.get(j), val_evi);
                     // modified by Laura, Apirl 13, 2011
                     System.out.println(/*
@@ -330,7 +358,7 @@ public class CumulativeEDisagreementIndex {
                         && di > qt_thrs[1]) {
                     qt_dis.add(new Integer(4));
                     val_evi.add(4);
-                    val_evi.add("Participant " + spk + " contributes " + di * 100 + "% of CDX Index;");
+                    val_evi.add("Participant " + parts.get(spk).getOriName() + " contributes " + di * 100 + "% of CDX Index;");
                     qscs.put(index + "_" + spks.get(j), val_evi);
                     // modified by Laura, Apirl 13, 2011
                     System.out.println(/*
@@ -342,7 +370,7 @@ public class CumulativeEDisagreementIndex {
                         && di > qt_thrs[2]) {
                     qt_dis.add(new Integer(3));
                     val_evi.add(3);
-                    val_evi.add("Participant " + spk + " contributes " + di * 100 + "% of CDX Index;");
+                    val_evi.add("Participant " + parts.get(spk).getOriName() + " contributes " + di * 100 + "% of CDX Index;");
                     qscs.put(index + "_" + spks.get(j), val_evi);
                     // modified by Laura, Apirl 13, 2011
                     System.out.println(/*
@@ -354,7 +382,7 @@ public class CumulativeEDisagreementIndex {
                         && di > qt_thrs[3]) {
                     qt_dis.add(new Integer(2));
                     val_evi.add(2);
-                    val_evi.add("Participant " + spk + " contributes " + di * 100 + "% of CDX Index;");
+                    val_evi.add("Participant " + parts.get(spk).getOriName() + " contributes " + di * 100 + "% of CDX Index;");
                     qscs.put(index + "_" + spks.get(j), val_evi);
                     // modified by Laura, Apirl 13, 2011
                     System.out.println(/*
@@ -365,7 +393,7 @@ public class CumulativeEDisagreementIndex {
                 } else if (di <= qt_thrs[3]) {
                     qt_dis.add(new Integer(1));
                     val_evi.add(1);
-                    val_evi.add("Participant " + spk + " contributes " + di * 100 + "% of CDX Index;");
+                    val_evi.add("Participant " + parts.get(spk).getOriName() + " contributes " + di * 100 + "% of CDX Index;");
                     qscs.put(index + "_" + spks.get(j), val_evi);
                     // modified by Laura, Apirl 13, 2011
                     System.out.println(/*
@@ -379,7 +407,7 @@ public class CumulativeEDisagreementIndex {
         prxmlp.setExpressiveDisagreementClaim(qscs);
     }
     /**
-     * ***************************** Attributes  *************************
+     * ***************************** Attributes *************************
      */
     private int total_dri_ = 0; //direct index
     private HashMap dris_ = new HashMap(); //outgoing disagreements

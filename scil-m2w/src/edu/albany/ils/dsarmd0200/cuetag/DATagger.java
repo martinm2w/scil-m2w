@@ -28,7 +28,7 @@ public class DATagger {
     private HashMap totalMap; 
     final static int LENGTH_LIMIT = 25; //if the input string/utterance is longer than 25 words, it will be discarded
     final static String NL = System.getProperty("line.separator");
-    public String path ="/home/ruobo/develop/scil0200/swbd_202k_42tags_noplus.txt.ngram";
+    public String path ="/home/ting/develop/deer/data/swbd_202k_42tags_noplus.txt.ngram";
     public final static String DATAG = "datag";
     public final static String POLARITY = "polairty";
     public final static String COMMACT = "comact";

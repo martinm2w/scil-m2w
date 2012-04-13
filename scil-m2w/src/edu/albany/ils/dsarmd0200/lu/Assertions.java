@@ -172,7 +172,7 @@ public class Assertions {
                         }
                     }
                 }
-
+                size_agrees_ = 0;
 
                 for (int j = 0; j < utts_.size(); j++) {
                     Utterance utt_ = utts_.get(j);
@@ -185,6 +185,8 @@ public class Assertions {
                     String tmpTagged = "";
                     if ((Settings.getValue(Settings.LANGUAGE)).equals("english")) {
                         //tmpTagged=StanfordPOSTagger.tagString(noEmotes);
+
+                        checkAgrees(noEmotes);
                         ArrayList splitUtterance = null;
                         if (noEmotes.length() > 200) {
                             splitUtterance = sp.split(noEmotes);
@@ -208,8 +210,9 @@ public class Assertions {
                         //add Chiense sentence splitter 03/26/2012 by TL
                         ArrayList splitUtterance = null;
                         //Split the Chinese utterences into individual sentences -Stanislaus
-                        if(noEmotes.length()>50){
-                            splitUtterance=sp.splitChinese(noEmotes);
+                        System.out.println("noEmotes: " + noEmotes);
+                        if (noEmotes.length() > 50) {
+                            splitUtterance = sp.splitChinese(noEmotes);
                         }
                         if (splitUtterance == null || splitUtterance.size() == 1) {
                             tmpTagged = StanfordPOSTagger.tagChineseString(noEmotes);
@@ -225,7 +228,7 @@ public class Assertions {
                             }
                             tmpTagged = temps.trim();
                         }
-                        System.out.println(splitUtterance);
+			//System.out.println("splitted sentences: " + splitUtterance);
                     }
                     if (tmpTagged == null) {
                         //System.out.println("tagged is null: " + noEmotes);
@@ -245,6 +248,8 @@ public class Assertions {
                     //     bufferedWriterTagFile.write(tagged);
                     //     bufferedWriterTagFile.newLine();
                 }
+
+
 
 
                 //     bufferedWriterTagFile.flush();
@@ -269,6 +274,7 @@ public class Assertions {
                 }
                 //System.exit(0);
                 tagDAct();
+                ddt_.setDDT(DocDialogueType.WK);
 //                cal_ = Calendar.getInstance();
 //                System.out.println("after DA tagging: " + df_.format(cal_.getTime()));
                 /*
@@ -284,28 +290,28 @@ public class Assertions {
 //                System.out.println("after build lc: " + df_.format(cal_.getTime()));
                 if (fn.startsWith("Feb27_GroupA")) {
                     Speaker part = parts_.get("tony");
-                    System.out.println(part.getUtts());
+//                    System.out.println(part.getUtts());
                 } else if (fn.startsWith("Feb28_GroupA")) {
                     Speaker part = parts_.get("laura");
-                    System.out.println(part.getUtts());
+//                    System.out.println(part.getUtts());
                 } else if (fn.startsWith("Mar07_GroupA")) {
                     Speaker part = parts_.get("danielle");
-                    System.out.println(part.getUtts());
+//                    System.out.println(part.getUtts());
                 } else if (fn.startsWith("Mar10_GroupA")) {
                     Speaker part = parts_.get("jorge");
-                    System.out.println(part.getUtts());
+//                    System.out.println(part.getUtts());
                 } else if (fn.startsWith("Mar10_GroupB")) {
                     Speaker part = parts_.get("lisa");
-                    System.out.println(part.getUtts());
+//                    System.out.println(part.getUtts());
                 } else if (fn.startsWith("Mar11_GroupB")) {
                     Speaker part = parts_.get("lisa");
-                    System.out.println(part.getUtts());
+//                    System.out.println(part.getUtts());
                 } else if (fn.startsWith("Mar14_GroupA")) {
                     Speaker part = parts_.get("sarah");
-                    System.out.println(part.getUtts());
+//                    System.out.println(part.getUtts());
                 } else if (fn.startsWith("Mar14_GroupB")) {
                     Speaker part = parts_.get("jenniferb");
-                    System.out.println(part.getUtts());
+//                    System.out.println(part.getUtts());
                 }
                 //meso_topic and task_focus
                 //System.out.println("------------Generate Meso-topics of " + (String)doc_names_.get(i));
@@ -496,6 +502,28 @@ public class Assertions {
             }
         }
 
+    }
+
+    public void checkAgrees(String noEmotes) {
+        String noEmotes_low = noEmotes.toLowerCase();
+        if ((noEmotes_low.indexOf(" agree with") != -1
+                || noEmotes_low.indexOf(" agree.") != -1
+                || noEmotes_low.indexOf(" agree!") != -1
+                || noEmotes_low.indexOf("agree,") != -1)
+                && noEmotes_low.indexOf("don't agree") == -1
+                || noEmotes_low.indexOf("you are right") != -1
+                || noEmotes_low.indexOf("nice work") != -1
+                || noEmotes_low.indexOf("well done") != -1
+                || noEmotes_low.indexOf("great idea") != -1
+                || noEmotes_low.indexOf("i support") != -1
+                || noEmotes_low.indexOf("excellent idea") != -1
+                || noEmotes_low.indexOf("brilliant idea") != -1
+                || noEmotes_low.indexOf("great!") != -1
+                || noEmotes_low.indexOf("excellent!") != -1
+                || noEmotes_low.indexOf("you are right") != -1
+                || noEmotes_low.indexOf("you're right") != -1) {
+            size_agrees_++;
+        }
     }
 
     ///////////////////////////////
@@ -1267,11 +1295,18 @@ public class Assertions {
 //            System.out.println(ddt_.getType());
             if (ddt_.getType().equals("wiki")) {
 //            System.out.println("IT is wiki!");
-
+              if ((Settings.getValue(Settings.LANGUAGE)).equals("english")) {
                 wt1 = 0.45;
                 wt2 = 0.2;
                 wt3 = 0.3;
                 wt4 = 0.7;
+              }
+              else if ((Settings.getValue(Settings.LANGUAGE)).equals("chinese")) {
+                    wt1 = 1.0;
+                    wt2 = 1.0;
+                    wt3 = 1.0;
+                    wt4 = 1.0;
+                }
             } else {
 //            System.out.println("Not wiki");
                 if ((Settings.getValue(Settings.LANGUAGE)).equals("english")) {
@@ -1562,8 +1597,17 @@ public class Assertions {
         //CSLIN
         ArrayList<Double> scoreDI = new ArrayList();
         double dCVDI = 0;
+        ArrayList<Double> scoreDI_TFM = new ArrayList();
+        double dCVDI_TFM = 0;
+        boolean zero_added = false;
+        double aver_tl = ((double) utts_.size()) / parts_.size();
 
-
+        System.out.println("aver_tl: " + aver_tl);
+        System.out.println("total agrees: " + size_agrees_);
+        ArrayList<Speaker> cands = new ArrayList();
+        int n_tsk_r1 = 0;
+        int n_tpc_r1 = 0;
+        int n_inv_r1 = 0;
         while (keys.hasNext()) {
             String key = (String) keys.next();
             if (key.startsWith("ils")) {
@@ -1578,30 +1622,137 @@ public class Assertions {
                 ld_score = part_.getLeadershipR();
             }
 
-            System.out.println(part_.getOriName() + ":" + part_.getLeadershipRInfo());
+            if (part_.getLeadershipR() > 0.5) {
+                cands.add(part_);
+            }
+            if (part_.getTKCRank() == 1) {
+                n_tsk_r1++;
+            }
+            if (part_.getTPCRank() == 1) {
+                n_tpc_r1++;
+            }
+            if (part_.getINVRank() == 1) {
+                n_inv_r1++;
+            }
 
-            Double e = part_.getLeadershipInfo().getDisagreement() + part_.getLeadershipInfo().getInvolvement();
-            //DIS-INV
-            scoreDI.add(e);
+            System.out.println(part_.getOriName() + ":" + part_.getLeadershipRInfo());
+            if ((part_.getLeadershipInfo().getDisagreement() == 0
+                    || part_.getLeadershipInfo().getInvolvement() == 0)
+                    && !zero_added
+                    || (part_.getLeadershipInfo().getDisagreement() > 0
+                    && part_.getLeadershipInfo().getInvolvement() > 0)) {
+                if ((part_.getLeadershipInfo().getDisagreement() == 0
+                        || part_.getLeadershipInfo().getInvolvement() == 0)) {
+                    zero_added = false;
+                }
+                Double e = part_.getLeadershipInfo().getDisagreement() + part_.getLeadershipInfo().getInvolvement();
+                scoreDI_TFM.add(part_.getLnkto_disagreement_());
+                //DIS-INV
+                scoreDI.add(e);
+            }
         }
 
+        //System.out.println("n_tsk_r1: " + n_tsk_r1);
+
+        if (cands.size() > 1) {
+            int tpc_r = leader.getTPCRank();
+            int tkc_r = leader.getTKCRank();
+            int inv_r = leader.getINVRank();
+            //System.out.println("leader's tpc_r: " + tpc_r);
+            //System.out.println("leader's tkc_r: " + tkc_r);
+            //System.out.println("leader's inv_r: " + inv_r);
+            //System.out.println("leader's tfm_r: " + leader.getLnk_exd_rank());
+            Speaker better = null;
+            double total_topics = (double) totalTopics();
+            double leader_tpc_invols = ((double) leader.sizeofInvTopics()) / total_topics;
+            //System.out.println("leader's tpc invols: " + leader_tpc_invols);
+            if ((Settings.getValue(Settings.LANGUAGE)).equals("english")
+                    && !(tpc_r == 1 && n_tpc_r1 == 1 && n_tsk_r1 == 1 && tpc_r == tkc_r
+                    || tkc_r == 1 && inv_r == tkc_r && n_inv_r1 == 1 && n_tsk_r1 == 1
+                    || tpc_r == 1 && tpc_r == inv_r && n_tpc_r1 == 1 && n_inv_r1 == 1
+                    || leader_tpc_invols < 0.4)) {
+                //System.out.println("select a leader");
+                double sec_highest = 0;
+                Speaker sec_spk = null;
+                for (Speaker cand : cands) {
+                    if (cand.equals(leader)) {
+                        continue;
+                    }
+                    if (cand.getLeadershipR() > sec_highest) {
+                        sec_spk = cand;
+                        sec_highest = cand.getLeadershipR();
+                    }
+                }
+                if (leader.getTKCRank() != -1 && leader.getEXDRank() < 3 && leader.getLnk_exd_rank() < 3
+                        && sec_spk.getEXDRank() >= 2 && sec_spk.getLnk_exd_rank() > 2) {
+                    //has to has task control defined
+                    better = sec_spk;
+                }
+                if (better == null) {
+                    ArrayList<Speaker> bads = new ArrayList();
+                    for (Speaker cand : cands) {
+                        double involved = ((double) cand.sizeofInvTopics()) / total_topics;
+                        if (involved <= 0.3) {
+                            bads.add(cand);
+                        }
+                    }
+                    for (Speaker bad : bads) {
+
+                        //System.out.println("removing: " + bad.getOriName());
+                        cands.remove(bad);
+                    }
+                    sec_highest = 0;
+                    sec_spk = null;
+                    for (Speaker cand : cands) {
+                        if (cand.equals(leader)) {
+                            continue;
+                        }
+                        if (cand.getLeadershipR() > sec_highest) {
+                            sec_spk = cand;
+                            sec_highest = cand.getLeadershipR();
+                        }
+                    }
+                    if (!cands.contains(leader)
+                            && sec_spk != null) {
+                        better = sec_spk;
+                    }
+                }
+            }
+            if (better != null) {
+                leader = better;
+            }
+        }
         Leadership ls = new Leadership();
         dCVDI = ls.calCV(scoreDI);
-        System.out.println("====>CV of (Dis+Inv)" + dCVDI);
-
+        //System.out.println("====>CV of (Dis+Inv)" + dCVDI);
+        dCVDI_TFM = ls.calCV(scoreDI_TFM);
+        //System.out.println("====>CV of (TFM): " + dCVDI_TFM);
 
 
         if (leader != null) {
             System.out.println("@Leader");
-            if (dCVDI < 0.6) {
-                System.out.println("No Leader");
+            if ((Settings.getValue(Settings.LANGUAGE)).equals("english")) {
+                if (!hasLeader(dCVDI, aver_tl)) {
+                    System.out.println("No Leader");
 
-                this.setLeader_(null);// added by m2w 2/14/12 10:44 AM
-                System.out.println("@Confidence: 90%\n");// + leader.getLeadershipConfidence());
-            } else {
-                System.out.println(leader.getOriName());
-                System.out.println("@Confidence:\n" + leader.getLeadershipConfidence());
-                this.setLeader_(leader);// added by m2w 2/14/12 10:44 AM
+                    this.setLeader_(null);// added by m2w 2/14/12 10:44 AM
+                    System.out.println("@Confidence: 90%\n");// + leader.getLeadershipConfidence());
+                } else {
+                    System.out.println(leader.getOriName());
+                    System.out.println("@Confidence:\n" + leader.getLeadershipConfidence());
+                    this.setLeader_(leader);// added by m2w 2/14/12 10:44 AM
+                }
+            } else if ((Settings.getValue(Settings.LANGUAGE)).equals("chinese")) {
+                if (!hasLeader(dCVDI, aver_tl)) {
+                    System.out.println("No Leader");
+
+                    this.setLeader_(null);// added by m2w 2/14/12 10:44 AM
+                    System.out.println("@Confidence: 90%\n");// + leader.getLeadershipConfidence());
+                } else {
+                    System.out.println(leader.getOriName());
+                    System.out.println("@Confidence:\n" + leader.getLeadershipConfidence());
+                    this.setLeader_(leader);// added by m2w 2/14/12 10:44 AM
+                }
             }
         }
         /*
@@ -1616,6 +1767,53 @@ public class Assertions {
          * \n" + part_.getLeadershipInfo()); } if (leader != null) {
          * System.out.println("==============leader is: " + leader.getName()); }
          */
+    }
+
+    public int totalTopics() {
+        int count = 0;
+        for (Utterance utt : utts_) {
+            if (utt.getCommActType().equalsIgnoreCase("addressed-to")) {
+                count++;
+            }
+        }
+        return count;
+    }
+
+    public boolean hasLeader(double cv, double aver_tl) {
+        if ((Settings.getValue(Settings.LANGUAGE)).equals("english")) {
+            //System.out.println("cv is: " + cv);
+            if (cv >= 1) {
+                return true;
+            }
+            if (cv < 0.6) {
+                if (aver_tl > 6 && size_agrees_ > 4) {
+                    return true;
+                }
+                return false;
+            } else {
+                if (size_agrees_ < 2 && tkc_.getTotalAcOc() < 4 && exd_.percentageOfDis() > 0.75) {
+                    //less agree and less action directive
+                    return false;
+                }
+                return true;
+            }
+        } else if ((Settings.getValue(Settings.LANGUAGE)).equals("chinese")) {
+            if (cv < 0.989) {
+                /*
+                 * if (aver_tl > 6 && size_agrees_ > 4) { return true; }
+                 *
+                 */
+                if (tkc_.getTotalAcOc() > 5) {
+                    //many action directives
+                    return true;
+                }
+                return false;
+            } else {
+                return true;
+            }
+        }
+
+        return true;
     }
 
     public void calGroupCohesion(int fn) {
@@ -2811,9 +3009,9 @@ public class Assertions {
             //System.out.println("load files...");
             //loadAndParseTraining();
             //if this data is from wiki
-//            if (docs_path_.indexOf("wiki") != -1) {
-//                ddt_.setDDT(DocDialogueType.WK);
-//            }
+            if (docs_path_.indexOf("wiki") != -1) {
+                ddt_.setDDT(DocDialogueType.WK);
+            }
 //            System.out.println(ddt_.getType());
             File tp = new File(docs_path_);
             ArrayList ps = new ArrayList();
@@ -3408,6 +3606,7 @@ public class Assertions {
     private String English_stopword = "conf/stop-words";
     private String Chinese_stopword = "conf/Chinese-stop-words";
     private Speaker leader_ = null;
+    private int size_agrees_ = 0;
 //    private ChineseWordnet CNWN = null;
 
     /**

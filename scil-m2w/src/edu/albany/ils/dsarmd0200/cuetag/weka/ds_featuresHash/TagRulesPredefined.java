@@ -91,7 +91,7 @@ public class TagRulesPredefined {
     public void addmoreADfeature(String req){
         
       if(!req.equals("") | (req!=null) ){
-         Wiki_AD="Wiki_AD";
+         Wiki_AD="wiki_ad";
 //         System.out.println("AddWiki!="+req);
          if(!Wiki_AD_Features.contains(req))
      Wiki_AD_Features.add(req);
