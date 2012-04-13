@@ -66,10 +66,11 @@ public class PursuitOfPower {
             }
             System.out.println("@Pursuit of Power:");
             int confidence = 0;
-            if (language.equalsIgnoreCase("english") && MODE.equals("std")){
+            if (language.equalsIgnoreCase("english")){
                 this.decidePopAndPrintSTDEnglish(PopList);
                 confidence = this.calConfidenceEng(PopList);
-            }else if (language.equalsIgnoreCase("chinese") && MODE.equals("std")){
+            }else if (language.equalsIgnoreCase("chinese")){
+                this.decidePopAndPrintChinese(PopList);
                 this.decidePopAndPrintSTDChinese(PopList);
                 confidence = this.calConfidenceEng(PopList);
             }
@@ -280,7 +281,6 @@ public class PursuitOfPower {
         return localMapNCM;
     }
     
-    
     /**
      * m2w: this method calculates pop using Tension Focus Measure.
      * //1.Disagree-Reject Target Index (DRT)
@@ -310,7 +310,6 @@ public class PursuitOfPower {
         }       
         return localTFMMap;
     }
-    
 
     /**
      * m2w: TFM 's Disagree-Reject Target Index (DRT)
@@ -511,6 +510,11 @@ public class PursuitOfPower {
         return map;
     }
     
+    /**
+     * m2w: English version, exclude leader from pop 
+     * @param map
+     * @return 
+     */
     private HashMap<String, Double> deleteLeader(HashMap<String, Double> map){
         if(leader != null){
             map.remove(leader.getName());
@@ -524,29 +528,49 @@ public class PursuitOfPower {
         return map;
     }
     
+    private void decidePopAndPrintChinese(ArrayList<ArrayList> PopList){
+        ArrayList<Double> gaps = new ArrayList<Double>();
+        if(PopList.size() > 1){
+            for(int i = 1; i <PopList.size(); i++){            
+                Double gap = (Double)PopList.get(i-1).get(1) - (Double)PopList.get(i).get(1);
+                gaps.add(gap);
+            }
+            
+            if(gaps.get(0) > ONE_OR_TWO_POP_GAP){
+                System.out.println((String)PopList.get(0).get(0));
+            }else{
+                System.out.println((String)PopList.get(0).get(0) + " , "  + (String)PopList.get(1).get(0));
+            }
+        }
+        
+    }
+    
     /**
      * m2w: standard deviation version of decide and print.
      * @param PopList 
      */
     private void decidePopAndPrintSTDEnglish(ArrayList<ArrayList> PopList){
+        PopList = this.exclude2PplChating(PopList);
+        PopList = this.excludePplisnotPop(PopList);
+        PopList = this.increaseScoreSpk1(PopList);
         Double totalWeight = 0.0;
         Double avgWeight = 0.0;
         Double sum = 0.0;
         Double sumSTD1 = 0.0;
         Double sumSTD2 = 0.0;
-        Double num = (double)PopMap.size();
+        Double num = (double)PopList.size();
         ArrayList<String> outList = new ArrayList<String>();
         boolean hasPop = false;
         //getting average weight
-        for(String spk : PopMap.keySet()){
-            Double tmpWeight = PopMap.get(spk);
+        for(int i = 0; i < PopList.size(); i ++){
+            Double tmpWeight = (Double)PopList.get(i).get(1);
             totalWeight = totalWeight + tmpWeight;
         }
         avgWeight = totalWeight / num;
         
         //getting standard deviation
-        for(String spk : PopMap.keySet()){
-            Double subtract = PopMap.get(spk) - avgWeight;
+        for(int i = 0; i < PopList.size(); i ++){
+            Double subtract = (Double)PopList.get(i).get(1) - avgWeight;
             Double square = subtract*subtract;
             sum = sum + square;
         }
@@ -565,7 +589,7 @@ public class PursuitOfPower {
                 outList.add(tempSpk);
                 continue;
             }
-            if(tempScore > sumSTD1){
+            if(tempScore > sumSTD1 * 0.87){
                 outList.add(tempSpk);
             }
         }
@@ -592,29 +616,34 @@ public class PursuitOfPower {
         }
     }
     
-     /**
+    /**
      * m2w: standard deviation version of decide and print.
      * @param PopList 
      */
     private void decidePopAndPrintSTDChinese(ArrayList<ArrayList> PopList){
+        
+        PopList = this.exclude2PplChating(PopList);
+        PopList = this.excludePplisnotPop(PopList);
+        PopList = this.increaseScoreSpk1(PopList);
+        
         Double totalWeight = 0.0;
         Double avgWeight = 0.0;
         Double sum = 0.0;
         Double sumSTD1 = 0.0;
         Double sumSTD2 = 0.0;
-        Double num = (double)PopMap.size();
+                Double num = (double)PopList.size();
         ArrayList<String> outList = new ArrayList<String>();
         boolean hasPop = false;
         //getting average weight
-        for(String spk : PopMap.keySet()){
-            Double tmpWeight = PopMap.get(spk);
+        for(int i = 0; i < PopList.size(); i ++){
+            Double tmpWeight = (Double)PopList.get(i).get(1);
             totalWeight = totalWeight + tmpWeight;
         }
         avgWeight = totalWeight / num;
         
         //getting standard deviation
-        for(String spk : PopMap.keySet()){
-            Double subtract = PopMap.get(spk) - avgWeight;
+        for(int i = 0; i < PopList.size(); i ++){
+            Double subtract = (Double)PopList.get(i).get(1) - avgWeight;
             Double square = subtract*subtract;
             sum = sum + square;
         }
@@ -633,7 +662,7 @@ public class PursuitOfPower {
                 outList.add(tempSpk);
                 continue;
             }
-            if(tempScore > sumSTD1){
+            if(tempScore > sumSTD1*0.87){
                 outList.add(tempSpk);
             }
         }
@@ -660,6 +689,11 @@ public class PursuitOfPower {
         }
     }
     
+    /**
+     * m2w: this method is the english version of calculating the confidence score
+     * @param PopList
+     * @return 
+     */
     private int calConfidenceEng(ArrayList<ArrayList> PopList){
         int confidence = 0;
         ArrayList<ArrayList> itcmList = this.sortAndConvertMapToArrayList(ITCMMap);
@@ -684,10 +718,18 @@ public class PursuitOfPower {
             }
         }
         
+        if(confidence == 0){
+            confidence = 50;
+        }
+        
         return confidence;
     }
     
-    
+    /**
+     * m2w: this method is the chinese version of claculating the confidence score.
+     * @param PopList
+     * @return 
+     */
     private int calConfidenceChn(ArrayList<ArrayList> PopList){
         int confidence = 0;
         ArrayList<ArrayList> itcmList = this.sortAndConvertMapToArrayList(ITCMMap);
@@ -712,8 +754,180 @@ public class PursuitOfPower {
             }
         }
         
+         if(confidence == 0){
+            confidence = 50;
+        }
+        
         return confidence;
     }
+    
+    /**
+     * 
+     */
+    private ArrayList<ArrayList> exclude2PplChating(ArrayList<ArrayList> PopList){
+        //loop through pop list's speakers
+        if(Utts.size() > 40){//if file is big
+//            System.out.println("+in excluding > 40");
+            HashSet<String> deleteSet = new HashSet<String>();
+            for(int i = 0; i < PopList.size(); i++){
+                String spk = (String)PopList.get(i).get(0);
+//                System.out.println("+curr spk " + spk);
+                ArrayList<Utterance> spkUttList = parts.get(spk).getUtts_();
+                
+                //calculate gap & sub speaker turns
+                if(spkUttList.size() > 10){
+//                    System.out.println("+curr spk" + spk);
+//                    System.out.println("+in size> 10" );
+                    HashMap<String, Integer> subSpeakerMap = new HashMap<String , Integer>();
+                    Integer start = Integer.parseInt(spkUttList.get(0).getTurn());
+                    Integer end = Integer.parseInt(spkUttList.get(spkUttList.size() - 1).getTurn());
+//                    System.out.println("+" + start + " " + end);
+                    //within the gap
+                    //build sub map
+                    for(int j = start; j < end; j++){
+                        Utterance u = Utts.get(j);
+                        String subSpk = u.getSpeaker();
+                        if(subSpk.equals(spk)){continue;}
+                        if(subSpeakerMap.containsKey(subSpk)){
+                            subSpeakerMap.put(subSpk, subSpeakerMap.get(subSpk) + 1);
+                        }else{
+                            subSpeakerMap.put(subSpk, 1);
+                        }
+                    }
+
+                    //parse sub map
+                    for(String subSpk : subSpeakerMap.keySet()){
+                        int subSpkTurns = subSpeakerMap.get(subSpk);
+                        Double subSpkPercent = (double)subSpkTurns / (double)(end - start);
+//                        System.out.println("+spk: " +spk + ", sub:" + subSpk + ", perc: " + subSpkPercent + ", turns: " + subSpkTurns);
+                        if(subSpkPercent > 0.35){
+                            deleteSet.add(spk);
+                            deleteSet.add(subSpk);
+                        }
+                    }
+                }
+            }//closes pop list loop
+//            System.out.println("+delete:" + deleteSet.toString());
+            for(int i = 0; i < PopList.size(); i++){
+                String spk = (String)PopList.get(i).get(0);
+                if(deleteSet.contains(spk)){
+                    PopList.remove(i);
+                    PopMap.remove(spk);
+                }
+            }
+        }//closes file size > 40 utts
+//        System.out.println(PopList.toString());
+        return PopList;
+    }
+    
+    /**
+     * 
+     */
+    private ArrayList<ArrayList> excludePplisnotPop(ArrayList<ArrayList> PopList){
+        if(Utts.size() > 15){
+//            System.out.println("-in exclude ppl");
+            HashSet<String> deleteSet = new HashSet<String>();
+            for(int i = 0; i < PopList.size(); i++){
+                String spk = (String)PopList.get(i).get(0);
+                ArrayList<Utterance> spkUttList = parts.get(spk).getUtts_();
+                Integer start = Integer.parseInt(spkUttList.get(0).getTurn());
+                Integer end = Integer.parseInt(spkUttList.get(spkUttList.size() - 1).getTurn());
+                Double sizePerc = (double)spkUttList.size() / (double)Utts.size();
+                Double gapPerc = (double)(end-start) / (double)Utts.size();
+//                System.out.println("-spk " + spk +" sizeperc: " + sizePerc + " gapPerc: " + gapPerc)  ;
+                if(sizePerc > 0 && sizePerc < 0.07 && gapPerc < 0.15 && gapPerc > 0){
+                    //if involved ppl is few then delete this ppl
+                    HashSet<String> subSpkSet = new HashSet<String>();
+                    
+                    for(int j = start; j < end; j++){
+                        Utterance u = Utts.get(j);
+                        String subSpk = u.getSpeaker();
+                        if(!subSpk.equalsIgnoreCase(spk) && PopMap.containsKey(subSpk)){
+                            subSpkSet.add(subSpk);
+                        }
+                    }
+                    
+                    Double subSpkPercent = (double)subSpkSet.size() / (double)PopList.size();
+//                    System.out.println("--sub prec" + subSpkPercent + "subset: " + subSpkSet);
+                    if(subSpkPercent > 0 && subSpkPercent < 0.2){
+                        deleteSet.add(spk);
+                    }
+                }
+            }
+            
+//            System.out.println("-deleteset: " + deleteSet);
+            for(int i = 0; i < PopList.size(); i++){
+                String spk = (String)PopList.get(i).get(0);
+                if(deleteSet.contains(spk)){
+                    PopList.remove(i);
+                }
+            }
+        }//closes if
+//        System.out.println(PopList.toString());
+        return PopList;
+    }
+        
+    /**
+     * m2w : this is for increasing scores while speaker in a large group of ppl, and has consecutive speaks.
+     * @param PopList
+     * @return 
+     */
+    private ArrayList<ArrayList> increaseScoreSpk1(ArrayList<ArrayList> PopList){
+        if(Utts.size() > 10){
+//            System.out.println("=in increase ");
+            HashSet<String>  increaseSet= new HashSet<String>();
+            for(int i = 0; i < PopList.size(); i++){
+                String spk = (String)PopList.get(i).get(0);
+                boolean increaseOrNot = false;
+                ArrayList<Utterance> spkUttList = parts.get(spk).getUtts_();
+                Integer start = Integer.parseInt(spkUttList.get(0).getTurn());
+                Integer end = Integer.parseInt(spkUttList.get(spkUttList.size() - 1).getTurn());
+                Double sizePerc = (double)spkUttList.size() / (double)Utts.size();
+                Double gapPerc = (double)(end-start) / (double)Utts.size();
+//                System.out.println("-spk " + spk +" sizeperc: " + sizePerc + " gapPerc: " + gapPerc)  ;
+                if(sizePerc > 0.07 && gapPerc > 0.15){
+                    //if involved ppl is few then delete this ppl
+                    HashSet<String> subSpkSet = new HashSet<String>();
+                    TreeMap<Integer, Boolean> spkUttMap = new TreeMap<Integer, Boolean>();
+                    
+                    for(int j = start; j < end; j++){
+                        Utterance u = Utts.get(j);
+                        String subSpk = u.getSpeaker();
+                        if(!subSpk.equalsIgnoreCase(spk) && PopMap.containsKey(subSpk)){
+                            subSpkSet.add(subSpk);
+                        }
+                        if(subSpk.equalsIgnoreCase(spk) && (j - 1) >start && (j + 1) < end){
+                            String prevSpk = Utts.get(j-1).getSpeaker();
+                            String nextSpk = Utts.get(j+1).getSpeaker();
+                            if(prevSpk.equals(spk) && nextSpk.equals(spk)){
+                                increaseOrNot = true;
+                            }
+                        }
+                        
+                    }
+                    
+                    Double subSpkPercent = (double)subSpkSet.size() / (double)PopList.size();
+                    if(subSpkPercent > 0.2 && increaseOrNot){
+                        //creat treemap, check for 3 consecutive utts.
+                        increaseSet.add(spk);
+                    }
+                }
+            }
+            
+//            System.out.println("=increaseSet: " + increaseSet);
+            for(int i = 0; i < PopList.size(); i++){
+                String spk = (String)PopList.get(i).get(0);
+                if(increaseSet.contains(spk)){
+                    Double tempScore = (Double)PopList.get(i).get(1);
+                    PopList.get(i).set(1, tempScore*1.1);
+                }
+            }
+        }//closes if
+//        System.out.println(PopList.toString());
+        return PopList;
+    }
+    
+    
 //    =================================== vars and consts =============================================
     //variables:
     private HashMap<String, Double> PopMap; //where the precentage of each speaker are stored.
@@ -743,11 +957,7 @@ public class PursuitOfPower {
     private final Double TFMWGT_CN = 0.90;
     private final Double NCMWGT_CN = 0.02;
     
-    
-    //mode control
-//    private final String MODE = "simple";//standard deviation
-    private final String MODE = "std";//standard deviation
-//    private final String MODE = "cov"; // Coefficient_of_variation
+    private final Double ONE_OR_TWO_POP_GAP = 0.20;
     
     //print out control:
     private boolean doSTDdebuggingPrintOut = true;
