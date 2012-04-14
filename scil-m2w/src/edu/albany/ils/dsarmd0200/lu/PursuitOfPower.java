@@ -621,9 +621,9 @@ public class PursuitOfPower {
      */
     private void decidePopAndPrintSTDChinese(ArrayList<ArrayList> PopList){
         
-//        PopList = this.exclude2PplChating(PopList);
-//        PopList = this.excludePplisnotPop(PopList);
-//        PopList = this.increaseScoreSpk1(PopList);
+        PopList = this.exclude2PplChating(PopList);
+        PopList = this.excludePplisnotPop(PopList);
+        PopList = this.increaseScoreSpk1(PopList);
         
         Double totalWeight = 0.0;
         Double avgWeight = 0.0;
@@ -657,7 +657,7 @@ public class PursuitOfPower {
         for(int i = 0; i < PopList.size(); i++){
             Double tempScore = (Double)PopList.get(i).get(1);
             String tempSpk = (String)PopList.get(i).get(0);
-            if(tempScore > sumSTD2){
+            if(tempScore < sumSTD2){
                 outList.add(tempSpk);
                 continue;
             }
@@ -934,14 +934,14 @@ public class PursuitOfPower {
     private final Double TFMWGT_EN = 0.02;
     private final Double NCMWGT_EN = 0.09;
     //chinese weights
-    private final Double ITCMWGT_CN = 0.04;
-    private final Double CDMWGT_CN = 0.04;
-    private final Double TFMWGT_CN = 0.90;
-    private final Double NCMWGT_CN = 0.02;
+    private final Double ITCMWGT_CN = 0.15;
+    private final Double CDMWGT_CN = 0.15;
+    private final Double TFMWGT_CN = 0.70;
+    private final Double NCMWGT_CN = 0.0;
     
     
     //print out control:
-    private boolean doSTDdebuggingPrintOut = false;
+    private boolean doSTDdebuggingPrintOut = true;
     private boolean doAnalysisPrintOut = false;
     private boolean doFinalPrintOut = true;
 }
