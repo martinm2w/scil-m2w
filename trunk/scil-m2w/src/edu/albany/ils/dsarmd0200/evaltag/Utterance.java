@@ -52,6 +52,9 @@ public class Utterance implements DialogAct {
 //Lin added
     private String space_tagged_content="";
     private String groundtruth_comm_act_type = "";
+    private String groundtruth_resp_to_spk = "";
+    private String groundtruth_resp_to_utt = "";
+    private String groundtruth_resp_to = "";
 
     /************************get information***********************************/
     /**
@@ -126,7 +129,11 @@ public class Utterance implements DialogAct {
     public String getRespTo() {
 	return resp_to;
     }
-    
+
+        public String getRespToUtt() {
+	return resp_to_utt;
+    }
+
     public String getRespToSpk() {
 	return resp_to_spk;
     }
@@ -164,6 +171,14 @@ public class Utterance implements DialogAct {
 
     public String getGroundTruthCommActType() {
 	return groundtruth_comm_act_type;
+    }
+    
+    public String getGTRespToUtt() {
+        return groundtruth_resp_to_utt;
+    }
+    
+    public String getGTRespToSpk() {
+        return groundtruth_resp_to_spk;
     }
 
 
@@ -268,6 +283,16 @@ public class Utterance implements DialogAct {
 	if (resps.length > 1) {
 	    resp_to_spk = resps[0].toLowerCase();
 	    resp_to_utt = resps[1].toLowerCase();
+	}
+    }
+
+    public void setGTRespTo(String resp_to) {
+	this.groundtruth_resp_to = resp_to;
+	if (groundtruth_resp_to == null || groundtruth_resp_to.trim().length() == 0) return;
+	String[] resps = groundtruth_resp_to.split(":");
+	if (resps.length > 1) {
+	    groundtruth_resp_to_spk = resps[0].toLowerCase();
+	    groundtruth_resp_to_utt = resps[1].toLowerCase();
 	}
     }
 

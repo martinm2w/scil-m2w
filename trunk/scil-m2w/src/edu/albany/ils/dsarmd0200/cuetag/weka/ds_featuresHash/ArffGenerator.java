@@ -220,7 +220,7 @@ public class ArffGenerator {
                                     && fraction >= 0.6
                                     && (Settings.getValue(Settings.LANGUAGE)).equals("chinese")
                                     && !commActType.equalsIgnoreCase("response-to")) {
-                                str += "|" + "ADM";
+                                str += "|" + "action-directive";
                                 ADMSet += "|" + term;
                                 //outAD+="|" + term+","+tag_freq+"; "+total_freq +strSep;
                                 //adString+="|"+term;
@@ -840,9 +840,21 @@ public class ArffGenerator {
 
                 //end
                 //filter AD and add new AD features
-                filterAD(utts);
-                addADFeatures(utts);
-
+                if ((Settings.getValue(Settings.LANGUAGE)).equals("chinese") ) {
+                    String[] ADMgram = PreADMSet.split("\\|");
+                    content="<start> " + content.toLowerCase().trim();
+                    for (int k = 0; k < ADMgram.length; k++) {
+                        if(content.contains(ADMgram[k])){
+                            content = content.replace(ADMgram[k], "action-directive");
+                        }
+                    }
+                    if (content.contains("<start> "))
+                        content = content.replace("<start> ", "");
+                }
+                else{                
+                    filterAD(utts);
+                    addADFeatures(utts);
+                }
                 content = trp.rules_filtered(content);
 
                 ArrayList<String> ngrams = Ngram.generateNgramList(content);
@@ -867,6 +879,47 @@ public class ArffGenerator {
 
 
                 int bDisRej = 0;
+//Dis
+                    if ((Settings.getValue(Settings.LANGUAGE)).equals("chinese") ){
+                            //&& tagGTCAT.equalsIgnoreCase("response-to")) { unlock Comm
+
+                        if (!ADMSet.equals("")) {
+                             
+                             if (content.contains("action-directive")){
+                                  ngrams.clear();
+                                  ngrams.add("action-directive");
+                             }
+                             else{
+                                 String[] ADMgram = ADMSet.split("\\|");
+                                 for(int t=0; t<ngrams.size(); t++){
+                                   for (int k = 0; k < ADMgram.length; k++) {
+                                      if (ngrams.get(t).equalsIgnoreCase(ADMgram[k])) {
+                                          ngrams.set(t, "action-directive");
+                                      }
+                                   }
+                                 }
+                             }
+
+                        }
+
+                       //System.out.println("check pair of utts for dis-rej: ");
+
+                        bDisRej = pairComparison(utts, utterance);
+
+                        if (ngrams.size()==1 && ngrams.get(0).equalsIgnoreCase("action-directive"))
+                            ;
+                        else if (bDisRej == 1) {
+                            ngrams.clear();
+                            ngrams.add(DsarmdDATag.DR);
+                        } else if (bDisRej == 2) {
+                            for (int k = 0; k < ngrams.size(); k++) {
+                                if (ngrams.get(k).equalsIgnoreCase(DsarmdDATag.DR)) {
+                                    ngrams.set(k, "");
+                                }
+                            }
+                        }
+                    }
+                    
                 for (int j = 0; j < ngrams.size(); j++) {
                     String term = ngrams.get(j);
                     String[] wordsInTerm = term.split("\\s+");
@@ -906,7 +959,7 @@ public class ArffGenerator {
 
                     //CSLin added--check the Dis-Rej conditions
 
-                    if ((Settings.getValue(Settings.LANGUAGE)).equals("chinese")
+                    /*if ((Settings.getValue(Settings.LANGUAGE)).equals("chinese")
                             && tagGTCAT.equalsIgnoreCase("response-to")) {
 
                         bDisRej = pairComparison(utts, utterance);
@@ -922,7 +975,7 @@ public class ArffGenerator {
 
                             }
                         }
-                    } else if ((Settings.getValue(Settings.LANGUAGE)).equals("english")
+                    } else*/ if ((Settings.getValue(Settings.LANGUAGE)).equals("english")
                             && !tagGTCAT.equalsIgnoreCase("addressed-to")) {
                         //else if ((Settings.getValue(Settings.LANGUAGE)).equals("english") &&
                         //        tagGTCAT.equalsIgnoreCase("response-to")){
@@ -1065,7 +1118,7 @@ public class ArffGenerator {
                         }
 
                         String admOriginal = "";
-                        if ((Settings.getValue(Settings.LANGUAGE)).equals("chinese") && !ADMSet.equals("")) {
+                        /*if ((Settings.getValue(Settings.LANGUAGE)).equals("chinese") && !ADMSet.equals("")) {
                             String[] ADMgram = ADMSet.split("\\|");
                             for (int k = 0; k < ADMgram.length; k++) {
                                 if (term.equalsIgnoreCase(ADMgram[k])) {
@@ -1073,7 +1126,7 @@ public class ArffGenerator {
                                     term = "ADM";
                                 }
                             }
-                        }
+                        }*/
 
                         /*
                          * String drmOriginal=""; if (!DRMSet.equals("")){
@@ -1305,6 +1358,27 @@ public class ArffGenerator {
         Util.writeToFile("dr_ngrams", dr_ngrams);
         dr_ngrams_ = dr_ngrams;
     }
+    private String PreADMSet = 
+            "请 仔细|请 仔 细|请 讨论|请 先 讨论|请 大家|请 大 家|请 不 要|讨论 请|请 多|请 各位|"+
+            "希望 大家|希望 大 家|我 希望|我 希 望|希望 各位|希 望 各位|"+
+            "不再 回答|不 再 回答|"+
+            "<start> 不如|， 不如|。 不如|？ 不如|"+
+            "不 应该|"+
+            "你 可以|"+
+            "至 少 要|至少 要|"+
+            "再次 提醒|再 次 提醒|"+
+            "注意 一点|注意 一 点|注 意 一 点|"+
+            "<start> 需要|， 需要|。 需要|？ 需要|需要 讨论|"+
+            "我 建议|我 希望|我 希 望|"+
+            "继续 讨论|"+
+            "进行 讨论|进 行 讨论|"+
+            "我 总结|我 总 结|我 建议|"+
+            "总之|总 之|"+
+            "恳请|"+
+            "<start> 儘量|，儘量|。 儘量|？ 儘量|"+
+            "提醒 你|提 醒 你|"+
+            "再 讨论"
+            ;
     private String ADMSet = "";
     private String DRMSet = "";
     private String AllGramsSet = "";

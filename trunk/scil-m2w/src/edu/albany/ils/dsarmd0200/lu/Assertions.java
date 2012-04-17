@@ -173,7 +173,7 @@ public class Assertions {
                     }
                 }
                 size_agrees_ = 0;
-
+                //System.out.println("document type: " + ddt_.getType());
                 for (int j = 0; j < utts_.size(); j++) {
                     Utterance utt_ = utts_.get(j);
                     String utterance = utt_.getUtterance().toString();
@@ -183,6 +183,7 @@ public class Assertions {
                     //String tmpTagged=StanfordPOSTagger.tagChineseString(noEmotes);
                     //System.out.println("parsing: " + utterance);
                     String tmpTagged = "";
+                    //System.out.println("beginning---utt's comm act type: " + utt_.getCommActType());
                     if ((Settings.getValue(Settings.LANGUAGE)).equals("english")) {
                         //tmpTagged=StanfordPOSTagger.tagString(noEmotes);
 
@@ -210,7 +211,7 @@ public class Assertions {
                         //add Chiense sentence splitter 03/26/2012 by TL
                         ArrayList splitUtterance = null;
                         //Split the Chinese utterences into individual sentences -Stanislaus
-                        System.out.println("noEmotes: " + noEmotes);
+                        //System.out.println("noEmotes: " + noEmotes);
                         if (noEmotes.length() > 50) {
                             splitUtterance = sp.splitChinese(noEmotes);
                         }
@@ -228,7 +229,7 @@ public class Assertions {
                             }
                             tmpTagged = temps.trim();
                         }
-			//System.out.println("splitted sentences: " + splitUtterance);
+                        //System.out.println("splitted sentences: " + splitUtterance);
                     }
                     if (tmpTagged == null) {
                         //System.out.println("tagged is null: " + noEmotes);
@@ -506,23 +507,25 @@ public class Assertions {
 
     public void checkAgrees(String noEmotes) {
         String noEmotes_low = noEmotes.toLowerCase();
-        if ((noEmotes_low.indexOf(" agree with") != -1
-                || noEmotes_low.indexOf(" agree.") != -1
-                || noEmotes_low.indexOf(" agree!") != -1
-                || noEmotes_low.indexOf("agree,") != -1)
-                && noEmotes_low.indexOf("don't agree") == -1
-                || noEmotes_low.indexOf("you are right") != -1
-                || noEmotes_low.indexOf("nice work") != -1
-                || noEmotes_low.indexOf("well done") != -1
-                || noEmotes_low.indexOf("great idea") != -1
-                || noEmotes_low.indexOf("i support") != -1
-                || noEmotes_low.indexOf("excellent idea") != -1
-                || noEmotes_low.indexOf("brilliant idea") != -1
-                || noEmotes_low.indexOf("great!") != -1
-                || noEmotes_low.indexOf("excellent!") != -1
-                || noEmotes_low.indexOf("you are right") != -1
-                || noEmotes_low.indexOf("you're right") != -1) {
-            size_agrees_++;
+        if ((Settings.getValue(Settings.LANGUAGE)).equals("english")) {
+            if ((noEmotes_low.indexOf(" agree with") != -1
+                    || noEmotes_low.indexOf(" agree.") != -1
+                    || noEmotes_low.indexOf(" agree!") != -1
+                    || noEmotes_low.indexOf("agree,") != -1)
+                    && noEmotes_low.indexOf("don't agree") == -1
+                    || noEmotes_low.indexOf("you are right") != -1
+                    || noEmotes_low.indexOf("nice work") != -1
+                    || noEmotes_low.indexOf("well done") != -1
+                    || noEmotes_low.indexOf("great idea") != -1
+                    || noEmotes_low.indexOf("i support") != -1
+                    || noEmotes_low.indexOf("excellent idea") != -1
+                    || noEmotes_low.indexOf("brilliant idea") != -1
+                    || noEmotes_low.indexOf("great!") != -1
+                    || noEmotes_low.indexOf("excellent!") != -1
+                    || noEmotes_low.indexOf("you are right") != -1
+                    || noEmotes_low.indexOf("you're right") != -1) {
+                size_agrees_++;
+            }
         }
     }
 
@@ -1295,13 +1298,12 @@ public class Assertions {
 //            System.out.println(ddt_.getType());
             if (ddt_.getType().equals("wiki")) {
 //            System.out.println("IT is wiki!");
-              if ((Settings.getValue(Settings.LANGUAGE)).equals("english")) {
-                wt1 = 0.45;
-                wt2 = 0.2;
-                wt3 = 0.3;
-                wt4 = 0.7;
-              }
-              else if ((Settings.getValue(Settings.LANGUAGE)).equals("chinese")) {
+                if ((Settings.getValue(Settings.LANGUAGE)).equals("english")) {
+                    wt1 = 0.45;
+                    wt2 = 0.2;
+                    wt3 = 0.3;
+                    wt4 = 0.7;
+                } else if ((Settings.getValue(Settings.LANGUAGE)).equals("chinese")) {
                     wt1 = 1.0;
                     wt2 = 1.0;
                     wt3 = 1.0;
@@ -1602,12 +1604,18 @@ public class Assertions {
         boolean zero_added = false;
         double aver_tl = ((double) utts_.size()) / parts_.size();
 
-        System.out.println("aver_tl: " + aver_tl);
-        System.out.println("total agrees: " + size_agrees_);
+        //System.out.println("aver_tl: " + aver_tl);
+        //System.out.println("total agrees: " + size_agrees_);
         ArrayList<Speaker> cands = new ArrayList();
+        ArrayList<Speaker> tskCands = new ArrayList();
+        ArrayList<Speaker> spks = new ArrayList();
         int n_tsk_r1 = 0;
         int n_tpc_r1 = 0;
         int n_inv_r1 = 0;
+        double total_topics = (double) totalTopics();
+        //System.out.println("total topics: " + total_topics);
+        double per_of_topics = total_topics / utts_.size();
+        //System.out.println("percentage of topics on all utterances: " + per_of_topics);
         while (keys.hasNext()) {
             String key = (String) keys.next();
             if (key.startsWith("ils")) {
@@ -1615,6 +1623,7 @@ public class Assertions {
             }
             //System.out.println("key: " + key);
             Speaker part_ = parts_.get(key);
+            spks.add(part_);
             part_.calLeadershipR();
             if (part_.getLeadershipR() > ld_score
                     && part_.rankFirst()) {
@@ -1627,6 +1636,7 @@ public class Assertions {
             }
             if (part_.getTKCRank() == 1) {
                 n_tsk_r1++;
+                tskCands.add(part_);
             }
             if (part_.getTPCRank() == 1) {
                 n_tpc_r1++;
@@ -1645,15 +1655,24 @@ public class Assertions {
                         || part_.getLeadershipInfo().getInvolvement() == 0)) {
                     zero_added = false;
                 }
-                Double e = part_.getLeadershipInfo().getDisagreement() + part_.getLeadershipInfo().getInvolvement();
+                Double e = part_.getLeadershipInfo().getInvolvement();
+                if (part_.getLeadershipInfo().getDisagreement() >= 0) {
+                    e += part_.getLeadershipInfo().getDisagreement();
+                }
                 scoreDI_TFM.add(part_.getLnkto_disagreement_());
                 //DIS-INV
                 scoreDI.add(e);
             }
+            double part_tpc_invols = ((double) part_.sizeofInvTopics()) / total_topics;
+            //System.out.println(part_ + "'s tpc invols: " + part_tpc_invols);
         }
 
         //System.out.println("n_tsk_r1: " + n_tsk_r1);
-
+        double leader_tpc_invols = 0;
+        if (leader != null && total_topics != 0) {
+            leader_tpc_invols = ((double) leader.sizeofInvTopics()) / total_topics;
+            //System.out.println("leader's tpc invols: " + leader_tpc_invols);
+        }
         if (cands.size() > 1) {
             int tpc_r = leader.getTPCRank();
             int tkc_r = leader.getTKCRank();
@@ -1663,15 +1682,15 @@ public class Assertions {
             //System.out.println("leader's inv_r: " + inv_r);
             //System.out.println("leader's tfm_r: " + leader.getLnk_exd_rank());
             Speaker better = null;
-            double total_topics = (double) totalTopics();
-            double leader_tpc_invols = ((double) leader.sizeofInvTopics()) / total_topics;
-            //System.out.println("leader's tpc invols: " + leader_tpc_invols);
             if ((Settings.getValue(Settings.LANGUAGE)).equals("english")
-                    && !(tpc_r == 1 && n_tpc_r1 == 1 && n_tsk_r1 == 1 && tpc_r == tkc_r
+                    && !((tpc_r == 1 && n_tpc_r1 == 1 && n_tsk_r1 == 1 && tpc_r == tkc_r
                     || tkc_r == 1 && inv_r == tkc_r && n_inv_r1 == 1 && n_tsk_r1 == 1
                     || tpc_r == 1 && tpc_r == inv_r && n_tpc_r1 == 1 && n_inv_r1 == 1
-                    || leader_tpc_invols < 0.4)) {
+                    || leader_tpc_invols >= 0.4)
+                    && (tskCands.size() > 0 && !tskCands.contains(leader)
+                    || tskCands.size() > 1))) {
                 //System.out.println("select a leader");
+                //System.out.println("current leader is: " + leader.getOriName());
                 double sec_highest = 0;
                 Speaker sec_spk = null;
                 for (Speaker cand : cands) {
@@ -1688,10 +1707,12 @@ public class Assertions {
                     //has to has task control defined
                     better = sec_spk;
                 }
+                //System.out.println("better: " + better);
                 if (better == null) {
                     ArrayList<Speaker> bads = new ArrayList();
                     for (Speaker cand : cands) {
                         double involved = ((double) cand.sizeofInvTopics()) / total_topics;
+                        //System.out.println("size of involved: " + involved);
                         if (involved <= 0.3) {
                             bads.add(cand);
                         }
@@ -1724,7 +1745,7 @@ public class Assertions {
         }
         Leadership ls = new Leadership();
         dCVDI = ls.calCV(scoreDI);
-        //System.out.println("====>CV of (Dis+Inv)" + dCVDI);
+        System.out.println("====>CV of (Dis+Inv)" + dCVDI);
         dCVDI_TFM = ls.calCV(scoreDI_TFM);
         //System.out.println("====>CV of (TFM): " + dCVDI_TFM);
 
@@ -1732,26 +1753,76 @@ public class Assertions {
         if (leader != null) {
             System.out.println("@Leader");
             if ((Settings.getValue(Settings.LANGUAGE)).equals("english")) {
-                if (!hasLeader(dCVDI, aver_tl)) {
+                if (!hasLeader(dCVDI, aver_tl, spks)) {
                     System.out.println("No Leader");
 
                     this.setLeader_(null);// added by m2w 2/14/12 10:44 AM
                     System.out.println("@Confidence: 90%\n");// + leader.getLeadershipConfidence());
                 } else {
                     System.out.println(leader.getOriName());
-                    System.out.println("@Confidence:\n" + leader.getLeadershipConfidence());
+                    System.out.println("@Confidence:\n" + leader.getLeadershipConfidenceWKEn());
                     this.setLeader_(leader);// added by m2w 2/14/12 10:44 AM
                 }
             } else if ((Settings.getValue(Settings.LANGUAGE)).equals("chinese")) {
-                if (!hasLeader(dCVDI, aver_tl)) {
+                if (!hasLeader(dCVDI, aver_tl, spks)) {
                     System.out.println("No Leader");
 
                     this.setLeader_(null);// added by m2w 2/14/12 10:44 AM
                     System.out.println("@Confidence: 90%\n");// + leader.getLeadershipConfidence());
                 } else {
-                    System.out.println(leader.getOriName());
-                    System.out.println("@Confidence:\n" + leader.getLeadershipConfidence());
-                    this.setLeader_(leader);// added by m2w 2/14/12 10:44 AM
+                    if (dCVDI < 0.989) {
+                        //need to redecide the leader
+                        ArrayList<Speaker> lcands = new ArrayList();
+                        ArrayList<Speaker> l2cands = new ArrayList();
+                        for (Speaker spk : spks) {
+                            if (spk.getTKCRank() == 1
+                                    && !lcands.contains(spk)) {
+                                lcands.add(spk);
+                            } else if (spk.getTKCRank() == 2
+                                    && !l2cands.contains(spk)) {
+                                l2cands.add(spk);
+                            }
+                        }
+                        if (lcands.size() == 1) {
+                            Speaker lcand = lcands.get(0);
+                            if (lcand.getLnk_exd_rank() == 1
+                                    && lcand.getLnkto_disagreement_() >= 0.4) {
+                                if (l2cands.size() == 1) {
+                                    leader = l2cands.get(0);
+                                    if (leader.getDICount() >= 3
+                                            && total_topics < 40
+                                            && per_of_topics < 0.6) {
+                                        System.out.println(leader.getOriName());
+                                        System.out.println("@Confidence:\n 0.5"); //second rank in task control
+                                        this.setLeader_(leader);// added by m2w 2/14/12 10:44 AM
+                                    } else {
+                                        System.out.println("No Leader");
+                                        this.setLeader_(null);// added by m2w 2/14/12 10:44 AM
+                                        System.out.println("@Confidence: 90%\n");// + leader.getLeadershipConfidence());                                        
+                                    }
+                                } else {
+                                    System.out.println("No Leader");
+                                    this.setLeader_(null);// added by m2w 2/14/12 10:44 AM
+                                    System.out.println("@Confidence: 90%\n");// + leader.getLeadershipConfidence());                                                             
+                                }
+                            } else {
+                                leader = lcands.get(0);
+                                System.out.println(leader.getOriName());
+                                System.out.println("@Confidence:\n" + leader.getLeadershipConfidenceWKEn());
+                                this.setLeader_(leader);// added by m2w 2/14/12 10:44 AM
+                            }
+                        } else {
+                            System.out.println("No Leader");
+                            this.setLeader_(null);// added by m2w 2/14/12 10:44 AM
+                            System.out.println("@Confidence: 90%\n");// + leader.getLeadershipConfidence());                            
+                        }
+                    } else {
+                        System.out.println(leader.getOriName());
+                        System.out.println("@Confidence:\n" + leader.getLeadershipConfidenceWKEn());
+                        this.setLeader_(leader);// added by m2w 2/14/12 10:44 AM
+
+                    }
+
                 }
             }
         }
@@ -1772,21 +1843,24 @@ public class Assertions {
     public int totalTopics() {
         int count = 0;
         for (Utterance utt : utts_) {
-            if (utt.getCommActType().equalsIgnoreCase("addressed-to")) {
+            //System.out.println("communiation act type: " + utt.getCommActType());
+            if (utt.getGroundTruthCommActType().equalsIgnoreCase("addressed-to")) {
                 count++;
             }
         }
         return count;
     }
 
-    public boolean hasLeader(double cv, double aver_tl) {
+    public boolean hasLeader(double cv, double aver_tl, ArrayList<Speaker> spks) {
         if ((Settings.getValue(Settings.LANGUAGE)).equals("english")) {
             //System.out.println("cv is: " + cv);
             if (cv >= 1) {
                 return true;
             }
             if (cv < 0.6) {
-                if (aver_tl > 6 && size_agrees_ > 4) {
+                if (aver_tl > 6 && size_agrees_ > 4 ||
+                        tkc_.getTotalAcOc() > 3 &&
+                        cv > 0.57) {
                     return true;
                 }
                 return false;
@@ -1803,9 +1877,15 @@ public class Assertions {
                  * if (aver_tl > 6 && size_agrees_ > 4) { return true; }
                  *
                  */
-                if (tkc_.getTotalAcOc() > 5) {
+                if (tkc_.getTotalAcOc() > 5 && utts_.size() > 30
+                        || tkc_.getTotalAcOc() > 4 && utts_.size() <= 29) {
                     //many action directives
                     return true;
+                }
+                for (Speaker spk : spks) {
+                    if (spk.getDICount() >= 3) {
+                        return true;
+                    }
                 }
                 return false;
             } else {

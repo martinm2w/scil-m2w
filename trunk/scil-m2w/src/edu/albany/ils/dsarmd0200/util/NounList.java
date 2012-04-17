@@ -595,6 +595,7 @@ public class NounList {
 		}
             //m2w: chinese 5/17/11 12:41 PM
             else if(isChinese_){
+                //System.out.println("in Chinese noun list creation");
                 if (!created){
 			for (int i = 0; i < utterances.size(); i++){
 			    Utterance utt_ = utts_.get(i);
@@ -834,29 +835,12 @@ public class NounList {
 		// if it is noun, find HiSynonyms
 		if (tag.charAt(0) == 'N')
 		{
-			tag = "noun";
-			synonyms = wrdnt.getHiSynonym(word1, tag);
-			//System.out.println("The word: " + word1);
-			/*
-			for (int i = 0; i < synonyms.size(); i++)
-				System.out.println(synonyms.get(i));
-			*/
 			int num = numberOfNouns();
-			// find all other repetition words, update boolean rep 
-			cal_ = Calendar.getInstance();
-			//System.out.println("before wdn tagging: " + df_.format(cal_.getTime()));
 			for (int i = 0; cont && i < num; i++)
 			{
 				String word2 = nouns.get(i).getWord();
 				boolean rep = word1.equalsIgnoreCase(word2);
-				boolean syn = false;
-				if (!rep)
-				{
-				    //find all other words are synonyms of the original word
-				    syn = wrdnt.isASynonym(word1, word2, tag);
-				    //syn = synonyms.contains(word1);
-				}
-				if (syn || rep)
+				if (rep)
 				{
 					// get that word
 					NounToken nt = nouns.get(i);
@@ -876,6 +860,51 @@ public class NounList {
 					// vice versa
 					param.setReference(nt.getID());
 					cont = false;
+                                        return;
+				}
+			}
+                        char fl_word1 = word1.charAt(0);
+			if (!isEnglish_ &&
+                                !Character.isLetter(fl_word1)) return;
+                        tag = "noun";
+			synonyms = wrdnt.getHiSynonym(word1, tag);
+			//System.out.println("The word: " + word1);
+			/*
+			for (int i = 0; i < synonyms.size(); i++)
+				System.out.println(synonyms.get(i));
+			*/
+			// find all other repetition words, update boolean rep 
+			cal_ = Calendar.getInstance();
+			//System.out.println("before wdn tagging: " + df_.format(cal_.getTime()));
+			for (int i = 0; cont && i < num; i++)
+			{
+				String word2 = nouns.get(i).getWord();
+                                char f1_word2 = word2.charAt(0);
+                                if (!Character.isLetter(f1_word2)) continue;
+				boolean syn = false;
+				    //find all other words are synonyms of the original word
+				    syn = wrdnt.isASynonym(word1, word2, tag);
+				if (syn)
+				{
+					// get that word
+					NounToken nt = nouns.get(i);
+					//modified by Ting Liu for submentions
+					while (nt.getRefInt() != -1) {
+					    nt = nouns.get(nt.getRefInt());
+					}
+					// make a new reference to the original word, save the reference words's ID in
+					// subsequentMentions arraylist in NounToken.java
+					/*
+					if (word1.trim().equalsIgnoreCase("jerry")) {
+					    System.out.println("param.getID: " + param.getID() + " === param turnno: " + param.getTurnNo());
+					    System.out.println("nt.getID: " + nt.getID() + " === turnno: " + nt.getTurnNo());
+					}
+					*/
+					nt.makeNewRef(param.getID());//modified by Ting 10/04 it was ID before
+					// vice versa
+					param.setReference(nt.getID());
+					cont = false;
+                                        break;
 				}
 			}
 			// do pronoun resolution
