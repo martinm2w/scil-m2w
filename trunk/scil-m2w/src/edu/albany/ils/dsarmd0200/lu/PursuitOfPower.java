@@ -587,7 +587,14 @@ public class PursuitOfPower {
         }else{
             System.out.println("No Pursuit of Power");
         }
-
+         
+        if(doSTDdebuggingPrintOut){
+                    System.out.println("total" + totalWeight);
+                    System.out.println("avg" + avgWeight);
+                    System.out.println("sum" + sum);
+                    System.out.println("sumstd1: " + sumSTD1);
+                    System.out.println("sumstd2: " + sumSTD2);
+        }
         
     }
     
@@ -633,7 +640,7 @@ public class PursuitOfPower {
         for(int i = 0; i < PopList.size(); i++){
             Double tempScore = (Double)PopList.get(i).get(1);
             String tempSpk = (String)PopList.get(i).get(0);
-            if(tempScore > sumSTD2){
+            if(tempScore < sumSTD2){
                 outList.add(tempSpk);
                 continue;
             }
@@ -652,6 +659,14 @@ public class PursuitOfPower {
             System.out.println();
         }else{
             System.out.println("No Pursuit of Power");
+        }
+        
+         if(doSTDdebuggingPrintOut){
+            System.out.println("total" + totalWeight);
+            System.out.println("avg" + avgWeight);
+            System.out.println("sum" + sum);
+            System.out.println("sumstd1: " + sumSTD1);
+            System.out.println("sumstd2: " + sumSTD2);
         }
 
     }
@@ -902,9 +917,9 @@ public class PursuitOfPower {
     private final Double TFMWGT_EN = 0.02;
     private final Double NCMWGT_EN = 0.09;
     //chinese weights
-    private final Double ITCMWGT_CN = 0.08;
-    private final Double CDMWGT_CN = 0.08;
-    private final Double TFMWGT_CN = 0.84;
+    private final Double ITCMWGT_CN = 0.15;
+    private final Double CDMWGT_CN = 0.15;
+    private final Double TFMWGT_CN = 0.70;
     private final Double NCMWGT_CN = 0.0;
     
     
