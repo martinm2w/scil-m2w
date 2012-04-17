@@ -58,6 +58,7 @@ public class TaskControl {
                             total_ac_oc_ += 1;
                         }
                     } else {
+                        //total_ac_oc_ +=0.5;
                         //ac_oc_--;
                     }
                 } else {
@@ -66,6 +67,7 @@ public class TaskControl {
 
             }
         }
+        System.out.println("total_ac_oc_: " + total_ac_oc_);
     }
 
     public void calTotalAdOc() {
@@ -86,7 +88,7 @@ public class TaskControl {
                      * utt_.getMTag().equalsIgnoreCase("TASK-MGMT") ||
 		utt_.getMTag().equalsIgnoreCase("PRCS-MGMT")
                      */) {
-                //System.out.println("find a task control usable utterance (" + utt_.getTag() + "/" + utt_.getMTag() + "): " + utt_.getContent() + utt_.getSpeaker()); 
+                //System.out.println("(in AD only)find a task control usable utterance (" + utt_.getTag() + "/" + utt_.getMTag() + "): " + utt_.getContent() + utt_.getSpeaker()); 
                 if (utt_.getTag().equalsIgnoreCase("information-request")
                         || utt_.getTag().equalsIgnoreCase("confirmation-request")
                         || (utt_.getTag().indexOf("Information-Request") != -1)

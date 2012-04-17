@@ -66,18 +66,19 @@ public class NounToken {
 	subsequentMentions = new ArrayList();
     }
 
-@Override public String toString(){
+    @Override public String toString(){
 	String retval = "***************\nLocal topic: " + word;
 	retval += "\nID: " + ID;
 	//retval += "\nTag: " + tag;
 	retval += "\nSpeaker: " + speaker;
 	retval += "\nref: " + reference + "\n";
-	retval += "\nTurnNo: " + turnNo + "\n---Subsequent Mentions---\n";
+	retval += "\nTurnNo: " + turnNo + "\nsize of subsequent mentions: " + subsequentMentions.size() + "\n---Subsequent Mentions---\n";
 	for (int i = 0; i < subsequentMentions.size(); i++){
 		retval += subsequentMentions.get(i) + "\n";
 	}
+
 	return retval;
-}
+    }
 
 	public String getTag(){
 		return tag;

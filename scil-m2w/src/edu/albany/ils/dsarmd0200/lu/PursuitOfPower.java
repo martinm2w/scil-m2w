@@ -526,24 +526,7 @@ public class PursuitOfPower {
         }
         return map;
     }
-    
-//    private void decidePopAndPrintChinese(ArrayList<ArrayList> PopList){
-//        ArrayList<Double> gaps = new ArrayList<Double>();
-//        if(PopList.size() > 1){
-//            for(int i = 1; i <PopList.size(); i++){            
-//                Double gap = (Double)PopList.get(i-1).get(1) - (Double)PopList.get(i).get(1);
-//                gaps.add(gap);
-//            }
-//            
-//            if(gaps.get(0) > ONE_OR_TWO_POP_GAP){
-//                System.out.println((String)PopList.get(0).get(0));
-//            }else{
-//                System.out.println((String)PopList.get(0).get(0) + " , "  + (String)PopList.get(1).get(0));
-//            }
-//        }
-//        
-//    }
-//    
+
     /**
      * m2w: standard deviation version of decide and print.
      * @param PopList 
@@ -606,13 +589,6 @@ public class PursuitOfPower {
         }
 
         
-        if(doSTDdebuggingPrintOut){
-            System.out.println("total" + totalWeight);
-            System.out.println("avg" + avgWeight);
-            System.out.println("sum" + sum);
-            System.out.println("sumstd1: " + sumSTD1);
-            System.out.println("sumstd2: " + sumSTD2);
-        }
     }
     
     /**
@@ -621,9 +597,9 @@ public class PursuitOfPower {
      */
     private void decidePopAndPrintSTDChinese(ArrayList<ArrayList> PopList){
         
-        PopList = this.exclude2PplChating(PopList);
-        PopList = this.excludePplisnotPop(PopList);
-        PopList = this.increaseScoreSpk1(PopList);
+//        PopList = this.exclude2PplChating(PopList);
+//        PopList = this.excludePplisnotPop(PopList);
+//        PopList = this.increaseScoreSpk1(PopList);
         
         Double totalWeight = 0.0;
         Double avgWeight = 0.0;
@@ -657,11 +633,11 @@ public class PursuitOfPower {
         for(int i = 0; i < PopList.size(); i++){
             Double tempScore = (Double)PopList.get(i).get(1);
             String tempSpk = (String)PopList.get(i).get(0);
-            if(tempScore < sumSTD2){
+            if(tempScore > sumSTD2){
                 outList.add(tempSpk);
                 continue;
             }
-            if(tempScore > sumSTD1*0.87){
+            if(tempScore > sumSTD1){
                 outList.add(tempSpk);
             }
         }
@@ -678,14 +654,6 @@ public class PursuitOfPower {
             System.out.println("No Pursuit of Power");
         }
 
-        
-        if(doSTDdebuggingPrintOut){
-            System.out.println("total" + totalWeight);
-            System.out.println("avg" + avgWeight);
-            System.out.println("sum" + sum);
-            System.out.println("sumstd1: " + sumSTD1);
-            System.out.println("sumstd2: " + sumSTD2);
-        }
     }
     
     /**
@@ -934,14 +902,14 @@ public class PursuitOfPower {
     private final Double TFMWGT_EN = 0.02;
     private final Double NCMWGT_EN = 0.09;
     //chinese weights
-    private final Double ITCMWGT_CN = 0.15;
-    private final Double CDMWGT_CN = 0.15;
-    private final Double TFMWGT_CN = 0.70;
+    private final Double ITCMWGT_CN = 0.08;
+    private final Double CDMWGT_CN = 0.08;
+    private final Double TFMWGT_CN = 0.84;
     private final Double NCMWGT_CN = 0.0;
     
     
     //print out control:
-    private boolean doSTDdebuggingPrintOut = true;
+    private boolean doSTDdebuggingPrintOut = false;
     private boolean doAnalysisPrintOut = false;
     private boolean doFinalPrintOut = true;
 }

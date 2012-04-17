@@ -53,6 +53,7 @@ public class DirectiveIndex {
 				ac_oc_ += 1;
 			    }
 			} else {
+                            //ac_oc_ += 0.5;
 			    //ac_oc_--;
 			}
 		    } else {

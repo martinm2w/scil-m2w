@@ -87,6 +87,7 @@ public class DsarmdDP extends DialogParser {
 	if (sub_node != null) {
 	    tag = sub_node.getNodeValue();
 	    da.setRespTo(sub_node.getNodeValue());
+	    da.setGTRespTo(sub_node.getNodeValue());
 	}
 	
 	sub_node = map.getNamedItem(Turn_no);

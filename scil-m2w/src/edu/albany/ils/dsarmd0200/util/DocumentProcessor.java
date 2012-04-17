@@ -115,7 +115,9 @@ public class DocumentProcessor {
                 if (lnk_tm_spk[1].equals("-1") ||
                         lnk_tm_spk[1].equals(lnk_tm_spk[0])) {
                     utt.setCommActType("addressed-to");
+                    utt.setGroundTruthCommActType("addressed-to");
                     utt.setRespTo("all-users");
+                    utt.setGTRespTo("all-users");
                 } else {
                     //System.out.println("preturn no: " + lnk_tm_spk[1]);
                     Utterance pre_turn = getUtt(utts, lnk_tm_spk[1]);
@@ -124,10 +126,13 @@ public class DocumentProcessor {
                     String cur_spk = utt.getSpeaker();
                     if (pre_turn_spk.equals(cur_spk)) {
                         utt.setCommActType("continuation-of");
+                        utt.setGroundTruthCommActType("continuation-of");
                     } else {
                         utt.setCommActType("response-to");
+                        utt.setGroundTruthCommActType("response-to");
                     }
                     utt.setRespTo(pre_turn_spk + ":" + pre_turn.getTurn());
+                    utt.setGTRespTo(pre_turn_spk + ":" + pre_turn.getTurn());
                 }
                 /*done*/
                 //System.out.println("a_line: " + a_line);
