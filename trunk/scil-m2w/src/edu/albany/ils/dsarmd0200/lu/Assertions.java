@@ -1382,7 +1382,7 @@ public class Assertions {
         for (int i = 0; i < spks.size(); i++) {
             if (((((Speaker) spks.get(i)).getinfwts()) >= sum1 && (((Speaker) spks.get(i)).getinfwts()) < sum2) && (sd2 != true)) {
                 set = true;
-                spk.add(((Speaker) spks.get(i)).getName());
+                spk.add(((Speaker) spks.get(i)).getOriName());
             } else {
                 continue;
             }
@@ -1417,19 +1417,19 @@ public class Assertions {
             for (int i = 0; i < spks.size(); i++) {
                 if ((((Speaker) spks.get(i)).getArgDiv()) == (MAD.get(0))) {
 //        System.out.println("spkr="+((Speaker)spks.get(i)).getName());
-                    spkmad1 = ((Speaker) spks.get(i)).getName();
+                    spkmad1 = ((Speaker) spks.get(i)).getOriName();
                 }
                 if ((((Speaker) spks.get(i)).getNetCentr()) == (NCM.get(0))) {
 //        System.out.println("spkr="+((Speaker)spks.get(i)).getName());
-                    spkncm1 = ((Speaker) spks.get(i)).getName();
+                    spkncm1 = ((Speaker) spks.get(i)).getOriName();
                 }
                 if ((((Speaker) spks.get(i)).getTC().getPower()) == (TCM.get(0))) {
 //        System.out.println("spkr="+((Speaker)spks.get(i)).getName());
-                    spktcm1 = ((Speaker) spks.get(i)).getName();
+                    spktcm1 = ((Speaker) spks.get(i)).getOriName();
                 }
                 if ((((Speaker) spks.get(i)).getDisagreement()) == (CDM.get(0))) {
 //        System.out.println("spkr="+((Speaker)spks.get(i)).getName());
-                    spkcdm1 = ((Speaker) spks.get(i)).getName();
+                    spkcdm1 = ((Speaker) spks.get(i)).getOriName();
                 }
             }
 
@@ -1757,7 +1757,7 @@ public class Assertions {
                     System.out.println("No Leader");
 
                     this.setLeader_(null);// added by m2w 2/14/12 10:44 AM
-                    System.out.println("@Confidence: 90%\n");// + leader.getLeadershipConfidence());
+                    System.out.println("@Confidence: 0.9\n");// + leader.getLeadershipConfidence());
                 } else {
                     System.out.println(leader.getOriName());
                     System.out.println("@Confidence:\n" + leader.getLeadershipConfidenceWKEn());
@@ -1768,7 +1768,7 @@ public class Assertions {
                     System.out.println("No Leader");
 
                     this.setLeader_(null);// added by m2w 2/14/12 10:44 AM
-                    System.out.println("@Confidence: 90%\n");// + leader.getLeadershipConfidence());
+                    System.out.println("@Confidence: 0.9\n");// + leader.getLeadershipConfidence());
                 } else {
                     if (dCVDI < 0.989) {
                         //need to redecide the leader
@@ -1798,12 +1798,12 @@ public class Assertions {
                                     } else {
                                         System.out.println("No Leader");
                                         this.setLeader_(null);// added by m2w 2/14/12 10:44 AM
-                                        System.out.println("@Confidence: 90%\n");// + leader.getLeadershipConfidence());                                        
+                                        System.out.println("@Confidence: 0.9\n");// + leader.getLeadershipConfidence());                                        
                                     }
                                 } else {
                                     System.out.println("No Leader");
                                     this.setLeader_(null);// added by m2w 2/14/12 10:44 AM
-                                    System.out.println("@Confidence: 90%\n");// + leader.getLeadershipConfidence());                                                             
+                                    System.out.println("@Confidence: 0.9\n");// + leader.getLeadershipConfidence());                                                             
                                 }
                             } else {
                                 leader = lcands.get(0);
@@ -1814,7 +1814,7 @@ public class Assertions {
                         } else {
                             System.out.println("No Leader");
                             this.setLeader_(null);// added by m2w 2/14/12 10:44 AM
-                            System.out.println("@Confidence: 90%\n");// + leader.getLeadershipConfidence());                            
+                            System.out.println("@Confidence: 0.9\n");// + leader.getLeadershipConfidence());                            
                         }
                     } else {
                         System.out.println(leader.getOriName());
